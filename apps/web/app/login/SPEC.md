@@ -46,17 +46,19 @@
 
 ## 3. Client Flow & Logic (Popup Window)
 1. **Trigger**: 유저가 '소셜 로그인' 버튼 클릭.
-2. **Action**: `window.open`으로 백엔드 인증 URL 호출. 메인 창은 "로그인 중..." 상태로 대기.
+2. **Action**: `window.open`으로 백엔드 인증 URL 호출. (`/auth/google`)
 3. **Popup Process**:
-   - 구글 인증 완료 -> 백엔드 callback (`/auth/google/callback`) 도달.
-   - **백엔드 역할**: 해당 URL에서 유저 정보를 응답(JSON/HTML)하며, **Script**를 통해 `window.opener.postMessage` 전송 후 `window.close()` 실행.
-     - *Success Message*: `{ type: 'LOGIN_SUCCESS', user: { ... } }`
-     - *Fail Message*: `{ type: 'LOGIN_FAIL', error: '...' }`
-4. **Main Window Sync**:
-   - `window.addEventListener('message', ...)`로 팝업 메시지 수신.
-   - **Success**: "로그인 성공!" 텍스트/토스트 노출 -> 메인 리다이렉트.
-   - **Fail**: "로그인 실패. 다시 시도해주세요" 텍스트/토스트 노출 -> 대기 상태 복귀.
-   - **Popup Closed**: (Optional) 팝업이 메시지 없이 닫힌 경우(interval 체크) -> 대기 상태 복귀.
+   - 구글 인증 완료 -> 백엔드 로직 수행 (쿠키 세팅).
+   - **Backend Redirect**: 백엔드는 JSON을 응답하지 않고, 프론트엔드 콜백 페이지로 리다이렉트.
+     - URL: `http://localhost:3000/login/callback?status=success`
+4. **Frontend Callback Page (`/login/callback`)**:
+   - **UI**: "로그인 처리 중입니다..." (Spinner).
+   - **Logic**:
+     - `useEffect`에서 `status` 파싱.
+     - `window.opener.postMessage({ type: 'LOGIN_SUCCESS' }, '*')` 전송.
+     - `window.close()` 실행.
+5. **Main Window Sync**:
+   - `message` 이벤트 수신 -> 메인 유저 정보 갱신 및 리다이렉트.
 
 ## 4. Edge Cases & Error Handling
 | Case | Condition | Behavior/UI |
