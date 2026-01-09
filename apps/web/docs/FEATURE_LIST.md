@@ -13,9 +13,9 @@
 
 | ID | Detail Feature | Status | Priority | Spec |
 |----|----------------|--------|----------|------|
-| **AUTH-1** | 로그인 페이지 UI | ⬜ | P1 | [Spec](../../app/login/SPEC.md) |
-| **AUTH-2** | 카카오 소셜 로그인 연동 | ⬜ | P1 | - |
-| **AUTH-3** | 토큰 관리 (JWT Access/Refresh) | ⬜ | P1 | - |
+| **AUTH-1** | 로그인 페이지 UI (Kakao, Google, Apple) | 🔄 | P1 | [Spec](../../app/login/SPEC.md) |
+| **AUTH-2** | 소셜 로그인 로직 연동 (Kakao, Google) | ⬜ | P1 | - |
+| **AUTH-3** | 유저 세션 동기화 (GET /me) | ⬜ | P1 | - |
 
 ### 🔹 HOME (Main Feed)
 메인 피드 및 추천

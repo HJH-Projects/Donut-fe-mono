@@ -10,7 +10,7 @@
   - `app/[feature]/layout.tsx`: (e.g., 로그인 전용 헤더가 필요한가?)
   - `app/(auth)/login/page.tsx`: (Route Group 사용 여부)
 - **Metadata**:
-  - `title`: "OOTD - {PageName}"
+  - `title`: "Donut - {PageName}"
   - `description`: "..."
 
 ## 1. UI/UX Plan
