@@ -15,6 +15,7 @@
 - `docs/conventions.md`: 공통 코딩/문서 규칙
 - `docs/architecture.md`: 모노레포 구조와 책임 범위
 - `docs/architecture_conventions.md`: 구조 관련 보조 규칙
+- `docs/pr_template.md`: PR 작성 템플릿(상세)
 
 ## 스펙
 - `docs/spec_template.md`: 공통 최소 스펙 템플릿
