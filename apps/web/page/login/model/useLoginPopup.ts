@@ -8,7 +8,7 @@ export const useLoginPopup = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
+    const handleMessage = async (event: MessageEvent) => {
       // 보안상 Origin 체크 (배포 시 필수)
       // if (event.origin !== window.location.origin) return;
 

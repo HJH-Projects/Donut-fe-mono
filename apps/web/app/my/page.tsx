@@ -1,4 +1,4 @@
-import { getMeServer, getUserStatsServer } from '@/shared/api/users';
+import { getMeServer, getUserStatsServer } from '@/shared/api/users.server';
 import { MyPage } from '@/page/my/ui/MyPage';
 
 export default async function Page() {
