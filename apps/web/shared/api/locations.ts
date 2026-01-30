@@ -24,6 +24,19 @@ export type WeatherSnapshot = {
   precipitationTypeCode?: number;
 };
 
+const defaultLocation: LocationItem = {
+  id: 'loc-seoul-cityhall',
+  alias: '서울시청',
+  isDefault: true,
+  location: {
+    id: 'loc-seoul-cityhall',
+    name: '서울시청',
+    lat: 37.5665,
+    lon: 126.978,
+    timezone: 'Asia/Seoul',
+  },
+};
+
 const mockLocations: LocationItem[] = [
   {
     id: 'loc-1',
@@ -49,9 +62,17 @@ const mockWeather: WeatherSnapshot = {
   precipitationTypeCode: 0,
 };
 
+const normalizeLocations = (value: unknown) => {
+  if (!Array.isArray(value) || value.length === 0) {
+    return [defaultLocation];
+  }
+  return value as LocationItem[];
+};
+
 export const getLocationsServer = async () => {
   try {
-    return await serverKy.get('locations').json<LocationItem[]>();
+    const res = await serverKy.get('locations').json<LocationItem[]>();
+    return normalizeLocations(res);
   } catch {
     return mockLocations;
   }
@@ -59,7 +80,8 @@ export const getLocationsServer = async () => {
 
 export const getLocationsClient = async () => {
   try {
-    return await clientKy.get('locations').json<LocationItem[]>();
+    const res = await clientKy.get('locations').json<LocationItem[]>();
+    return normalizeLocations(res);
   } catch {
     return mockLocations;
   }
