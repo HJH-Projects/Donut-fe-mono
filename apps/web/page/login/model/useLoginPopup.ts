@@ -1,13 +1,12 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
+import { getGoogleAuthUrl, getKakaoAuthUrl } from '@/shared/api/auth';
 
 export const useLoginPopup = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const handleMessage = async (event: MessageEvent) => {
+    const handleMessage = (event: MessageEvent) => {
       // 보안상 Origin 체크 (배포 시 필수)
       // if (event.origin !== window.location.origin) return;
 
@@ -28,7 +27,7 @@ export const useLoginPopup = () => {
     const left = window.screen.width / 2 - width / 2;
     const top = window.screen.height / 2 - height / 2;
 
-    const url = `${API_BASE_URL}/auth/${provider}`;
+    const url = provider === 'google' ? getGoogleAuthUrl() : getKakaoAuthUrl();
     
     window.open(
       url,
