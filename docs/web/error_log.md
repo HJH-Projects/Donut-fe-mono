@@ -14,7 +14,7 @@
 
 ## Logs
 
-### [Example] 2025-01-01: Hydration failed because the initial UI does not match
+### [예시] 2025-01-01: Hydration failed because the initial UI does not match
 - **Error**: `Hydration failed because the initial UI does not match what was rendered on the server.`
 - **Context**: `AccessTime` 컴포넌트에서 `new Date()`를 렌더링할 때 발생.
 - **Cause**: 서버 시간과 클라이언트 시간이 달라 렌더링 결과 불일치.
