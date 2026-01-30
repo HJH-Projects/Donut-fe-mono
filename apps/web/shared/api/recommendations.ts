@@ -24,6 +24,13 @@ export type RecommendationResponse = {
   recommendation: LookRecommendation;
 };
 
+export type RecommendationParams = {
+  latitude?: number;
+  longitude?: number;
+};
+
+type Gender = 'MALE' | 'FEMALE';
+
 const mockRecommendation: RecommendationResponse = {
   weather: {
     display: {
@@ -44,20 +51,37 @@ const mockRecommendation: RecommendationResponse = {
   },
 };
 
-export const recommendLookServer = async (latitude: number, longitude: number) => {
+const pickRandomGender = (): Gender => (Math.random() < 0.5 ? 'MALE' : 'FEMALE');
+
+const buildSearchParams = (params?: RecommendationParams) => {
+  const searchParams: Record<string, string> = {
+    gender: pickRandomGender(),
+  };
+
+  if (typeof params?.latitude === 'number') {
+    searchParams.latitude = params.latitude.toString();
+  }
+  if (typeof params?.longitude === 'number') {
+    searchParams.longitude = params.longitude.toString();
+  }
+
+  return searchParams;
+};
+
+export const recommendLookServer = async (params?: RecommendationParams) => {
   try {
     return await serverKy
-      .post('recommendations/look', { json: { latitude, longitude } })
+      .get('recommendations/look', { searchParams: buildSearchParams(params) })
       .json<RecommendationResponse>();
   } catch {
     return mockRecommendation;
   }
 };
 
-export const recommendLookClient = async (latitude: number, longitude: number) => {
+export const recommendLookClient = async (params?: RecommendationParams) => {
   try {
     return await clientKy
-      .post('recommendations/look', { json: { latitude, longitude } })
+      .get('recommendations/look', { searchParams: buildSearchParams(params) })
       .json<RecommendationResponse>();
   } catch {
     return mockRecommendation;

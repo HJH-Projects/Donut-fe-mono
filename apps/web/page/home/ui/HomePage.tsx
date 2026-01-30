@@ -1,20 +1,28 @@
 import { BottomNav } from '@/shared/ui/BottomNav';
 import { getLocationsServer, getWeatherByLocationServer } from '@/shared/api/locations';
 import { recommendLookServer } from '@/shared/api/recommendations';
+import { cookies } from 'next/headers';
 
 const getDefaultLocation = (locations: Awaited<ReturnType<typeof getLocationsServer>>) => {
   return locations.find((item) => item.isDefault) ?? locations[0];
 };
 
 export const HomePage = async () => {
+  const cookieStore = cookies();
+  const isAuthed = Boolean(cookieStore.get('accessToken')?.value);
   const locations = await getLocationsServer();
   const defaultLocation = getDefaultLocation(locations);
-  const weather = defaultLocation
-    ? await getWeatherByLocationServer(defaultLocation.location.id)
-    : null;
-  const recommendation = defaultLocation
-    ? await recommendLookServer(defaultLocation.location.lat, defaultLocation.location.lon)
-    : null;
+  const weather =
+    isAuthed && defaultLocation
+      ? await getWeatherByLocationServer(defaultLocation.location.id)
+      : null;
+  const recommendation =
+    isAuthed && defaultLocation
+      ? await recommendLookServer({
+          latitude: defaultLocation.location.lat,
+          longitude: defaultLocation.location.lon,
+        })
+      : await recommendLookServer();
 
   const display = recommendation?.weather.display;
 
