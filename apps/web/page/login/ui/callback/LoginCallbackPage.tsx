@@ -8,6 +8,7 @@ export const LoginCallbackPage = () => {
   const status = searchParams.get('status');
   // 백엔드가 에러 메시지를 query로 줄 경우를 대비
   const error = searchParams.get('error');
+  const isSuccess = status === 'success' || status === 'ok' || (!status && !error);
 
   useEffect(() => {
     // 팝업이 아니면 메인으로 이동
@@ -18,7 +19,7 @@ export const LoginCallbackPage = () => {
 
     // 약간의 딜레이를 주어 스피너가 보이게 함 (UX)
     const timer = setTimeout(() => {
-      if (status === 'success') {
+      if (isSuccess) {
         window.opener.postMessage(
           { type: 'LOGIN_SUCCESS', payload: { user: {} } }, // 필요 시 유저 정보 전달
           window.location.origin // 보안: Same Origin 체크
