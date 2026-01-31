@@ -1,29 +1,18 @@
-import { BottomNav } from '@/shared/ui/BottomNav';
-import { getLocationsServer, getWeatherByLocationServer } from '@/shared/api/locations';
-import { recommendLookServer } from '@/shared/api/recommendations';
-import { cookies } from 'next/headers';
+'use client';
 
-const getDefaultLocation = (locations: Awaited<ReturnType<typeof getLocationsServer>>) => {
-  return locations.find((item) => item.isDefault) ?? locations[0];
+import { BottomNav } from '@/shared/ui/BottomNav';
+import type { WeatherSnapshot } from '@/shared/api/locations';
+import type { RecommendationResponse } from '@/shared/api/recommendations.types';
+import { LocationConsentBanner } from './LocationConsentBanner';
+
+type Props = {
+  locationName?: string;
+  weather?: WeatherSnapshot | null;
+  recommendation?: RecommendationResponse | null;
+  hasGeo: boolean;
 };
 
-export const HomePage = async () => {
-  const cookieStore = cookies();
-  const isAuthed = Boolean(cookieStore.get('accessToken')?.value);
-  const locations = await getLocationsServer();
-  const defaultLocation = getDefaultLocation(locations);
-  const weather =
-    isAuthed && defaultLocation
-      ? await getWeatherByLocationServer(defaultLocation.location.id)
-      : null;
-  const recommendation =
-    isAuthed && defaultLocation
-      ? await recommendLookServer({
-          latitude: defaultLocation.location.lat,
-          longitude: defaultLocation.location.lon,
-        })
-      : await recommendLookServer();
-
+export const HomePage = ({ locationName, weather, recommendation, hasGeo }: Props) => {
   const display = recommendation?.weather.display;
 
   return (
@@ -32,11 +21,11 @@ export const HomePage = async () => {
         <h1 className="text-xl font-semibold text-gray-900">Donut</h1>
       </header>
 
+      <LocationConsentBanner initialHasGeo={hasGeo} />
+
       <section className="px-6">
         <div className="rounded-2xl border border-gray-200 p-4">
-          <p className="text-sm text-gray-500">
-            {defaultLocation?.location.name ?? '위치 없음'}
-          </p>
+          <p className="text-sm text-gray-500">{locationName ?? '위치 없음'}</p>
           <div className="mt-2 flex items-end gap-3">
             <span className="text-3xl font-semibold text-gray-900">
               {display?.tempCurrent ?? weather?.tempCurrent ?? '--'}°
@@ -58,13 +47,13 @@ export const HomePage = async () => {
       </section>
 
       <section className="mt-6 px-6">
-        <div className="h-[60vh] w-full overflow-hidden rounded-3xl bg-gray-100">
+        <div className="h-[60vh] w-full overflow-hidden rounded-3xl">
           {recommendation?.recommendation.lookImageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={recommendation.recommendation.lookImageUrl}
               alt="코디 이미지"
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain"
             />
           ) : (
             <div className="flex h-full items-center justify-center text-gray-400">
