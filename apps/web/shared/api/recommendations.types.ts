@@ -1,4 +1,5 @@
 export type WeatherDisplay = {
+  locationName?: string;
   sky: string;
   precipitationType: string;
   tempCurrent: number;

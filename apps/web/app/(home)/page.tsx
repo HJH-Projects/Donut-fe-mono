@@ -21,13 +21,16 @@ const parseGeoCookie = (value?: string | null) => {
   return { latitude, longitude };
 };
 
+const normalizeCoord = (value?: number | null) => {
+  if (typeof value !== "number") return undefined;
+  return Number(value.toFixed(2));
+};
+
 export default async function Page() {
   const cookieStore = await cookies();
   const geoCookie = cookieStore.get("geo")?.value ?? null;
   const isAuthed = Boolean(cookieStore.get("accessToken")?.value);
   const geo = parseGeoCookie(geoCookie);
-  console.log("[geo] cookie (server):", geoCookie);
-  console.log("[geo] parsed (server):", geo);
   const locations = await getLocationsServer();
   const defaultLocation = getDefaultLocation(locations);
   const weather =
@@ -37,13 +40,13 @@ export default async function Page() {
   const recommendation =
     isAuthed && defaultLocation
       ? await recommendLookServer({
-          latitude: geo?.latitude ?? defaultLocation.location.lat,
-          longitude: geo?.longitude ?? defaultLocation.location.lon,
+          latitude: normalizeCoord(geo?.latitude) ?? normalizeCoord(defaultLocation.location.lat),
+          longitude: normalizeCoord(geo?.longitude) ?? normalizeCoord(defaultLocation.location.lon),
         })
       : geo
         ? await recommendLookServer({
-            latitude: geo.latitude,
-            longitude: geo.longitude,
+            latitude: normalizeCoord(geo.latitude),
+            longitude: normalizeCoord(geo.longitude),
           })
         : await recommendLookServer();
 

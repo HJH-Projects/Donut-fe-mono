@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { UserProfile, UserStats } from '@/shared/api/users';
+import { logout } from '@/shared/api/auth';
 import { BottomNav } from '@/shared/ui/BottomNav';
 
 type Props = {
@@ -10,9 +12,24 @@ type Props = {
 };
 
 export const MyPage = ({ profile, stats }: Props) => {
+  const router = useRouter();
   const [temperatureUnit, setTemperatureUnit] = useState('C');
   const [language, setLanguage] = useState('KR');
   const [notifications, setNotifications] = useState(true);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      setLoggingOut(true);
+      await logout();
+      router.push('/login');
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+      alert('로그아웃에 실패했습니다.');
+      setLoggingOut(false);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-white pb-24">
@@ -94,8 +111,12 @@ export const MyPage = ({ profile, stats }: Props) => {
           </div>
         </div>
 
-        <button className="w-full rounded-2xl border border-gray-200 py-3 text-sm text-gray-700">
-          로그아웃
+        <button
+          onClick={handleLogout}
+          disabled={loggingOut}
+          className="w-full rounded-2xl border border-gray-200 py-3 text-sm text-gray-700 disabled:opacity-60"
+        >
+          {loggingOut ? '로그아웃 중...' : '로그아웃'}
         </button>
       </section>
 

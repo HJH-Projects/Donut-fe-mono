@@ -9,11 +9,16 @@ export const useLoginPopup = () => {
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      // 보안상 Origin 체크 (배포 시 필수)
-      // if (event.origin !== window.location.origin) return;
+      const apiOrigin = process.env.NEXT_PUBLIC_API_URL
+        ? new URL(process.env.NEXT_PUBLIC_API_URL).origin
+        : null;
+      const allowedOrigins = [window.location.origin, apiOrigin].filter(Boolean) as string[];
+      if (!allowedOrigins.includes(event.origin)) return;
 
       if (event.data?.type === 'LOGIN_SUCCESS') {
-        router.push(nextPath);
+        const storedNext = sessionStorage.getItem('login:next');
+        sessionStorage.removeItem('login:next');
+        router.push(storedNext || nextPath);
       } else if (event.data?.type === 'LOGIN_FAIL') {
         alert(event.data?.error || '로그인에 실패했습니다.');
       }
@@ -21,7 +26,7 @@ export const useLoginPopup = () => {
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [router]);
+  }, [router, nextPath]);
 
   const openPopup = (provider: 'google' | 'kakao') => {
     const width = 500;
@@ -30,6 +35,7 @@ export const useLoginPopup = () => {
     const top = window.screen.height / 2 - height / 2;
 
     const url = provider === 'google' ? getGoogleAuthUrl() : getKakaoAuthUrl();
+    sessionStorage.setItem('login:next', nextPath);
     
     window.open(
       url,

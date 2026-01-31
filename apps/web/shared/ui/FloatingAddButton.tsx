@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import ky from 'ky';
 import { useRouter } from 'next/navigation';
 import { createPresignedUrl, completeUpload } from '@/shared/api/uploads';
-import { createClothesClient } from '@/shared/api/clothes';
+import { createClothesClient } from '@/shared/api/clothes.client';
 
 export const FloatingAddButton = () => {
   const [open, setOpen] = useState(false);
@@ -52,8 +53,7 @@ export const FloatingAddButton = () => {
         contentType: file.type || 'image/jpeg',
         contentLength: file.size,
       });
-      await fetch(presign.uploadUrl, {
-        method: 'PUT',
+      await ky.put(presign.uploadUrl, {
         headers: { 'Content-Type': file.type || 'image/jpeg' },
         body: file,
       });

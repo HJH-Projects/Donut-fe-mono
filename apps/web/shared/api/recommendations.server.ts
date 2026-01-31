@@ -1,13 +1,10 @@
+import { randomInt } from "crypto";
 import type {
   Gender,
   RecommendationParams,
   RecommendationResponse,
 } from "./recommendations.types";
-
-const API_BASE_URL =
-  process.env.API_SOURCE_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
-  "http://localhost:8080";
+import { serverKy } from "./server";
 
 const getSecondsUntilNextKst0430 = () => {
   const now = new Date();
@@ -22,35 +19,40 @@ const getSecondsUntilNextKst0430 = () => {
   return Math.max(diffSeconds, 60);
 };
 
-const pickRandomGender = (): Gender =>
-  Math.random() < 0.5 ? "MALE" : "FEMALE";
+const pickRandomGender = (): Gender => (randomInt(0, 2) === 0 ? "MALE" : "FEMALE");
 
-const buildSearchParams = (params?: RecommendationParams) => {
-  const searchParams: Record<string, string> = {
-    gender: pickRandomGender(),
-  };
+const normalizeCoord = (value: number) => value.toFixed(2);
 
-  if (typeof params?.latitude === "number") {
-    searchParams.latitude = params.latitude.toString();
+const fetchRecommendation = async (
+  lat: string,
+  lon: string,
+  gender: Gender,
+  ttl: number
+): Promise<RecommendationResponse | null> => {
+  const searchParams = new URLSearchParams({ gender });
+  if (lat !== "default") {
+    searchParams.set("latitude", lat);
   }
-  if (typeof params?.longitude === "number") {
-    searchParams.longitude = params.longitude.toString();
+  if (lon !== "default") {
+    searchParams.set("longitude", lon);
   }
 
-  return searchParams;
+  const response = await serverKy.get("recommendations/look", {
+    searchParams,
+    cache: "force-cache",
+    next: { revalidate: ttl },
+    timeout: 60000,
+  } as RequestInit & { searchParams: URLSearchParams });
+
+  if (!response.ok) return null;
+  return response.json();
 };
 
 export const recommendLookServer = async (params?: RecommendationParams) => {
-  const searchParams = new URLSearchParams(buildSearchParams(params));
+  const lat = typeof params?.latitude === "number" ? normalizeCoord(params.latitude) : "default";
+  const lon = typeof params?.longitude === "number" ? normalizeCoord(params.longitude) : "default";
+  const gender = pickRandomGender();
 
-  const upstreamUrl = `${API_BASE_URL}/recommendations/look?${searchParams.toString()}`;
   const ttl = getSecondsUntilNextKst0430();
-
-  // 3. 직접 호출 및 캐싱 설정
-  const response = await fetch(upstreamUrl, {
-    next: { revalidate: ttl }, // 여기서 TTL 설정
-  });
-
-  if (!response.ok) return null;
-  return response.json() as Promise<RecommendationResponse>;
+  return fetchRecommendation(lat, lon, gender, ttl);
 };

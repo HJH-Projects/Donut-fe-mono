@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getLooksServer } from '@/shared/api/looks';
+import { getLooksServer } from '@/shared/api/looks.server';
 import { BottomNav } from '@/shared/ui/BottomNav';
 import { FloatingLinkButton } from '@/shared/ui/FloatingLinkButton';
 

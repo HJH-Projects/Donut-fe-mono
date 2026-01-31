@@ -30,10 +30,9 @@ export const LocationConsentBanner = ({ initialHasGeo }: Props) => {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const lat = position.coords.latitude.toFixed(6);
-        const lon = position.coords.longitude.toFixed(6);
+        const lat = position.coords.latitude.toFixed(2);
+        const lon = position.coords.longitude.toFixed(2);
         document.cookie = `geo=${lat},${lon}; path=/; samesite=lax`;
-        console.log('[geo] cookie set:', document.cookie);
         window.sessionStorage.setItem(SESSION_KEY, 'granted');
         setVisible(false);
         window.location.reload();

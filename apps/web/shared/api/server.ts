@@ -1,7 +1,7 @@
 import ky from 'ky';
 import { cookies } from 'next/headers';
 
-const API_SOURCE_URL = process.env.API_SOURCE_URL || 'http://localhost:8080';
+const API_SOURCE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 export const serverKy = ky.create({
   prefixUrl: API_SOURCE_URL,

@@ -25,7 +25,9 @@ export const HomePage = ({ locationName, weather, recommendation, hasGeo }: Prop
 
       <section className="px-6">
         <div className="rounded-2xl border border-gray-200 p-4">
-          <p className="text-sm text-gray-500">{locationName ?? '위치 없음'}</p>
+          <p className="text-sm text-gray-500">
+            {display?.locationName ?? locationName ?? '위치 없음'}
+          </p>
           <div className="mt-2 flex items-end gap-3">
             <span className="text-3xl font-semibold text-gray-900">
               {display?.tempCurrent ?? weather?.tempCurrent ?? '--'}°
@@ -37,7 +39,9 @@ export const HomePage = ({ locationName, weather, recommendation, hasGeo }: Prop
           </div>
           <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-500">
             <span>날씨: {display?.sky ?? '정보 없음'}</span>
-            <span>풍랑: {weather?.windSpeed ?? '--'}m/s</span>
+            <span>
+              바람 {display?.wind ?? (weather?.windSpeed ? `${weather.windSpeed}m/s` : '--')}
+            </span>
             <span>강수확률: {display?.precipitationProbability ?? '--'}</span>
           </div>
           <p className="mt-3 text-sm text-gray-700">

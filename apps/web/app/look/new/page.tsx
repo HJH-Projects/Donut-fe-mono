@@ -1,4 +1,4 @@
-import { getClothesServer } from '@/shared/api/clothes';
+import { getClothesServer } from '@/shared/api/clothes.server';
 import { LookCreatePage } from '@/page/look/ui/LookCreatePage';
 
 export default async function Page() {

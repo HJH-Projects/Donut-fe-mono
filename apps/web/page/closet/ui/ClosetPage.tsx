@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getClothesServer } from '@/shared/api/clothes';
+import { getClothesServer } from '@/shared/api/clothes.server';
 import { BottomNav } from '@/shared/ui/BottomNav';
 import { FloatingAddButton } from '@/shared/ui/FloatingAddButton';
 
@@ -39,23 +39,35 @@ export const ClosetPage = async () => {
                 {CATEGORY_LABELS[category]}
               </h2>
               <div className="grid grid-cols-2 gap-3">
-                {filtered.map((item) => (
-                  <Link
-                    key={item.id}
-                    href={`/closet/${item.id}`}
-                    className="relative overflow-hidden rounded-2xl bg-gray-100"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={item.imageUrl}
-                      alt={item.title}
-                      className="h-40 w-full object-cover"
-                    />
-                    <span className="absolute bottom-2 right-2 rounded-full bg-white/90 px-2 py-1 text-xs">
-                      {item.isFavorite ? '♥' : '♡'}
-                    </span>
-                  </Link>
-                ))}
+                {filtered.map((item, index) => {
+                  if (!item.id) {
+                    return (
+                      <div
+                        key={`missing-${index}`}
+                        className="relative flex h-40 items-center justify-center overflow-hidden rounded-2xl bg-gray-100 text-xs text-gray-400"
+                      >
+                        잘못된 아이템
+                      </div>
+                    );
+                  }
+                  return (
+                    <Link
+                      key={item.id}
+                      href={`/closet/${item.id}`}
+                      className="relative overflow-hidden rounded-2xl bg-gray-100"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={item.imageUrl}
+                        alt={item.title}
+                        className="h-40 w-full object-cover"
+                      />
+                      <span className="absolute bottom-2 right-2 rounded-full bg-white/90 px-2 py-1 text-xs">
+                        {item.isFavorite ? '♥' : '♡'}
+                      </span>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           );
