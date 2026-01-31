@@ -13,6 +13,14 @@ export const LookPage = async () => {
       </header>
 
       <section className="px-6 space-y-4">
+        {looks.length === 0 && (
+          <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center">
+            <p className="text-sm font-semibold text-gray-700">등록된 룩이 없어요</p>
+            <p className="mt-2 text-xs text-gray-500">
+              오른쪽 아래 + 버튼을 눌러 룩을 만들어보세요.
+            </p>
+          </div>
+        )}
         {looks.map((look) => (
           <Link
             key={look.id}
