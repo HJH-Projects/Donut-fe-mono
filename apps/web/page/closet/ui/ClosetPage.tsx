@@ -21,6 +21,14 @@ export const ClosetPage = async () => {
       </header>
 
       <section className="px-6">
+        {clothes.length === 0 && (
+          <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center">
+            <p className="text-sm font-semibold text-gray-700">등록된 옷이 없어요</p>
+            <p className="mt-2 text-xs text-gray-500">
+              오른쪽 아래 + 버튼을 눌러 옷을 추가해보세요.
+            </p>
+          </div>
+        )}
         {Object.keys(CATEGORY_LABELS).map((category) => {
           const filtered = clothes.filter((item) => item.category === category);
           if (filtered.length === 0) return null;
