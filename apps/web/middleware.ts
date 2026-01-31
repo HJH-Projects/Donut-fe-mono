@@ -13,6 +13,8 @@ export const middleware = (request: NextRequest) => {
   if (!accessToken && isProtected) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
+    const nextPath = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+    url.searchParams.set('next', nextPath);
     return NextResponse.redirect(url);
   }
 
