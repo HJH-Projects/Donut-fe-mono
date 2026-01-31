@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { getGoogleAuthUrl, getKakaoAuthUrl } from '@/shared/api/auth';
 
 export const useLoginPopup = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = searchParams.get('next') || '/';
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -11,7 +13,7 @@ export const useLoginPopup = () => {
       // if (event.origin !== window.location.origin) return;
 
       if (event.data?.type === 'LOGIN_SUCCESS') {
-        router.push('/');
+        router.push(nextPath);
       } else if (event.data?.type === 'LOGIN_FAIL') {
         alert(event.data?.error || '로그인에 실패했습니다.');
       }
