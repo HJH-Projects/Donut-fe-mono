@@ -68,6 +68,24 @@ export const getClothesClient = async () => {
   }
 };
 
+export const createClothesClient = async (payload: {
+  title: string;
+  category: ClothesItem['category'];
+  color: string;
+  imageUrl: string;
+}) => {
+  try {
+    return await clientKy.post('clothes', { json: payload }).json<ClothesItem>();
+  } catch {
+    return {
+      id: `mock-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      isFavorite: false,
+      ...payload,
+    };
+  }
+};
+
 export const getClothesDetailServer = async (id: string) => {
   try {
     return await serverKy.get(`clothes/${id}`).json<ClothesDetail>();
