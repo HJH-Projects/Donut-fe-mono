@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getGoogleAuthUrl, getKakaoAuthUrl } from '@/shared/api/auth';
+import { getMeClient } from '@/shared/api/users.client';
 
 export const useLoginPopup = () => {
   const router = useRouter();
@@ -18,7 +19,13 @@ export const useLoginPopup = () => {
       if (event.data?.type === 'LOGIN_SUCCESS') {
         const storedNext = sessionStorage.getItem('login:next');
         sessionStorage.removeItem('login:next');
-        router.push(storedNext || nextPath);
+        getMeClient()
+          .catch(() => {
+            alert('로그인 정보를 확인하지 못했습니다.');
+          })
+          .finally(() => {
+            router.push(storedNext || nextPath);
+          });
       } else if (event.data?.type === 'LOGIN_FAIL') {
         alert(event.data?.error || '로그인에 실패했습니다.');
       }
