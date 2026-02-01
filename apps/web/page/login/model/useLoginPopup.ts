@@ -24,7 +24,8 @@ export const useLoginPopup = () => {
             alert('로그인 정보를 확인하지 못했습니다.');
           })
           .finally(() => {
-            router.push(storedNext || nextPath);
+            const target = storedNext || nextPath;
+            window.location.assign(target);
           });
       } else if (event.data?.type === 'LOGIN_FAIL') {
         alert(event.data?.error || '로그인에 실패했습니다.');
