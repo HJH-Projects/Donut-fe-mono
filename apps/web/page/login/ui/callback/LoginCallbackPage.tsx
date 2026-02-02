@@ -6,9 +6,9 @@ import { useSearchParams } from 'next/navigation';
 export const LoginCallbackPage = () => {
   const searchParams = useSearchParams();
   const status = searchParams.get('status');
-  // 백엔드가 에러 메시지를 query로 줄 경우를 대비
   const error = searchParams.get('error');
-  const isSuccess = status === 'success' || status === 'ok' || (!status && !error);
+  const errorMessage = searchParams.get('message');
+  const isSuccess = status === 'success' || status === 'ok' || (!status && !error && !errorMessage);
 
   useEffect(() => {
     // 팝업이 아니면 메인으로 이동
@@ -17,24 +17,38 @@ export const LoginCallbackPage = () => {
       return;
     }
 
+    const notifyFail = (message: string) => {
+      window.opener.postMessage(
+        { type: 'LOGIN_FAIL', error: message },
+        window.location.origin
+      );
+      window.close();
+    };
+
+    const notifySuccess = () => {
+      window.opener.postMessage(
+        { type: 'LOGIN_SUCCESS', payload: { user: {} } },
+        window.location.origin
+      );
+      window.close();
+    };
+
     // 약간의 딜레이를 주어 스피너가 보이게 함 (UX)
     const timer = setTimeout(() => {
       if (isSuccess) {
-        window.opener.postMessage(
-          { type: 'LOGIN_SUCCESS', payload: { user: {} } }, // 필요 시 유저 정보 전달
-          window.location.origin // 보안: Same Origin 체크
-        );
+        notifySuccess();
       } else {
-        window.opener.postMessage(
-          { type: 'LOGIN_FAIL', error: error || 'Login failed' },
-          window.location.origin
-        );
+        notifyFail(errorMessage || error || 'Login failed');
       }
-      window.close();
     }, 800);
 
+    const onError = () => {
+      notifyFail('사용자 정보를 처리할 수 없습니다.');
+    };
+    window.addEventListener('error', onError);
+
     return () => clearTimeout(timer);
-  }, [status, error]);
+  }, [status, error, errorMessage]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-white">
