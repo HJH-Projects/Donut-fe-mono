@@ -15,6 +15,8 @@
 - **기능 상태 업데이트**: `docs/feature_status.md`
 - **스펙 작성**: `docs/spec_template.md` + 앱 확장 템플릿
 - **아키텍처 확인**: `docs/architecture.md`
+- **정책 확인/변경**: `docs/policies.md`
+- **체크리스트 확인**: `docs/checklist.md`
 - **에러 해결 기록**: `docs/<app>/error_log.md`
 - **앱 전용 규칙**: `docs/<app>/coding_convention.md`
 - **기능 현황 확인**: `docs/feature_list.md` + 앱별 `docs/<app>/feature_list.md`

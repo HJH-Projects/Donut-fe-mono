@@ -7,12 +7,14 @@
 - `docs/workflow.md`: 공통 개발 흐름(브랜치/검증/머지)
 - `docs/worktree.md`: 병렬 작업을 위한 worktree 운영
 - `docs/feature_status.md`: 기능 상태 업데이트 규칙
+- `docs/checklist.md`: 작업 전/후 체크리스트
 
 ## 컨텍스트 최소화 가이드
 - `docs/context_loading.md`: 필요한 문서만 읽도록 범위와 조건 정의
 
 ## 규칙/구조
 - `docs/conventions.md`: 공통 코딩/문서 규칙
+- `docs/policies.md`: 변경 시 혼선 방지용 고정 정책
 - `docs/architecture.md`: 모노레포 구조와 책임 범위
 - `docs/architecture_conventions.md`: 구조 관련 보조 규칙
 - `docs/pr_template.md`: PR 작성 템플릿(상세)
