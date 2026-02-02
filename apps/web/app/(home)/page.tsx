@@ -3,7 +3,7 @@ import { HomePage } from "@/page/home/ui/HomePage";
 import {
   getLocationsServer,
   getWeatherByLocationServer,
-} from "@/shared/api/locations";
+} from "@/shared/api/locations.server";
 import { recommendLookServer } from "@/shared/api/recommendations.server";
 
 const getDefaultLocation = (
@@ -58,6 +58,7 @@ export default async function Page() {
       weather={weather}
       recommendation={recommendation}
       hasGeo={Boolean(geo)}
+      initialLocations={locations}
     />
   );
 }
