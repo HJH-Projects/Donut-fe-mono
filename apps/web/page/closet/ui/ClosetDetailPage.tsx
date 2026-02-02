@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import type { ClothesDetail } from '@/shared/api/clothes';
+import { deleteClothesClient } from '@/shared/api/clothes.client';
 import { BackButton } from '@/shared/ui/BackButton';
 
 type Props = {
@@ -9,33 +11,34 @@ type Props = {
 };
 
 export const ClosetDetailPage = ({ detail }: Props) => {
-  const [memo, setMemo] = useState(detail.memo ?? '');
+  const router = useRouter();
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm('이 아이템을 삭제하시겠습니까?')) return;
+    try {
+      setDeleting(true);
+      await deleteClothesClient(detail.id);
+      router.push('/closet');
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+      alert('삭제에 실패했습니다.');
+      setDeleting(false);
+    }
+  };
+
+  const handleEdit = () => {
+    router.push(`/closet/${detail.id}/edit`);
+  };
 
   return (
     <main className="min-h-screen bg-white pb-20">
       <header className="flex items-center justify-between px-6 pt-6 pb-4">
         <BackButton />
         <h1 className="text-base font-semibold text-gray-900">아이템상세</h1>
-        <button
-          type="button"
-          className="text-gray-900"
-          aria-label="공유하기"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="h-6 w-6"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 16v-7m0 0l-3 3m3-3l3 3M5 20h14a1 1 0 001-1v-3M4 16v3a1 1 0 001 1"
-            />
-          </svg>
-        </button>
+        <span className="h-9 w-9" />
       </header>
 
       <section className="px-6">
@@ -56,23 +59,39 @@ export const ClosetDetailPage = ({ detail }: Props) => {
 
         <div className="mt-4">
           <h2 className="text-lg font-semibold text-gray-900">{detail.title}</h2>
-          <div className="mt-3 grid grid-cols-2 gap-2 text-sm text-gray-600">
-            <span>카테고리: {detail.category}</span>
-            <span>시즌: {detail.season ?? '미지정'}</span>
-            <span>색상: {detail.color}</span>
-            <span>브랜드: {detail.brand ?? '미지정'}</span>
-            <span>소재: {detail.material ?? '미지정'}</span>
-            <span>사이즈: {detail.size ?? '미지정'}</span>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span className="rounded-full bg-gray-100 px-3 py-1.5 text-sm text-gray-600">
+              {detail.category}
+            </span>
+            <span className="rounded-full bg-gray-100 px-3 py-1.5 text-sm text-gray-600">
+              {detail.color}
+            </span>
           </div>
         </div>
 
-        <div className="mt-6">
-          <label className="text-sm font-semibold text-gray-700">메모</label>
-          <textarea
-            value={memo}
-            onChange={(event) => setMemo(event.target.value)}
-            className="mt-2 h-28 w-full rounded-xl border border-gray-200 p-3 text-sm text-gray-700"
-          />
+        {/* Action Buttons */}
+        <div className="mt-6 flex gap-3">
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 py-3 text-sm text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            {deleting ? '삭제 중...' : '삭제'}
+          </button>
+          <button
+            type="button"
+            onClick={handleEdit}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 py-3 text-sm text-gray-600 transition-colors hover:bg-gray-50"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            수정
+          </button>
         </div>
       </section>
     </main>

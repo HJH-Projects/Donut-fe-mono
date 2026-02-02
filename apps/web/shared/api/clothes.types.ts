@@ -5,13 +5,8 @@ export type ClothesItem = {
   color: string;
   imageUrl: string;
   createdAt: string;
-  isFavorite?: boolean;
 };
 
 export type ClothesDetail = ClothesItem & {
-  season?: string;
-  brand?: string;
-  material?: string;
-  size?: string;
-  memo?: string;
+  updatedAt?: string;
 };
