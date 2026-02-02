@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ClothesItem } from '@/shared/api/clothes';
-import { createLookClient } from '@/shared/api/looks.client';
+import type { ClothesItem } from '@/shared/api/clothes';
+import type { LookItem } from '@/shared/api/looks';
+import { updateLookClient, deleteLookClient } from '@/shared/api/looks.client';
 import { BackButton } from '@/shared/ui/BackButton';
 
 const CATEGORIES = ['TOP', 'BOTTOM', 'OUTER', 'SHOES', 'ACCESSORY'] as const;
@@ -31,16 +32,25 @@ const PRESET_TAGS = [
 ] as const;
 
 type Props = {
+  look: LookItem;
   clothes: ClothesItem[];
 };
 
-export const LookCreatePage = ({ clothes }: Props) => {
+export const LookEditPage = ({ look, clothes }: Props) => {
   const router = useRouter();
-  const [name, setName] = useState('');
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [selected, setSelected] = useState<string[]>([]);
+  const [name, setName] = useState(look.name);
+  const [selectedTags, setSelectedTags] = useState<string[]>(
+    look.tags
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean)
+  );
+  const [selected, setSelected] = useState<string[]>(
+    look.items.map((item) => item.clothesId).filter(Boolean)
+  );
   const [activeCategory, setActiveCategory] = useState<string>(CATEGORIES[0]);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -94,7 +104,7 @@ export const LookCreatePage = ({ clothes }: Props) => {
     }
     try {
       setSaving(true);
-      await createLookClient({
+      await updateLookClient(look.id, {
         name: trimmedName,
         tags: selectedTags.join(','),
         items: selectedItems.map((item, index) => ({
@@ -105,24 +115,35 @@ export const LookCreatePage = ({ clothes }: Props) => {
       });
       setSuccessMessage('룩이 저장되었습니다.');
       setTimeout(() => {
-        router.push('/look');
+        router.push(`/look/${look.id}`);
+        router.refresh();
       }, 600);
     } catch (error) {
       console.error(error);
-      setErrorMessage('룩 등록에 실패했습니다.');
+      setErrorMessage('룩 수정에 실패했습니다.');
       setSaving(false);
     }
   };
 
-  const handleCancel = () => {
-    router.back();
+  const handleDelete = async () => {
+    if (!confirm('이 룩을 삭제하시겠습니까?')) return;
+    try {
+      setDeleting(true);
+      await deleteLookClient(look.id);
+      router.push('/look');
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+      alert('삭제에 실패했습니다.');
+      setDeleting(false);
+    }
   };
 
   return (
     <main className="min-h-screen bg-white pb-32">
       <header className="flex items-center justify-between px-6 pt-6 pb-4">
         <BackButton />
-        <h1 className="text-xl font-semibold text-gray-900">룩 등록</h1>
+        <h1 className="text-xl font-semibold text-gray-900">룩 수정</h1>
         <span className="h-9 w-9" />
       </header>
 
@@ -242,19 +263,19 @@ export const LookCreatePage = ({ clothes }: Props) => {
           <div className="flex gap-3">
             <button
               type="button"
-              onClick={handleCancel}
-              disabled={saving}
-              className="flex-1 rounded-xl border border-gray-200 py-3 text-sm font-medium text-gray-600"
+              onClick={handleDelete}
+              disabled={saving || deleting}
+              className="flex-1 rounded-xl border border-red-200 py-3 text-sm font-medium text-red-600 disabled:opacity-50"
             >
-              취소
+              {deleting ? '삭제 중...' : '삭제'}
             </button>
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={saving}
+              disabled={saving || deleting}
               className="flex-1 rounded-xl bg-black py-3 text-sm font-medium text-white disabled:opacity-50"
             >
-              {saving ? '등록 중...' : '등록'}
+              {saving ? '저장 중...' : '저장'}
             </button>
           </div>
         </div>

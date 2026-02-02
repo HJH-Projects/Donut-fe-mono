@@ -10,9 +10,10 @@ export type LookItem = {
     clothes?: {
       id: string;
       title: string;
+      category: string;
+      color: string;
       imageUrl: string;
     };
   }>;
   createdAt?: string;
-  isFavorite?: boolean;
 };
