@@ -1,170 +1,1383 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import type { LookItem } from '@/shared/api/looks';
-import { deleteLookClient } from '@/shared/api/looks.client';
-import { BottomNav } from '@/shared/ui/BottomNav';
+import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Dialog } from "@base-ui/react/dialog";
+import { ImageWithFallback } from "@/shared/ui/ImageWithFallback";
+import { LookForm } from "@/shared/ui/LookForm";
+import { useTranslation } from "react-i18next";
+import { Plus, Heart, Search, ArrowLeft, ArrowRight, Share2, X, Trash2, Edit2, Link2, Check, Copy } from "lucide-react";
 
-type Props = {
-  looks: LookItem[];
+type LookItem = {
+  id: string;
+  name: string;
+  category: string;
+  imageUrl: string;
 };
 
-export const LookPage = ({ looks: initialLooks }: Props) => {
+type Look = {
+  id: string;
+  name: string;
+  tags: string[];
+  items: LookItem[];
+  isFavorite: boolean;
+};
+
+type SharedLink = {
+  id: string;
+  name: string;
+  url: string;
+  createdAt: Date;
+};
+
+export function LookPage() {
+  const { t } = useTranslation();
   const router = useRouter();
-  const [looks, setLooks] = useState<LookItem[]>(initialLooks);
+  const [showFavoriteOnly, setShowFavoriteOnly] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showCreateLinkDialog, setShowCreateLinkDialog] = useState(false);
+  const [selectedLook, setSelectedLook] = useState<Look | null>(null);
+  const [sharedLinks, setSharedLinks] = useState<SharedLink[]>([]);
+  const [selectedLink, setSelectedLink] = useState<SharedLink | null>(null);
+  const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
+  const [linkName, setLinkName] = useState("");
+  const tagScrollRef = useRef<HTMLDivElement>(null);
 
-  const handleShare = async (e: React.MouseEvent, look: LookItem) => {
-    e.preventDefault();
-    e.stopPropagation();
+  // Mock 옷장 아이템 데이터 (카테고리별로 선택 가능하도록)
+  const [closetItems] = useState<LookItem[]>([
+    { id: "c1", name: "회색 코트", category: "아우터", imageUrl: "https://images.unsplash.com/photo-1626307416562-ee839676f5fc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxncmV5JTIwd2ludGVyJTIwY29hdCUyMG91dGZpdHxlbnwxfHx8fDE3NzAxMDgwMjB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
+    { id: "c2", name: "화이트 셔츠", category: "상의", imageUrl: "https://images.unsplash.com/photo-1766416143517-ee39c8db4f99?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3aGl0ZSUyMHNoaXJ0JTIwZm9ybWFsJTIwd2VhcnxlbnwxfHx8fDE3NzAxMDgwMjB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
+    { id: "c3", name: "블랙 슬랙스", category: "하의", imageUrl: "https://images.unsplash.com/photo-1699205016746-8aa2e6e48453?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxibGFjayUyMGRyZXNzJTIwcGFudHN8ZW58MXx8fHwxNzcwMTA4MDIwfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
+    { id: "c4", name: "가죽 구두", category: "신발", imageUrl: "https://images.unsplash.com/photo-1576792741377-eb0f4f6d1a47?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsZWF0aGVyJTIwZHJlc3MlMjBzaG9lc3xlbnwxfHx8fDE3Njk5OTg3MTR8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
+    { id: "c5", name: "데님 자켓", category: "아우터", imageUrl: "https://images.unsplash.com/photo-1764427163096-97ecceee3d72?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkZW5pbSUyMGphY2tldCUyMGNhc3VhbHxlbnwxfHx8fDE3NzAwODE1MTN8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
+    { id: "c6", name: "화이트 티셔츠", category: "상의", imageUrl: "https://images.unsplash.com/photo-1574180566232-aaad1b5b8450?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3aGl0ZSUyMHQtc2hpcnR8ZW58MXx8fHwxNzcwMDk5OTY0fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
+    { id: "c7", name: "청바지", category: "하의", imageUrl: "https://images.unsplash.com/photo-1713880442898-0f151fba5e16?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxibHVlJTIwamVhbnMlMjBkZW5pbXxlbnwxfHx8fDE3NzAxMDgwMjJ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
+    { id: "c8", name: "스니커즈", category: "신발", imageUrl: "https://images.unsplash.com/photo-1597350584914-55bb62285896?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3aGl0ZSUyMHNuZWFrZXJzfGVufDF8fHx8MTc3MDAyMDkwNXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
+    { id: "c9", name: "크로스백", category: "악세사리", imageUrl: "https://images.unsplash.com/photo-1760624294514-ca40aafe3d96?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjcm9zc2JvZHklMjBiYWclMjBhY2Nlc3Nvcnl8ZW58MXx8fHwxNzcwMTA4MDIzfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
+    { id: "c10", name: "린넨 셔", category: "상의", imageUrl: "https://images.unsplash.com/photo-1766735324704-5f245cf0e9e2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsaW5lbiUyMHNoaXJ0JTIwc3VtbWVyfGVufDF8fHx8MTc3MDEwODAyM3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
+    { id: "c11", name: "반바지", category: "하의", imageUrl: "https://images.unsplash.com/photo-1769072058532-fb6cc4443ea0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxraGFraSUyMHNob3J0c3xlbnwxfHx8fDE3NzAxMDgwMjZ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
+    { id: "c12", name: "샌들", category: "신발", imageUrl: "https://images.unsplash.com/photo-1743591684800-c8cfba557087?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzdW1tZXIlMjBzYW5kYWxzfGVufDF8fHx8MTc3MDA1MTcwMXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
+    { id: "c13", name: "블랙 니트", category: "상의", imageUrl: "https://images.unsplash.com/photo-1676661725258-9a801a285c72?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxibGFjayUyMGtuaXQlMjBzd2VhdGVyfGVufDF8fHx8MTc3MDEwODAyN3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
+    { id: "c14", name: "체크 셔츠", category: "상의", imageUrl: "https://images.unsplash.com/photo-1591560774328-fcb4b90c206e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjaGVja2VyZWQlMjBwbGFpZCUyMHNoaXJ0fGVufDF8fHx8MTc3MDEwODAyN3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
+    { id: "c15", name: "트렌치코트", category: "아우터", imageUrl: "https://images.unsplash.com/photo-1633821879282-0c4e91f96232?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxiZWlnZSUyMHRyZW5jaCUyMGNvYXR8ZW58MXx8fHwxNzcwMDIxNjc5fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
+  ]);
+
+  // Mock 룩 데이터
+  const [looks, setLooks] = useState<Look[]>([
+    {
+      id: "1",
+      name: "겨울 출근룩",
+      tags: ["오피스", "포멀", "겨울"],
+      items: [
+        {
+          id: "c1",
+          name: "회색 코트",
+          category: "아우터",
+          imageUrl: "https://images.unsplash.com/photo-1626307416562-ee839676f5fc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxncmV5JTIwd2ludGVyJTIwY29hdCUyMG91dGZpdHxlbnwxfHx8fDE3NzAxMDgwMjB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+        },
+        {
+          id: "c2",
+          name: "화이트 셔츠",
+          category: "상의",
+          imageUrl: "https://images.unsplash.com/photo-1766416143517-ee39c8db4f99?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3aGl0ZSUyMHNoaXJ0JTIwZm9ybWFsJTIwd2VhcnxlbnwxfHx8fDE3NzAxMDgwMjB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+        },
+        {
+          id: "c3",
+          name: "블랙 슬랙스",
+          category: "하의",
+          imageUrl: "https://images.unsplash.com/photo-1699205016746-8aa2e6e48453?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxibGFjayUyMGRyZXNzJTIwcGFudHN8ZW58MXx8fHwxNzcwMTA4MDIwfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+        },
+        {
+          id: "c4",
+          name: "가죽 구두",
+          category: "신발",
+          imageUrl: "https://images.unsplash.com/photo-1576792741377-eb0f4f6d1a47?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsZWF0aGVyJTIwZHJlc3MlMjBzaG9lc3xlbnwxfHx8fDE3Njk5OTg3MTR8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+        },
+      ],
+      isFavorite: true,
+    },
+    {
+      id: "2",
+      name: "주말 데이트룩",
+      tags: ["캐주얼", "데이트", "봄"],
+      items: [
+        {
+          id: "c5",
+          name: "데님 자켓",
+          category: "아우터",
+          imageUrl: "https://images.unsplash.com/photo-1764427163096-97ecceee3d72?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkZW5pbSUyMGphY2tldCUyMGNhc3VhbHxlbnwxfHx8fDE3NzAwODE1MTN8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+        },
+        {
+          id: "c6",
+          name: "화이트 티셔츠",
+          category: "상의",
+          imageUrl: "https://images.unsplash.com/photo-1574180566232-aaad1b5b8450?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3aGl0ZSUyMHQtc2hpcnR8ZW58MXx8fHwxNzcwMDk5OTY0fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+        },
+        {
+          id: "c7",
+          name: "청바지",
+          category: "하의",
+          imageUrl: "https://images.unsplash.com/photo-1713880442898-0f151fba5e16?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxibHVlJTIwamVhbnMlMjBkZW5pbXxlbnwxfHx8fDE3NzAxMDgwMjJ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+        },
+        {
+          id: "c8",
+          name: "스니커즈",
+          category: "신발",
+          imageUrl: "https://images.unsplash.com/photo-1597350584914-55bb62285896?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3aGl0ZSUyMHNuZWFrZXJzfGVufDF8fHx8MTc3MDAyMDkwNXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+        },
+        {
+          id: "c9",
+          name: "크로스백",
+          category: "악세사리",
+          imageUrl: "https://images.unsplash.com/photo-1760624294514-ca40aafe3d96?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjcm9zc2JvZHklMjBiYWclMjBhY2Nlc3Nvcnl8ZW58MXx8fHwxNzcwMTA4MDIzfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+        },
+      ],
+      isFavorite: false,
+    },
+    {
+      id: "3",
+      name: "여름 휴가룩",
+      tags: ["여행", "편안", "여름"],
+      items: [
+        {
+          id: "c10",
+          name: "린넨 셔츠",
+          category: "상의",
+          imageUrl: "https://images.unsplash.com/photo-1766735324704-5f245cf0e9e2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsaW5lbiUyMHNoaXJ0JTIwc3VtbWVyfGVufDF8fHx8MTc3MDEwODAyM3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+        },
+        {
+          id: "c11",
+          name: "반바지",
+          category: "하의",
+          imageUrl: "https://images.unsplash.com/photo-1769072058532-fb6cc4443ea0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxraGFraSUyMHNob3J0c3xlbnwxfHx8fDE3NzAxMDgwMjZ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+        },
+        {
+          id: "c12",
+          name: "샌들",
+          category: "신발",
+          imageUrl: "https://images.unsplash.com/photo-1743591684800-c8cfba557087?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzdW1tZXIlMjBzYW5kYWxzfGVufDF8fHx8MTc3MDA1MTcwMXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+        },
+      ],
+      isFavorite: true,
+    },
+  ]);
+
+  const [newLook, setNewLook] = useState<Partial<Look>>({
+    name: "",
+    tags: [],
+    items: [],
+    isFavorite: false,
+  });
+
+  // 모든 룩에서 사용 가능한 태그 추출
+  const allTags = Array.from(
+    new Set(looks.flatMap((look) => look.tags))
+  ).sort();
+
+  // 필터링된 룩 목록
+  const filteredLooks = looks.filter((look) => {
+    // 찜 필터
+    if (showFavoriteOnly && !look.isFavorite) return false;
+    // 검색 필터 (룩 이름 또는 태그명으로 검색)
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesName = look.name.toLowerCase().includes(query);
+      const matchesTags = look.tags.some(tag => tag.toLowerCase().includes(query));
+      if (!matchesName && !matchesTags) return false;
+    }
+    return true;
+  });
+
+  const handleToggleFavorite = (id: string) => {
+    setLooks(
+      looks.map((look) =>
+        look.id === id
+          ? { ...look, isFavorite: !look.isFavorite }
+          : look,
+      ),
+    );
+  };
+
+  const handleLookClick = (look: Look) => {
+    setSelectedLook(look);
+    setShowDetailDialog(true);
+  };
+
+  const handleCardClick = (e: React.MouseEvent, look: Look) => {
+    // 화살표 버튼이나 그 컨테이너를 클릭한 경우 무시
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('[data-navigation-buttons]') ||
+      target.closest('button[data-scroll-button]')
+    ) {
+      return;
+    }
+    handleLookClick(look);
+  };
+
+  const handleCardPointerDown = (e: React.PointerEvent, lookId: string) => {
+    // 화살표 영역 클릭 시 active 효과 적용 안 함
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('[data-navigation-buttons]') ||
+      target.closest('button[data-scroll-button]') ||
+      target.closest('button')
+    ) {
+      e.currentTarget.classList.remove('card-active');
+      return;
+    }
+    e.currentTarget.classList.add('card-active');
+  };
+
+  const handleCardPointerUp = (e: React.PointerEvent) => {
+    e.currentTarget.classList.remove('card-active');
+  };
+
+  const handleCardPointerLeave = (e: React.PointerEvent) => {
+    e.currentTarget.classList.remove('card-active');
+  };
+
+  const handleDeleteLook = () => {
+    if (!selectedLook) return;
+    setLooks(
+      looks.filter((look) => look.id !== selectedLook.id),
+    );
+    setShowDetailDialog(false);
+    setSelectedLook(null);
+  };
+
+  const handleAddLook = (lookData: Partial<Look>) => {
+    const newId = (looks.length + 1).toString();
+    const newLook: Look = {
+      id: newId,
+      name: lookData.name || "",
+      tags: lookData.tags || [],
+      items: lookData.items || [],
+      isFavorite: false,
+    };
+    setLooks([...looks, newLook]);
+    setShowAddDialog(false);
+  };
+
+  const handleEditLook = (lookData: Partial<Look>) => {
+    if (!selectedLook) return;
+    setLooks(
+      looks.map((look) =>
+        look.id === selectedLook.id
+          ? {
+              ...look,
+              name: lookData.name || look.name,
+              tags: lookData.tags || look.tags,
+              items: lookData.items || look.items,
+            }
+          : look
+      )
+    );
+    setShowEditDialog(false);
+    setShowDetailDialog(false);
+    setSelectedLook(null);
+  };
+
+  const handleShareLook = () => {
+    if (!selectedLook) return;
+
+    // 실제로는 서버에서 공유 링크를 생성받지만, 여기서는 클라이언트에서 생성
+    const shareUrl = `${window.location.origin}/share/${selectedLook.id}`;
+
+    // 클립보드에 복사
+    navigator.clipboard.writeText(shareUrl).then(
+      () => {
+        alert("공유 링크가 클립보드에 복사되었습니다!");
+      },
+      () => {
+        alert("링크 복사에 실패했습니다. 다시 시도해주세요.");
+      }
+    );
+  };
+
+  const handleCreateLink = () => {
+    if (!selectedLook) return;
+
+    const linkId = Date.now().toString();
+    const url = `${window.location.origin}/share/${selectedLook.id}?ref=${linkId}`;
+    const newLink: SharedLink = {
+      id: linkId,
+      name: linkName || "새 링크",
+      url: url,
+      createdAt: new Date(),
+    };
+    setSharedLinks([newLink, ...sharedLinks]);
+    setLinkName("");
+    setShowCreateLinkDialog(false);
+  };
+
+  const handleCopyLink = (url: string, linkId: string) => {
+    // Try to copy to clipboard with fallback
     try {
-      await navigator.share({
-        title: look.name,
-        text: `${look.name} 룩을 확인해보세요!`,
-        url: `${window.location.origin}/look/${look.id}`,
+      navigator.clipboard.writeText(url).then(() => {
+        setCopiedLinkId(linkId);
+        setTimeout(() => setCopiedLinkId(null), 2000);
+      }).catch(() => {
+        // Fallback method
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        setCopiedLinkId(linkId);
+        setTimeout(() => setCopiedLinkId(null), 2000);
       });
-    } catch {
-      await navigator.clipboard.writeText(`${window.location.origin}/look/${look.id}`);
-      alert('링크가 복사되었습니다.');
+    } catch (err) {
+      // Fallback method for older browsers or permission issues
+      const textArea = document.createElement('textarea');
+      textArea.value = url;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setCopiedLinkId(linkId);
+      setTimeout(() => setCopiedLinkId(null), 2000);
     }
   };
 
-  const handleEdit = (e: React.MouseEvent, look: LookItem) => {
-    e.preventDefault();
-    e.stopPropagation();
-    router.push(`/look/${look.id}/edit`);
-  };
-
-  const handleDelete = async (e: React.MouseEvent, look: LookItem) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!confirm('이 룩을 삭제하시겠습니까?')) return;
-    try {
-      await deleteLookClient(look.id);
-      setLooks((prev) => prev.filter((l) => l.id !== look.id));
-    } catch (error) {
-      console.error(error);
-      alert('삭제에 실패했습니다.');
+  const handleKakaoShare = () => {
+    // 임시: 공유 페이지로 이동
+    if (selectedLook) {
+      router.push(`/share/${selectedLook.id}`);
+      setShowShareDialog(false);
+      setShowCreateLinkDialog(false);
     }
   };
 
-  const tagList = (tags: string) =>
-    tags
-      .split(',')
-      .map((t) => t.trim())
-      .filter(Boolean);
+  const handleDeleteLink = (linkId: string) => {
+    if (confirm("링크를 삭제하시겠습니까?")) {
+      setSharedLinks(sharedLinks.filter((link) => link.id !== linkId));
+    }
+  };
 
-  return (
-    <main className="min-h-screen bg-white pb-24">
-      <header className="px-6 pt-6 pb-4">
-        <h1 className="text-xl font-semibold text-gray-900">룩</h1>
-      </header>
+  const formatDate = (date: Date) => {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
 
-      <section className="px-6 space-y-4">
-        {looks.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center">
-            <p className="text-sm font-semibold text-gray-700">등록된 룩이 없어요</p>
-            <p className="mt-2 text-xs text-gray-500">
-              오른쪽 아래 + 버튼을 눌러 룩을 만들어보세요.
-            </p>
+    if (minutes < 1) return "방금 전";
+    if (minutes < 60) return `${minutes}분 전`;
+    if (hours < 24) return `${hours}시간 전`;
+    if (days < 7) return `${days}일 전`;
+
+    // yyyy-MM-dd 형식으로 변경
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // 스크롤 가능한 이미지 갤러리 컴포넌트
+  const ScrollableImageGallery = ({
+    items,
+    lookId,
+  }: {
+    items: LookItem[];
+    lookId: string;
+  }) => {
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(false);
+    const [needsScroll, setNeedsScroll] = useState(false);
+
+    const checkScrollButtons = () => {
+      if (!scrollRef.current) return;
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+
+      // 스크롤이 필요한지 체크
+      const hasScroll = scrollWidth > clientWidth;
+      setNeedsScroll(hasScroll);
+
+      // 스크롤 위치에 따른 버튼 상태
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
+    };
+
+    // 초기 마운트 시 스크롤 체크
+    useEffect(() => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollLeft = 0;
+        setTimeout(checkScrollButtons, 50);
+      }
+    }, [lookId, items.length]);
+
+    // 윈도우 리사이즈 시 스크롤 체크
+    useEffect(() => {
+      const handleResize = () => {
+        checkScrollButtons();
+      };
+
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const scrollLeft = () => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollBy({ left: -150, behavior: 'smooth' });
+      }
+    };
+
+    const scrollRight = () => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollBy({ left: 150, behavior: 'smooth' });
+      }
+    };
+
+    if (items.length === 0) return null;
+
+    return (
+      <div className="py-3 relative pb-2">
+        {/* 스크롤 가능한 이미지 목록 */}
+        <div
+          ref={scrollRef}
+          onScroll={checkScrollButtons}
+          className="overflow-x-auto overflow-y-hidden scrollbar-hide"
+          style={{
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+          }}
+        >
+          <div
+            className="flex items-center"
+            style={{
+              gap: "8px",
+              paddingLeft: "16px",
+              paddingRight: "16px",
+            }}
+          >
+            {items.map((item) => (
+              <div
+                key={item.id}
+                className="flex-shrink-0"
+              >
+                <div
+                  className="w-[64px] h-[64px] bg-gray-100 overflow-hidden shadow-sm"
+                  style={{
+                    borderRadius: "100px",
+                  }}
+                >
+                  {item.imageUrl ? (
+                    <ImageWithFallback
+                      src={item.imageUrl}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center">
+                      <p
+                        className="text-[#000] mb-1"
+                        style={{
+                          fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                          fontSize: "11px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {item.category}
+                      </p>
+                      <p
+                        className="text-[#666] text-center px-2"
+                        style={{
+                          fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                          fontSize: "9px",
+                          fontWeight: 400,
+                        }}
+                      >
+                        {item.name}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 네비게이션 버튼 - 스크롤이 실제로 필요한 경우에만 표시 */}
+        {needsScroll && (
+          <div
+            data-navigation-buttons
+            className="absolute flex items-center gap-0.5"
+            style={{
+              bottom: "-32px",
+              right: "12px",
+              zIndex: 10,
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              data-scroll-button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                scrollLeft();
+              }}
+              onPointerDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onTouchStart={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              disabled={!canScrollLeft}
+              className="transition-all disabled:opacity-20 flex items-center justify-center active:bg-gray-200"
+              style={{
+                width: "36px",
+                height: "36px",
+                borderRadius: "50%",
+              }}
+            >
+              <ArrowLeft
+                size={14}
+                color="#000"
+                strokeWidth={2}
+              />
+            </button>
+            <div
+              style={{
+                width: "1px",
+                height: "10px",
+                backgroundColor: "#D9D9D9",
+              }}
+            />
+            <button
+              data-scroll-button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                scrollRight();
+              }}
+              onPointerDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onTouchStart={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              disabled={!canScrollRight}
+              className="transition-all disabled:opacity-20 flex items-center justify-center active:bg-gray-200"
+              style={{
+                width: "36px",
+                height: "36px",
+                borderRadius: "50%",
+              }}
+            >
+              <ArrowRight
+                size={14}
+                color="#000"
+                strokeWidth={2}
+              />
+            </button>
           </div>
         )}
-        {looks.map((look) => (
-          <Link
-            key={look.id}
-            href={`/look/${look.id}`}
-            className="block rounded-2xl border border-gray-200 p-4"
+      </div>
+    );
+  };
+
+  return (
+    <div className="h-screen w-full max-w-[500px] mx-auto flex flex-col overflow-hidden" style={{ backgroundColor: "#FFFFFF" }}>
+      {/* 상단 타이틀 + 추가 버튼 */}
+      <div className="flex-shrink-0 px-6 pt-6 pb-6 flex items-center justify-center relative">
+        <h1
+          className="text-black text-center"
+          style={{
+            fontFamily: "var(--font-inter), 'Inter', sans-serif",
+            fontSize: "24px",
+            fontWeight: 700,
+            letterSpacing: "-0.02em",
+          }}
+        >
+          Looks
+        </h1>
+        <button
+          onClick={() => setShowAddDialog(true)}
+          className="absolute right-6 text-white p-2 hover:opacity-90 transition-opacity"
+          style={{
+            borderRadius: "12px",
+            backgroundColor: "#000",
+          }}
+        >
+          <Plus size={20} color="#fff" strokeWidth={2} />
+        </button>
+      </div>
+
+      {/* 필터 토글 + 검색 + 룩 개수 표시 */}
+      <div className="flex-shrink-0 px-6 pb-4 pt-4 flex items-center justify-between">
+        {/* 왼쪽: 필터 토글 + 검색창 */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowFavoriteOnly(false)}
+            className="transition-all"
+            style={{
+              fontFamily: "var(--font-inter), 'Inter', sans-serif",
+              fontSize: "12px",
+              fontWeight: !showFavoriteOnly ? 600 : 500,
+              color: !showFavoriteOnly ? "#000" : "#999",
+              background: "none",
+              border: "none",
+              padding: 0,
+            }}
           >
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-gray-900">{look.name}</h2>
-              <span className="text-xs text-gray-400">{look.createdAt?.slice(0, 10)}</span>
-            </div>
+            {t('looks.all')}
+          </button>
+          <div
+            style={{
+              width: "1px",
+              height: "12px",
+              backgroundColor: "#D9D9D9",
+            }}
+          />
+          <button
+            onClick={() => setShowFavoriteOnly(true)}
+            className="transition-all flex items-center gap-1"
+            style={{
+              fontFamily: "var(--font-inter), 'Inter', sans-serif",
+              fontSize: "12px",
+              fontWeight: showFavoriteOnly ? 600 : 500,
+              color: showFavoriteOnly ? "#000" : "#999",
+              background: "none",
+              border: "none",
+              padding: 0,
+            }}
+          >
+            <Heart
+              size={12}
+              color={showFavoriteOnly ? "#000" : "#999"}
+              fill={showFavoriteOnly ? "#000" : "none"}
+              strokeWidth={2}
+            />
+            {t('looks.favorite')}
+          </button>
 
-            {/* Tags */}
-            {look.tags && (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {tagList(look.tags).map((tag, i) => (
-                  <span
-                    key={i}
-                    className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-600"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
+          <div
+            style={{
+              width: "1px",
+              height: "12px",
+              backgroundColor: "#D9D9D9",
+            }}
+          />
 
-            {/* Items Preview */}
-            <div className="mt-3 flex gap-2">
-              {look.items.map((item) => (
-                <div key={item.id} className="h-12 w-12 overflow-hidden rounded-lg bg-gray-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={item.clothes?.imageUrl}
-                    alt={item.clothes?.title ?? '옷'}
-                    className="h-full w-full object-cover"
+          {/* 작은 검색창 */}
+          <div className="relative">
+            <Search
+              size={12}
+              color="#999"
+              strokeWidth={2}
+              className="absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none"
+            />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('looks.searchPlaceholder')}
+              className="pl-7 pr-2 py-1 transition-all"
+              style={{
+                width: "85px",
+                borderRadius: "999px",
+                backgroundColor: "#F5F5F5",
+                border: "1px solid transparent",
+                fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                fontSize: "12px",
+                fontWeight: 400,
+                color: "#000",
+                outline: "none",
+              }}
+              onFocus={(e) => {
+                e.target.style.backgroundColor = "#FFF";
+                e.target.style.borderColor = "#E5E5E5";
+              }}
+              onBlur={(e) => {
+                if (!searchQuery) {
+                  e.target.style.backgroundColor = "#F5F5F5";
+                  e.target.style.borderColor = "transparent";
+                }
+              }}
+            />
+          </div>
+        </div>
+
+        {/* 오른쪽: 개수 표시 */}
+        <p
+          className="text-[#555555] flex-shrink-0"
+          style={{
+            fontFamily: "var(--font-inter), 'Inter', sans-serif",
+            fontSize: "12px",
+            fontWeight: 500,
+          }}
+        >
+          {filteredLooks.length}{t('looks.items')}
+        </p>
+      </div>
+
+      {/* 룩 목록 */}
+      <div className="flex-1 overflow-y-auto pb-24">
+        <div className="px-6" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {filteredLooks.map((look, index) => (
+            <div
+              key={look.id}
+              onClick={(e) => handleCardClick(e, look)}
+              onPointerDown={(e) => handleCardPointerDown(e, look.id)}
+              onPointerUp={handleCardPointerUp}
+              onPointerLeave={handleCardPointerLeave}
+              className="cursor-pointer transition-all relative rounded-md"
+              style={{
+                padding: "16px",
+                backgroundColor: "#FFFFFF",
+                borderRadius: "16px",
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06)",
+              }}
+            >
+              {/* 하단 우측: 하트/공유 버튼 (absolute) */}
+              <div className="absolute bottom-4 right-4 flex items-center gap-1 z-10">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleFavorite(look.id);
+                  }}
+                  className="p-1.5 hover:bg-gray-50 transition-all"
+                  style={{ borderRadius: "8px" }}
+                >
+                  <Heart
+                    size={18}
+                    color={look.isFavorite ? "#000" : "#999"}
+                    fill={look.isFavorite ? "#000" : "none"}
+                    strokeWidth={1.5}
                   />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedLook(look);
+                    setShowShareDialog(true);
+                  }}
+                  className="p-1.5 hover:bg-gray-50 transition-all"
+                  style={{ borderRadius: "8px" }}
+                >
+                  <Share2
+                    size={18}
+                    color="#000"
+                    strokeWidth={1.5}
+                  />
+                </button>
+              </div>
+
+              {/* 상단: 이미지 갤러리 */}
+              <ScrollableImageGallery
+                items={look.items}
+                lookId={look.id}
+              />
+
+              {/* 중앙: 룩 이름 */}
+              <div className="px-4 pt-2 mb-2">
+                <h3
+                  className="text-black"
+                  style={{
+                    fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                    fontSize: "18px",
+                    fontWeight: 700,
+                    letterSpacing: "-0.01em",
+                  }}
+                >
+                  {look.name}
+                </h3>
+              </div>
+
+              {/* 하단: 태그 + 아이템 개수 */}
+              <div className="px-4">
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {look.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-3 py-1 text-white"
+                      style={{
+                        borderRadius: "999px",
+                        backgroundColor: "#000",
+                        fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                        fontSize: "11px",
+                        fontWeight: 500,
+                      }}
+                    >
+                      #{tag}
+                    </span>
+                  ))}
                 </div>
-              ))}
+                <p
+                  className="text-[#999]"
+                  style={{
+                    fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                    fontSize: "11px",
+                    fontWeight: 400,
+                  }}
+                >
+                  아이템 {look.items.length}개
+                </p>
+              </div>
             </div>
-
-            {/* Action Icons */}
-            <div className="mt-4 flex gap-4">
-              <button
-                type="button"
-                onClick={(e) => handleShare(e, look)}
-                className="text-gray-400 hover:text-gray-600"
-                aria-label="공유"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                onClick={(e) => handleEdit(e, look)}
-                className="text-gray-400 hover:text-gray-600"
-                aria-label="수정"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                onClick={(e) => handleDelete(e, look)}
-                className="text-gray-400 hover:text-red-500"
-                aria-label="삭제"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-            </div>
-          </Link>
-        ))}
-      </section>
-
-      {/* Floating Button with Count */}
-      <div className="fixed inset-x-0 bottom-24 z-50">
-        <div className="mx-auto flex w-full max-w-[600px] items-center justify-between px-6">
-          <span className="rounded-full bg-black/80 px-4 py-2 text-sm text-white">
-            총 {looks.length}개의 룩
-          </span>
-          <Link
-            href="/look/new"
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-black text-white shadow-lg"
-            aria-label="룩 등록"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-6 w-6">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-          </Link>
+          ))}
         </div>
       </div>
 
-      <BottomNav />
-    </main>
+      {/* 룩 상세보기 다이얼로그 */}
+      <Dialog.Root
+        open={showDetailDialog}
+        onOpenChange={setShowDetailDialog}
+      >
+        <Dialog.Portal>
+          <Dialog.Backdrop className="fixed inset-0 bg-black/30 z-50" />
+          <Dialog.Popup
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[400px] max-h-[85vh] flex flex-col"
+            style={{
+              borderRadius: "24px",
+            }}
+            aria-describedby={undefined}
+          >
+            {selectedLook && (
+              <>
+                {/* 헤더 */}
+                <div className="flex-shrink-0 p-6 pb-4 flex items-start justify-between">
+                  <div className="flex-1">
+                    <h2
+                      className="text-black mb-2"
+                      style={{
+                        fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                        fontSize: "20px",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {selectedLook.name}
+                    </h2>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedLook.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-3 py-1 text-white"
+                          style={{
+                            borderRadius: "999px",
+                            backgroundColor: "#000",
+                            fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                            fontSize: "11px",
+                            fontWeight: 500,
+                          }}
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowDetailDialog(false)}
+                    className="p-1.5 hover:bg-gray-100 transition-colors"
+                    style={{ borderRadius: "8px" }}
+                  >
+                    <X
+                      size={20}
+                      color="#000"
+                      strokeWidth={1.5}
+                    />
+                  </button>
+                </div>
+
+                {/* 아이템 목록 */}
+                <div className="flex-1 overflow-y-auto px-6">
+                  <h4
+                    className="text-black mb-3"
+                    style={{
+                      fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {t('looks.includedItemsCount', { count: selectedLook.items.length })}
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3 pb-4">
+                    {selectedLook.items.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex flex-col gap-2"
+                      >
+                        <div
+                          className="w-full aspect-square bg-gray-200 overflow-hidden"
+                          style={{ borderRadius: "10px" }}
+                        >
+                          {item.imageUrl ? (
+                            <ImageWithFallback
+                              src={item.imageUrl}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <span
+                                className="text-[#999]"
+                                style={{
+                                  fontFamily:
+                                    "var(--font-inter), 'Inter', sans-serif",
+                                  fontSize: "9px",
+                                  fontWeight: 500,
+                                }}
+                              >
+                                이미지
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <p
+                            className="text-black mb-0.5"
+                            style={{
+                              fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                              fontSize: "13px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {item.name}
+                          </p>
+                          <p
+                            className="text-[#666]"
+                            style={{
+                              fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                              fontSize: "11px",
+                              fontWeight: 400,
+                            }}
+                          >
+                            {item.category}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 하단 버튼 */}
+                <div className="flex-shrink-0 p-6 pt-4 flex gap-3">
+                  <button
+                    onClick={handleDeleteLook}
+                    className="flex-1 px-5 py-3 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
+                    style={{
+                      borderRadius: "12px",
+                      border: "1.5px solid #E5E5E5",
+                      fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      color: "#000",
+                    }}
+                  >
+                    <Trash2 size={16} strokeWidth={1.5} />
+                    {t('looks.delete')}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDetailDialog(false);
+                      setShowEditDialog(true);
+                    }}
+                    className="flex-1 px-5 py-3 flex items-center justify-center gap-2 text-white hover:opacity-90 transition-opacity"
+                    style={{
+                      borderRadius: "12px",
+                      backgroundColor: "#000",
+                      fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    <Edit2 size={16} strokeWidth={1.5} />
+                    {t('looks.edit')}
+                  </button>
+                </div>
+              </>
+            )}
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {/* 룩 추가 다이얼로그 */}
+      <Dialog.Root
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+      >
+        <Dialog.Portal>
+          <Dialog.Backdrop className="fixed inset-0 bg-black/30 z-50" />
+          <Dialog.Popup
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[400px]"
+            style={{
+              borderRadius: "24px",
+            }}
+            aria-describedby={undefined}
+          >
+            <LookForm
+              mode="add"
+              closetItems={closetItems}
+              onSave={handleAddLook}
+              onCancel={() => setShowAddDialog(false)}
+            />
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {/* 룩 수정 다이얼로그 */}
+      <Dialog.Root
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+      >
+        <Dialog.Portal>
+          <Dialog.Backdrop className="fixed inset-0 bg-black/30 z-50" />
+          <Dialog.Popup
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[400px]"
+            style={{
+              borderRadius: "24px",
+            }}
+            aria-describedby={undefined}
+          >
+            {selectedLook && (
+              <LookForm
+                mode="edit"
+                initialData={selectedLook}
+                closetItems={closetItems}
+                onSave={handleEditLook}
+                onCancel={() => {
+                  setShowEditDialog(false);
+                  setSelectedLook(null);
+                }}
+              />
+            )}
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {/* 공유 링크 생성 다이얼로그 */}
+      <Dialog.Root
+        open={showCreateLinkDialog}
+        onOpenChange={setShowCreateLinkDialog}
+      >
+        <Dialog.Portal>
+          <Dialog.Backdrop className="fixed inset-0 bg-black/30 z-50" />
+          <Dialog.Popup
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[400px]"
+            style={{
+              borderRadius: "24px",
+            }}
+            aria-describedby={undefined}
+          >
+            {selectedLook && (
+              <>
+                {/* 헤더 */}
+                <div className="flex-shrink-0 p-6 pb-4 flex items-start justify-between">
+                  <h2
+                    className="text-black"
+                    style={{
+                      fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                      fontSize: "20px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {selectedLook.name}
+                  </h2>
+                  <button
+                    onClick={() => setShowCreateLinkDialog(false)}
+                    className="p-1.5 hover:bg-gray-100 transition-colors"
+                    style={{ borderRadius: "8px" }}
+                  >
+                    <X
+                      size={20}
+                      color="#000"
+                      strokeWidth={1.5}
+                    />
+                  </button>
+                </div>
+
+                {/* 공유 링크 생성 */}
+                <div className="flex-1 overflow-y-auto px-6 pb-4">
+                  <h4
+                    className="text-black mb-3"
+                    style={{
+                      fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {t('looks.shareDialog.createNewLink')}
+                  </h4>
+                  <input
+                    type="text"
+                    value={linkName}
+                    onChange={(e) => setLinkName(e.target.value)}
+                    className="w-full px-4 py-3 text-black mb-4"
+                    style={{
+                      borderRadius: "12px",
+                      backgroundColor: "#F5F5F5",
+                      fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                      fontSize: "14px",
+                      fontWeight: 400,
+                      border: "1px solid #E5E5E5",
+                    }}
+                    placeholder={t('looks.shareDialog.enterLinkName')}
+                  />
+                </div>
+
+                {/* 하단 버튼 */}
+                <div className="flex-shrink-0 p-6 pt-4 flex gap-3">
+                  <button
+                    onClick={() => setShowCreateLinkDialog(false)}
+                    className="flex-1 px-5 py-3 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
+                    style={{
+                      borderRadius: "12px",
+                      border: "1.5px solid #E5E5E5",
+                      fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      color: "#000",
+                    }}
+                  >
+                    {t('common.cancel')}
+                  </button>
+                  <button
+                    onClick={handleCreateLink}
+                    className="flex-1 px-5 py-3 flex items-center justify-center gap-2 text-white hover:opacity-90 transition-opacity"
+                    style={{
+                      borderRadius: "12px",
+                      backgroundColor: "#000",
+                      fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    <Link2 size={16} strokeWidth={2} />
+                    {t('profile.confirm')}
+                  </button>
+                </div>
+              </>
+            )}
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {/* 공유 링크 목록 다이얼로그 */}
+      <Dialog.Root
+        open={showShareDialog}
+        onOpenChange={(open) => {
+          setShowShareDialog(open);
+          if (!open) setShowCreateLinkDialog(false);
+        }}
+      >
+        <Dialog.Portal>
+          <Dialog.Backdrop className="fixed inset-0 bg-black/30 z-50" />
+          <Dialog.Popup
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[400px] max-h-[80vh] flex flex-col"
+            style={{
+              borderRadius: "24px",
+            }}
+            aria-describedby={undefined}
+          >
+            {selectedLook && (
+              <>
+                {/* 헤더 */}
+                <div className="flex items-center justify-between mb-4 p-6 pb-4">
+                  <h2
+                    className="text-black"
+                    style={{
+                      fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                      fontSize: "18px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {t('looks.shareDialog.title')}
+                  </h2>
+                  <button
+                    onClick={() => setShowShareDialog(false)}
+                    className="p-1 hover:bg-gray-100 transition-colors"
+                    style={{ borderRadius: "6px" }}
+                  >
+                    <X size={20} color="#000" strokeWidth={2} />
+                  </button>
+                </div>
+
+                {/* 링크 리스트 */}
+                {sharedLinks.length > 0 && (
+                  <div className="mb-4 px-6">
+                    <p
+                      className="text-[#666] mb-3"
+                      style={{
+                        fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                        fontSize: "13px",
+                        fontWeight: 500,
+                      }}
+                    >
+                      {t('looks.shareDialog.generatedLinks')} ({sharedLinks.length})
+                    </p>
+                    <div className="max-h-[300px] overflow-y-auto" style={{ paddingTop: "8px" }}>
+                      <div className="space-y-3">
+                        {sharedLinks.map((link) => (
+                          <div
+                            key={link.id}
+                            className="relative"
+                          >
+                            {/* 체크 아이콘 - 카드 위쪽 우측에 표시 */}
+                            {selectedLink?.id === link.id && (
+                              <div className="absolute -top-2 right-2 z-50">
+                                <div
+                                  className="w-6 h-6 flex items-center justify-center"
+                                  style={{
+                                    backgroundColor: "#000",
+                                    borderRadius: "var(--radius-sm)",
+                                  }}
+                                >
+                                  <Check size={14} color="#FFFFFF" strokeWidth={2.5} />
+                                </div>
+                              </div>
+                            )}
+
+                            <div
+                              onClick={() => setSelectedLink(selectedLink?.id === link.id ? null : link)}
+                              className="p-3 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+                              style={{
+                                borderRadius: "12px",
+                                border: selectedLink?.id === link.id ? "2px solid #000" : "1px solid #E5E5E5",
+                              }}
+                            >
+                              <div className="flex items-start justify-between gap-2 mb-2">
+                                <div className="flex-1 min-w-0">
+                                  <p
+                                    className="text-[#000] mb-1"
+                                    style={{
+                                      fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                                      fontSize: "14px",
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    {link.name}
+                                  </p>
+                                  <p
+                                    className="text-[#666] truncate"
+                                    style={{
+                                      fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                                      fontSize: "11px",
+                                      fontWeight: 400,
+                                    }}
+                                    title={link.url}
+                                  >
+                                    {link.url}
+                                  </p>
+                                </div>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteLink(link.id);
+                                    if (selectedLink?.id === link.id) {
+                                      setSelectedLink(null);
+                                    }
+                                  }}
+                                  className="p-1.5 hover:bg-gray-200 transition-colors flex-shrink-0"
+                                  style={{ borderRadius: "6px" }}
+                                  title="링크 삭제"
+                                >
+                                  <Trash2 size={14} color="#666" strokeWidth={1.5} />
+                                </button>
+                              </div>
+                              <p
+                                className="text-[#999]"
+                                style={{
+                                  fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                                  fontSize: "11px",
+                                  fontWeight: 400,
+                                }}
+                              >
+                                {formatDate(link.createdAt)}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 하단 버튼 영역 */}
+                <div className="px-6 pb-6">
+                  {/* 선택된 링크가 있으면 공유 옵션 표시 */}
+                  {selectedLink ? (
+                    <div className="space-y-3">
+                      {/* 링크 복사 버튼 */}
+                      <button
+                        onClick={() => handleCopyLink(selectedLink.url, selectedLink.id)}
+                        className="w-full px-5 py-3 text-black hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                        style={{
+                          borderRadius: "12px",
+                          backgroundColor: "#F5F5F5",
+                          fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                          fontSize: "14px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        <Copy size={16} color="#000" strokeWidth={2} />
+                        {copiedLinkId === selectedLink.id ? t('looks.shareDialog.copied') : t('looks.shareDialog.copyLink')}
+                      </button>
+
+                      {/* 카카오톡 공유 버튼 */}
+                      <button
+                        onClick={handleKakaoShare}
+                        className="w-full px-5 py-3 text-[#3C1E1E] hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                        style={{
+                          borderRadius: "12px",
+                          backgroundColor: "#FEE500",
+                          fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                          fontSize: "14px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        <Share2 size={16} color="#3C1E1E" strokeWidth={2} />
+                        {t('looks.shareDialog.kakaoShare')}
+                      </button>
+                    </div>
+                  ) : (
+                      /* 새 링크 생성 버튼 */
+                      <button
+                        onClick={() => setShowCreateLinkDialog(true)}
+                        className="w-full px-5 py-3 text-white hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                        style={{
+                          borderRadius: "12px",
+                          backgroundColor: "#000",
+                          fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                          fontSize: "14px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        <Link2 size={16} color="#fff" strokeWidth={2} />
+                        {t('looks.shareDialog.createLink')}
+                      </button>
+                    )}
+                </div>
+              </>
+            )}
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </div>
   );
-};
+}

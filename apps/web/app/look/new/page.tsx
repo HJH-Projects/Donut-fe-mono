@@ -1,7 +1,5 @@
-import { getClothesServer } from '@/shared/api/clothes.server';
-import { LookCreatePage } from '@/page/look/ui/LookCreatePage';
+import { redirect } from 'next/navigation';
 
-export default async function Page() {
-  const clothes = await getClothesServer();
-  return <LookCreatePage clothes={clothes} />;
+export default function Page() {
+  redirect('/look');
 }

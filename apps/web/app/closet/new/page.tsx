@@ -1,5 +1,5 @@
-import { ClosetCreatePage } from '@/page/closet/ui/ClosetCreatePage';
+import { redirect } from 'next/navigation';
 
 export default function Page() {
-  return <ClosetCreatePage />;
+  redirect('/closet');
 }
