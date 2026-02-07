@@ -1,10 +1,13 @@
 'use client';
 
-import { useParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Share2, Trash2, Link2, Copy, X } from "lucide-react";
 import { ImageWithFallback } from "@/shared/ui/ImageWithFallback";
 import { useTranslation } from "react-i18next";
+import type { ShareLinkDetail } from "@/shared/api/shares.types";
+import type { CommentItem as ApiCommentItem } from "@/shared/api/comments.types";
+import { createCommentAction, deleteCommentAction } from "@/shared/api/actions/comments.action";
 
 type LookItem = {
   id: string;
@@ -18,7 +21,7 @@ type Look = {
   name: string;
   tags: string[];
   items: LookItem[];
-  isFavorite: boolean;
+  user: { id: string; nickname: string; profileImg: string | null } | null;
 };
 
 type Comment = {
@@ -35,12 +38,45 @@ type SharedLink = {
   createdAt: Date;
 };
 
-export function SharedLookPage() {
+function mapShareDetailToLocal(detail: ShareLinkDetail): Look {
+  return {
+    id: detail.look.id,
+    name: detail.look.name,
+    tags: [],
+    items: (detail.look.items || []).map(item => ({
+      id: item.clothesId,
+      name: '',
+      category: item.role,
+      imageUrl: '',
+    })),
+    user: detail.look.user,
+  };
+}
+
+function mapApiCommentToLocal(c: ApiCommentItem): Comment {
+  return {
+    id: c.id,
+    userId: c.user.id,
+    author: c.user.nickname,
+    content: c.content,
+    createdAt: new Date(c.createdAt),
+  };
+}
+
+interface SharedLookPageProps {
+  sharePath: string;
+  initialShareDetail?: ShareLinkDetail | null;
+  initialComments?: ApiCommentItem[];
+  isLoggedIn?: boolean;
+}
+
+export function SharedLookPage({ sharePath, initialShareDetail = null, initialComments = [], isLoggedIn = false }: SharedLookPageProps) {
   const { t } = useTranslation();
-  const params = useParams();
-  const lookId = params.lookId as string;
-  const [look, setLook] = useState<Look | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const router = useRouter();
+  const [look, setLook] = useState<Look | null>(initialShareDetail ? mapShareDetailToLocal(initialShareDetail) : null);
+  const [comments, setComments] = useState<Comment[]>(() =>
+    initialComments.map(mapApiCommentToLocal)
+  );
   const [newComment, setNewComment] = useState({ content: "" });
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showLinkCreator, setShowLinkCreator] = useState(false);
@@ -49,57 +85,17 @@ export function SharedLookPage() {
 
   const currentUser = { id: "current-user-id", name: "나" };
 
-  useEffect(() => {
-    const mockLooks: { [key: string]: Look } = {
-      "1": {
-        id: "1",
-        name: "겨울 출근룩",
-        tags: ["오피스", "포멀", "겨울"],
-        items: [
-          { id: "c1", name: "회색 코트", category: "아우터", imageUrl: "" },
-          { id: "c2", name: "화이트 셔츠", category: "상의", imageUrl: "" },
-          { id: "c3", name: "블랙 슬랙스", category: "하의", imageUrl: "" },
-          { id: "c4", name: "가죽 구두", category: "신발", imageUrl: "" },
-        ],
-        isFavorite: true,
-      },
-      "2": {
-        id: "2",
-        name: "주말 데이트룩",
-        tags: ["캐주얼", "데이트", "봄"],
-        items: [
-          { id: "c5", name: "데님 자켓", category: "아우터", imageUrl: "" },
-          { id: "c6", name: "화이트 티셔츠", category: "상의", imageUrl: "" },
-          { id: "c7", name: "청바지", category: "하의", imageUrl: "" },
-          { id: "c8", name: "스니커즈", category: "신발", imageUrl: "" },
-          { id: "c9", name: "크로스백", category: "악세사리", imageUrl: "" },
-        ],
-        isFavorite: false,
-      },
-      "3": {
-        id: "3",
-        name: "여름 휴가룩",
-        tags: ["여행", "편안", "여름"],
-        items: [
-          { id: "c10", name: "린넨 셔츠", category: "상의", imageUrl: "" },
-          { id: "c11", name: "반바지", category: "하의", imageUrl: "" },
-          { id: "c12", name: "샌들", category: "신발", imageUrl: "" },
-        ],
-        isFavorite: true,
-      },
-    };
 
-    if (lookId && mockLooks[lookId]) {
-      setLook(mockLooks[lookId]);
+  const requireLogin = () => {
+    if (!isLoggedIn) {
+      router.push(`/login?next=/share/${sharePath}`);
+      return true;
     }
+    return false;
+  };
 
-    setComments([
-      { id: "1", userId: "user1", author: "패션왕", content: "정말 멋진 룩이네요! 참고할게요 :)", createdAt: new Date("2025-02-01T10:30:00") },
-      { id: "2", userId: "user2", author: "스타일리스트", content: "색 조합이 훌륭합니다!", createdAt: new Date("2025-02-02T14:20:00") },
-    ]);
-  }, [lookId]);
-
-  const handleAddComment = () => {
+  const handleAddComment = async () => {
+    if (requireLogin()) return;
     if (!newComment.content.trim()) {
       alert(t('sharedLook.commentRequired'));
       return;
@@ -112,7 +108,12 @@ export function SharedLookPage() {
       createdAt: new Date(),
     };
     setComments([...comments, comment]);
+    const content = newComment.content;
     setNewComment({ content: "" });
+
+    try {
+      await createCommentAction(sharePath, { content });
+    } catch { /* 오프라인 시 로컬 상태만 업데이트 */ }
   };
 
   const formatDate = (date: Date) => {
@@ -133,7 +134,7 @@ export function SharedLookPage() {
 
   const handleCreateLink = () => {
     const linkId = Date.now().toString();
-    const url = `${window.location.origin}/share/${lookId}?ref=${linkId}`;
+    const url = `${window.location.origin}/share/${sharePath}`;
     const newLink: SharedLink = { id: linkId, url: url, createdAt: new Date() };
     setSharedLinks([newLink, ...sharedLinks]);
     setShowLinkCreator(true);
@@ -180,9 +181,13 @@ export function SharedLookPage() {
     }
   };
 
-  const handleDeleteComment = (commentId: string) => {
+  const handleDeleteComment = async (commentId: string) => {
     if (confirm(t('sharedLook.deleteCommentConfirm'))) {
       setComments(comments.filter((c) => c.id !== commentId));
+
+      try {
+        await deleteCommentAction(sharePath, commentId);
+      } catch { /* 오프라인 시 로컬 상태만 업데이트 */ }
     }
   };
 
@@ -305,6 +310,11 @@ export function SharedLookPage() {
           <h2 className="text-black" style={{ fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "24px", fontWeight: 700 }}>
             {look.name}
           </h2>
+          {look.user && (
+            <p className="text-[#666] mt-1" style={{ fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "14px", fontWeight: 400 }}>
+              by {look.user.nickname}
+            </p>
+          )}
         </div>
 
         <div className="mb-8">
@@ -377,6 +387,7 @@ export function SharedLookPage() {
             <textarea
               value={newComment.content}
               onChange={(e) => setNewComment({ ...newComment, content: e.target.value })}
+              onFocus={() => requireLogin()}
               placeholder={t('sharedLook.commentPlaceholder')}
               rows={3}
               className="w-full px-4 py-3 mb-3 bg-white text-black placeholder-gray-400 resize-none"

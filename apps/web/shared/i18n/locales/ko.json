@@ -67,6 +67,11 @@
     "enterTagPlaceholder": "직접 입력...",
     "addTag": "추가",
     "noImage": "이미지 없음",
+    "emptyTitle": "아직 등록된 옷이 없어요",
+    "emptyDescription": "옷장에 첫 번째 아이템을 추가해보세요",
+    "addFirst": "옷 추가하기",
+    "noResults": "일치하는 아이템이 없어요",
+    "noResultsDescription": "다른 카테고리를 선택해보세요",
     "categories": {
       "outer": "아우터",
       "top": "상의",
@@ -140,6 +145,11 @@
       "deleteLink": "링크 삭제",
       "viewCount": "{{count}}회 조회"
     },
+    "emptyTitle": "아직 등록된 룩이 없어요",
+    "emptyDescription": "옷장의 아이템으로 첫 번째 룩을 만들어보세요",
+    "createFirst": "룩 만들기",
+    "noResults": "일치하는 룩이 없어요",
+    "noResultsDescription": "다른 검색어나 필터를 사용해보세요",
     "tagOptions": {
       "casual": "캐주얼",
       "office": "오피스",

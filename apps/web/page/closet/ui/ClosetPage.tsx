@@ -10,9 +10,17 @@ import {
   Trash2,
 } from "lucide-react";
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { ImageWithFallback } from "@/shared/ui/ImageWithFallback";
 import { useTranslation } from "react-i18next";
+import type { ClothesItem } from "@/shared/api/clothes.types";
+import {
+  createClothesAction,
+  updateClothesAction,
+  deleteClothesAction,
+} from "@/shared/api/actions/clothes.action";
+import { uploadToS3 } from "@/shared/utils/uploadToS3";
 
 // 카테고리 정의
 const CATEGORIES = {
@@ -74,8 +82,24 @@ type ClothingItem = {
   isFavorite: boolean;
 };
 
-export function ClosetPage() {
+interface ClosetPageProps {
+  initialClothes?: ClothesItem[];
+}
+
+function getCategoryGroup(category: ClothesItem['category']): string {
+  const map: Record<string, string> = {
+    TOP: '상의',
+    BOTTOM: '하의',
+    OUTER: '아우터',
+    SHOES: '신발',
+    ACCESSORY: '악세사리',
+  };
+  return map[category] || '전체';
+}
+
+export function ClosetPage({ initialClothes = [] }: ClosetPageProps) {
   const { t } = useTranslation();
+  const router = useRouter();
   const [selectedCategory, setSelectedCategory] =
     useState("전체");
   const [showFavoriteOnly, setShowFavoriteOnly] =
@@ -91,50 +115,22 @@ export function ClosetPage() {
   );
   const [isProcessing, setIsProcessing] = useState(false);
   const [isEditingImage, setIsEditingImage] = useState(false);
-  const [clothes, setClothes] = useState<ClothingItem[]>([
-    {
-      id: "1",
-      name: "기본 화이트 티셔츠",
-      category1: "상의",
-      category2: "반소매 티셔츠",
-      season: ["봄", "여름", "사계절"],
-      color: ["화이트"],
-      brand: "유니클로",
-      material: "면",
-      size: "M",
-      memo: "데일리로 자주 입는 기본템",
-      imageUrl: "",
-      isFavorite: true,
-    },
-    {
-      id: "2",
-      name: "블랙 청바지",
-      category1: "하의",
-      category2: "청바지",
-      season: ["사계절"],
-      color: ["블랙"],
-      brand: "리바이스",
-      material: "데님",
-      size: "30",
-      memo: "슬림핏",
-      imageUrl: "",
+  const [clothes, setClothes] = useState<ClothingItem[]>(() => {
+    return initialClothes.map((item) => ({
+      id: item.id,
+      name: item.title,
+      category1: getCategoryGroup(item.category),
+      category2: '',
+      season: [],
+      color: [item.color],
+      brand: '',
+      material: '',
+      size: '',
+      memo: '',
+      imageUrl: item.imageUrl,
       isFavorite: false,
-    },
-    {
-      id: "3",
-      name: "회색 코트",
-      category1: "아우터",
-      category2: "코트",
-      season: ["가을", "겨울"],
-      color: ["그레이"],
-      brand: "자라",
-      material: "울",
-      size: "95",
-      memo: "겨울 정장 룩에 잘 어울림",
-      imageUrl: "",
-      isFavorite: true,
-    },
-  ]);
+    }));
+  });
 
   const [newClothing, setNewClothing] = useState<
     Partial<ClothingItem>
@@ -155,6 +151,8 @@ export function ClosetPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const categoryScrollRef = useRef<HTMLDivElement>(null);
+  const pendingUploadFileRef = useRef<File | null>(null);
+  const [uploadedPublicUrl, setUploadedPublicUrl] = useState<string | null>(null);
 
   const handleToggleFavorite = (id: string) => {
     setClothes(
@@ -179,6 +177,19 @@ export function ClosetPage() {
     const file = e.target.files?.[0];
     if (file) {
       const imageUrl = URL.createObjectURL(file);
+      pendingUploadFileRef.current = file;
+      setUploadedPublicUrl(null);
+
+      // Background S3 upload
+      uploadToS3(file, 'clothes')
+        .then(({ publicUrl }) => {
+          setUploadedPublicUrl(publicUrl);
+          URL.revokeObjectURL(imageUrl);
+        })
+        .catch(() => {
+          // S3 업로드 실패 시 blob URL 유지 (graceful degradation)
+        });
+
       if (isEditingImage && selectedItem) {
         // 수정 모드에서 이미지 변경할 때
         setNewClothing({ ...newClothing, imageUrl });
@@ -227,8 +238,11 @@ export function ClosetPage() {
     }
   };
 
-  const handleAddClothing = () => {
+  const handleAddClothing = async () => {
     if (!newClothing.name || !newClothing.category1) return;
+
+    // S3 업로드가 완료되었으면 publicUrl 사용, 아니면 blob URL 유지
+    const finalImageUrl = uploadedPublicUrl || newClothing.imageUrl || "";
 
     const newItem: ClothingItem = {
       id: Date.now().toString(),
@@ -241,7 +255,7 @@ export function ClosetPage() {
       material: newClothing.material || "",
       size: newClothing.size || "",
       memo: newClothing.memo || "",
-      imageUrl: newClothing.imageUrl || "",
+      imageUrl: finalImageUrl,
       isFavorite: false,
     };
 
@@ -261,9 +275,30 @@ export function ClosetPage() {
       imageUrl: "",
       isFavorite: false,
     });
+    pendingUploadFileRef.current = null;
+    setUploadedPublicUrl(null);
+
+    try {
+      const categoryMap: Record<string, ClothesItem['category']> = {
+        '상의': 'TOP',
+        '하의': 'BOTTOM',
+        '아우터': 'OUTER',
+        '신발': 'SHOES',
+        '악세사리': 'ACCESSORY',
+      };
+      await createClothesAction({
+        title: newItem.name,
+        category: categoryMap[newItem.category1] || 'TOP',
+        color: newItem.color[0] || '',
+        imageUrl: finalImageUrl,
+      });
+      router.refresh();
+    } catch {
+      /* 오프라인 시 로컬 상태만 업데이트 */
+    }
   };
 
-  const handleUpdateClothing = () => {
+  const handleUpdateClothing = async () => {
     if (!selectedItem) return;
 
     setClothes(
@@ -274,16 +309,43 @@ export function ClosetPage() {
     setShowDetailDialog(false);
     setSelectedItem(null);
     setEditMode(false);
+
+    try {
+      const categoryMap: Record<string, ClothesItem['category']> = {
+        '상의': 'TOP',
+        '하의': 'BOTTOM',
+        '아우터': 'OUTER',
+        '신발': 'SHOES',
+        '악세사리': 'ACCESSORY',
+      };
+      await updateClothesAction(selectedItem.id, {
+        title: selectedItem.name,
+        category: categoryMap[selectedItem.category1] || 'TOP',
+        color: selectedItem.color[0] || '',
+        imageUrl: selectedItem.imageUrl,
+      });
+      router.refresh();
+    } catch {
+      /* 오프라인 시 로컬 상태만 업데이트 */
+    }
   };
 
-  const handleDeleteClothing = () => {
+  const handleDeleteClothing = async () => {
     if (!selectedItem) return;
 
+    const deletedId = selectedItem.id;
     setClothes(
       clothes.filter((item) => item.id !== selectedItem.id),
     );
     setShowDetailDialog(false);
     setSelectedItem(null);
+
+    try {
+      await deleteClothesAction(deletedId);
+      router.refresh();
+    } catch {
+      /* 오프라인 시 로컬 상태만 업데이트 */
+    }
   };
 
   const handleCancelAdd = () => {
@@ -291,6 +353,8 @@ export function ClosetPage() {
     setAddStep("method");
     setIsProcessing(false);
     setIsEditingImage(false);
+    pendingUploadFileRef.current = null;
+    setUploadedPublicUrl(null);
     setNewClothing({
       name: "",
       category1: "상의",
@@ -449,6 +513,51 @@ export function ClosetPage() {
 
       {/* 옷 목록 그리드 */}
       <div className="flex-1 overflow-y-auto px-6 pb-24">
+        {displayedClothes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full">
+            <div
+              className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4"
+            >
+              <Plus size={28} color="#999" strokeWidth={1.5} />
+            </div>
+            <p
+              className="text-black mb-1"
+              style={{
+                fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                fontSize: "16px",
+                fontWeight: 600,
+              }}
+            >
+              {clothes.length === 0 ? t('closet.emptyTitle') : t('closet.noResults')}
+            </p>
+            <p
+              className="text-[#999] text-center mb-6"
+              style={{
+                fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                fontSize: "13px",
+                fontWeight: 400,
+              }}
+            >
+              {clothes.length === 0 ? t('closet.emptyDescription') : t('closet.noResultsDescription')}
+            </p>
+            {clothes.length === 0 && (
+              <button
+                onClick={() => setShowAddDialog(true)}
+                className="px-6 py-3 text-white hover:opacity-90 transition-opacity flex items-center gap-2"
+                style={{
+                  borderRadius: "12px",
+                  backgroundColor: "#000",
+                  fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                }}
+              >
+                <Plus size={18} color="#fff" strokeWidth={2} />
+                {t('closet.addFirst')}
+              </button>
+            )}
+          </div>
+        ) : (
         <div className="grid grid-cols-2 gap-4">
           {displayedClothes.map((item) => (
             <div key={item.id} className="relative">
@@ -522,6 +631,7 @@ export function ClosetPage() {
             </div>
           ))}
         </div>
+        )}
       </div>
 
       {/* 옷 추가 다이얼로그 */}

@@ -5,11 +5,20 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { useTranslation } from "react-i18next";
+import type { UserProfile } from "@/shared/api/users.types";
+import type { UserStats } from "@/shared/api/users.types";
+import { updateProfileAction } from "@/shared/api/actions/users.action";
+import { logout } from "@/shared/api/auth";
 
 type TemperatureUnit = "celsius" | "fahrenheit";
 type Language = "ko" | "en";
 
-export function MyPage() {
+interface MyPageProps {
+  initialProfile?: UserProfile | null;
+  initialStats?: UserStats | null;
+}
+
+export function MyPage({ initialProfile = null, initialStats = null }: MyPageProps) {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const [showSettingsDialog, setShowSettingsDialog] =
@@ -21,21 +30,26 @@ export function MyPage() {
   const [temperatureUnit, setTemperatureUnit] =
     useState<TemperatureUnit>("celsius");
   const [language, setLanguage] = useState<Language>(i18n.language as Language);
-  const [nickname, setNickname] = useState("패션러버");
+  const [nickname, setNickname] = useState(initialProfile?.nickname || "패션러버");
   const [tempNickname, setTempNickname] = useState("");
 
   const userProfile = {
     nickname: nickname,
-    email: "fashion@example.com",
-    closetCount: 15,
-    closetFavoriteCount: 7,
-    looksCount: 3,
-    looksFavoriteCount: 2,
+    email: initialProfile?.email || "fashion@example.com",
+    closetCount: initialStats?.closetCount ?? 15,
+    closetFavoriteCount: 0,
+    looksCount: initialStats?.lookCount ?? 3,
+    looksFavoriteCount: 0,
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (confirm(t('profile.logoutConfirm'))) {
-      alert(t('profile.logoutSuccess'));
+      try {
+        await logout();
+        router.push('/login');
+      } catch {
+        alert(t('profile.logoutSuccess'));
+      }
     }
   };
 
@@ -44,13 +58,18 @@ export function MyPage() {
     setShowNicknameDialog(true);
   };
 
-  const handleSaveNickname = () => {
+  const handleSaveNickname = async () => {
     if (!tempNickname.trim()) {
       alert(t('profile.enterNickname'));
       return;
     }
-    setNickname(tempNickname.trim());
+    const newNickname = tempNickname.trim();
+    setNickname(newNickname);
     setShowNicknameDialog(false);
+    try {
+      await updateProfileAction({ nickname: newNickname });
+      router.refresh();
+    } catch { /* 오프라인 시 로컬 상태만 업데이트 */ }
   };
 
   const handleLanguageChange = (newLang: Language) => {

@@ -3,18 +3,27 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import type { AnnouncementListItem } from "@/shared/api/announcements.types";
 
-export function AnnouncementsPage() {
+const fallbackAnnouncements: AnnouncementListItem[] = [
+  { id: "1", title: "앱 v2.0 업데이트", date: "2026-02-05" },
+  { id: "2", title: "새로운 기능 추가 안내", date: "2026-02-01" },
+  { id: "3", title: "겨울 시즌 코디 팁 업데이트", date: "2026-01-28" },
+  { id: "4", title: "서비스 점검 안내", date: "2026-01-25" },
+  { id: "5", title: "신규 회원 이벤트 안내", date: "2026-01-20" },
+];
+
+interface AnnouncementsPageProps {
+  initialAnnouncements?: AnnouncementListItem[];
+}
+
+export function AnnouncementsPage({ initialAnnouncements = [] }: AnnouncementsPageProps) {
   const router = useRouter();
   const { t } = useTranslation();
 
-  const announcements = [
-    { id: "1", title: "앱 v2.0 업데이트", date: "2026-02-05" },
-    { id: "2", title: "새로운 기능 추가 안내", date: "2026-02-01" },
-    { id: "3", title: "겨울 시즌 코디 팁 업데이트", date: "2026-01-28" },
-    { id: "4", title: "서비스 점검 안내", date: "2026-01-25" },
-    { id: "5", title: "신규 회원 이벤트 안내", date: "2026-01-20" },
-  ];
+  const announcements = initialAnnouncements.length > 0
+    ? initialAnnouncements
+    : fallbackAnnouncements;
 
   return (
     <div className="min-h-screen w-full max-w-[500px] mx-auto flex flex-col pb-24" style={{ backgroundColor: "#FFFFFF" }}>

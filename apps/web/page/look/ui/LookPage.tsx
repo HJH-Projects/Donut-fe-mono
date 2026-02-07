@@ -7,6 +7,9 @@ import { ImageWithFallback } from "@/shared/ui/ImageWithFallback";
 import { LookForm } from "@/shared/ui/LookForm";
 import { useTranslation } from "react-i18next";
 import { Plus, Heart, Search, ArrowLeft, ArrowRight, Share2, X, Trash2, Edit2, Link2, Check, Copy } from "lucide-react";
+import type { ClothesItem as ApiClothesItem } from '@/shared/api/clothes.types';
+import type { LookItem as ApiLookItem } from '@/shared/api/looks.types';
+import { createLookAction, updateLookAction, deleteLookAction } from '@/shared/api/actions/looks.action';
 
 type LookItem = {
   id: string;
@@ -30,7 +33,12 @@ type SharedLink = {
   createdAt: Date;
 };
 
-export function LookPage() {
+interface LookPageProps {
+  initialLooks?: ApiLookItem[];
+  initialClothes?: ApiClothesItem[];
+}
+
+export function LookPage({ initialLooks = [], initialClothes = [] }: LookPageProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const [showFavoriteOnly, setShowFavoriteOnly] = useState(false);
@@ -47,124 +55,32 @@ export function LookPage() {
   const [linkName, setLinkName] = useState("");
   const tagScrollRef = useRef<HTMLDivElement>(null);
 
-  // Mock 옷장 아이템 데이터 (카테고리별로 선택 가능하도록)
-  const [closetItems] = useState<LookItem[]>([
-    { id: "c1", name: "회색 코트", category: "아우터", imageUrl: "https://images.unsplash.com/photo-1626307416562-ee839676f5fc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxncmV5JTIwd2ludGVyJTIwY29hdCUyMG91dGZpdHxlbnwxfHx8fDE3NzAxMDgwMjB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
-    { id: "c2", name: "화이트 셔츠", category: "상의", imageUrl: "https://images.unsplash.com/photo-1766416143517-ee39c8db4f99?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3aGl0ZSUyMHNoaXJ0JTIwZm9ybWFsJTIwd2VhcnxlbnwxfHx8fDE3NzAxMDgwMjB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
-    { id: "c3", name: "블랙 슬랙스", category: "하의", imageUrl: "https://images.unsplash.com/photo-1699205016746-8aa2e6e48453?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxibGFjayUyMGRyZXNzJTIwcGFudHN8ZW58MXx8fHwxNzcwMTA4MDIwfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
-    { id: "c4", name: "가죽 구두", category: "신발", imageUrl: "https://images.unsplash.com/photo-1576792741377-eb0f4f6d1a47?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsZWF0aGVyJTIwZHJlc3MlMjBzaG9lc3xlbnwxfHx8fDE3Njk5OTg3MTR8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
-    { id: "c5", name: "데님 자켓", category: "아우터", imageUrl: "https://images.unsplash.com/photo-1764427163096-97ecceee3d72?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkZW5pbSUyMGphY2tldCUyMGNhc3VhbHxlbnwxfHx8fDE3NzAwODE1MTN8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
-    { id: "c6", name: "화이트 티셔츠", category: "상의", imageUrl: "https://images.unsplash.com/photo-1574180566232-aaad1b5b8450?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3aGl0ZSUyMHQtc2hpcnR8ZW58MXx8fHwxNzcwMDk5OTY0fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
-    { id: "c7", name: "청바지", category: "하의", imageUrl: "https://images.unsplash.com/photo-1713880442898-0f151fba5e16?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxibHVlJTIwamVhbnMlMjBkZW5pbXxlbnwxfHx8fDE3NzAxMDgwMjJ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
-    { id: "c8", name: "스니커즈", category: "신발", imageUrl: "https://images.unsplash.com/photo-1597350584914-55bb62285896?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3aGl0ZSUyMHNuZWFrZXJzfGVufDF8fHx8MTc3MDAyMDkwNXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
-    { id: "c9", name: "크로스백", category: "악세사리", imageUrl: "https://images.unsplash.com/photo-1760624294514-ca40aafe3d96?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjcm9zc2JvZHklMjBiYWclMjBhY2Nlc3Nvcnl8ZW58MXx8fHwxNzcwMTA4MDIzfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
-    { id: "c10", name: "린넨 셔", category: "상의", imageUrl: "https://images.unsplash.com/photo-1766735324704-5f245cf0e9e2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsaW5lbiUyMHNoaXJ0JTIwc3VtbWVyfGVufDF8fHx8MTc3MDEwODAyM3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
-    { id: "c11", name: "반바지", category: "하의", imageUrl: "https://images.unsplash.com/photo-1769072058532-fb6cc4443ea0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxraGFraSUyMHNob3J0c3xlbnwxfHx8fDE3NzAxMDgwMjZ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
-    { id: "c12", name: "샌들", category: "신발", imageUrl: "https://images.unsplash.com/photo-1743591684800-c8cfba557087?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzdW1tZXIlMjBzYW5kYWxzfGVufDF8fHx8MTc3MDA1MTcwMXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
-    { id: "c13", name: "블랙 니트", category: "상의", imageUrl: "https://images.unsplash.com/photo-1676661725258-9a801a285c72?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxibGFjayUyMGtuaXQlMjBzd2VhdGVyfGVufDF8fHx8MTc3MDEwODAyN3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
-    { id: "c14", name: "체크 셔츠", category: "상의", imageUrl: "https://images.unsplash.com/photo-1591560774328-fcb4b90c206e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjaGVja2VyZWQlMjBwbGFpZCUyMHNoaXJ0fGVufDF8fHx8MTc3MDEwODAyN3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
-    { id: "c15", name: "트렌치코트", category: "아우터", imageUrl: "https://images.unsplash.com/photo-1633821879282-0c4e91f96232?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxiZWlnZSUyMHRyZW5jaCUyMGNvYXR8ZW58MXx8fHwxNzcwMDIxNjc5fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" },
-  ]);
+  // 옷장 아이템 데이터 (API)
+  const [closetItems] = useState<LookItem[]>(() => {
+    const categoryMap: Record<string, string> = { TOP: '상의', BOTTOM: '하의', OUTER: '아우터', SHOES: '신발', ACCESSORY: '악세사리' };
+    return initialClothes.map(item => ({
+      id: item.id,
+      name: item.title,
+      category: categoryMap[item.category] || item.category,
+      imageUrl: item.imageUrl,
+    }));
+  });
 
-  // Mock 룩 데이터
-  const [looks, setLooks] = useState<Look[]>([
-    {
-      id: "1",
-      name: "겨울 출근룩",
-      tags: ["오피스", "포멀", "겨울"],
-      items: [
-        {
-          id: "c1",
-          name: "회색 코트",
-          category: "아우터",
-          imageUrl: "https://images.unsplash.com/photo-1626307416562-ee839676f5fc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxncmV5JTIwd2ludGVyJTIwY29hdCUyMG91dGZpdHxlbnwxfHx8fDE3NzAxMDgwMjB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-        },
-        {
-          id: "c2",
-          name: "화이트 셔츠",
-          category: "상의",
-          imageUrl: "https://images.unsplash.com/photo-1766416143517-ee39c8db4f99?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3aGl0ZSUyMHNoaXJ0JTIwZm9ybWFsJTIwd2VhcnxlbnwxfHx8fDE3NzAxMDgwMjB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-        },
-        {
-          id: "c3",
-          name: "블랙 슬랙스",
-          category: "하의",
-          imageUrl: "https://images.unsplash.com/photo-1699205016746-8aa2e6e48453?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxibGFjayUyMGRyZXNzJTIwcGFudHN8ZW58MXx8fHwxNzcwMTA4MDIwfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-        },
-        {
-          id: "c4",
-          name: "가죽 구두",
-          category: "신발",
-          imageUrl: "https://images.unsplash.com/photo-1576792741377-eb0f4f6d1a47?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsZWF0aGVyJTIwZHJlc3MlMjBzaG9lc3xlbnwxfHx8fDE3Njk5OTg3MTR8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-        },
-      ],
-      isFavorite: true,
-    },
-    {
-      id: "2",
-      name: "주말 데이트룩",
-      tags: ["캐주얼", "데이트", "봄"],
-      items: [
-        {
-          id: "c5",
-          name: "데님 자켓",
-          category: "아우터",
-          imageUrl: "https://images.unsplash.com/photo-1764427163096-97ecceee3d72?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkZW5pbSUyMGphY2tldCUyMGNhc3VhbHxlbnwxfHx8fDE3NzAwODE1MTN8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-        },
-        {
-          id: "c6",
-          name: "화이트 티셔츠",
-          category: "상의",
-          imageUrl: "https://images.unsplash.com/photo-1574180566232-aaad1b5b8450?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3aGl0ZSUyMHQtc2hpcnR8ZW58MXx8fHwxNzcwMDk5OTY0fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-        },
-        {
-          id: "c7",
-          name: "청바지",
-          category: "하의",
-          imageUrl: "https://images.unsplash.com/photo-1713880442898-0f151fba5e16?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxibHVlJTIwamVhbnMlMjBkZW5pbXxlbnwxfHx8fDE3NzAxMDgwMjJ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-        },
-        {
-          id: "c8",
-          name: "스니커즈",
-          category: "신발",
-          imageUrl: "https://images.unsplash.com/photo-1597350584914-55bb62285896?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3aGl0ZSUyMHNuZWFrZXJzfGVufDF8fHx8MTc3MDAyMDkwNXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-        },
-        {
-          id: "c9",
-          name: "크로스백",
-          category: "악세사리",
-          imageUrl: "https://images.unsplash.com/photo-1760624294514-ca40aafe3d96?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjcm9zc2JvZHklMjBiYWclMjBhY2Nlc3Nvcnl8ZW58MXx8fHwxNzcwMTA4MDIzfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-        },
-      ],
+  // 룩 데이터 (API)
+  const [looks, setLooks] = useState<Look[]>(() => {
+    return initialLooks.map(look => ({
+      id: look.id,
+      name: look.name,
+      tags: look.tags ? look.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+      items: (look.items || []).map(item => ({
+        id: item.clothes?.id || item.clothesId,
+        name: item.clothes?.title || '',
+        category: item.clothes?.category || '',
+        imageUrl: item.clothes?.imageUrl || '',
+      })),
       isFavorite: false,
-    },
-    {
-      id: "3",
-      name: "여름 휴가룩",
-      tags: ["여행", "편안", "여름"],
-      items: [
-        {
-          id: "c10",
-          name: "린넨 셔츠",
-          category: "상의",
-          imageUrl: "https://images.unsplash.com/photo-1766735324704-5f245cf0e9e2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsaW5lbiUyMHNoaXJ0JTIwc3VtbWVyfGVufDF8fHx8MTc3MDEwODAyM3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-        },
-        {
-          id: "c11",
-          name: "반바지",
-          category: "하의",
-          imageUrl: "https://images.unsplash.com/photo-1769072058532-fb6cc4443ea0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxraGFraSUyMHNob3J0c3xlbnwxfHx8fDE3NzAxMDgwMjZ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-        },
-        {
-          id: "c12",
-          name: "샌들",
-          category: "신발",
-          imageUrl: "https://images.unsplash.com/photo-1743591684800-c8cfba557087?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzdW1tZXIlMjBzYW5kYWxzfGVufDF8fHx8MTc3MDA1MTcwMXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-        },
-      ],
-      isFavorite: true,
-    },
-  ]);
+    }));
+  });
 
   const [newLook, setNewLook] = useState<Partial<Look>>({
     name: "",
@@ -241,16 +157,21 @@ export function LookPage() {
     e.currentTarget.classList.remove('card-active');
   };
 
-  const handleDeleteLook = () => {
+  const handleDeleteLook = async () => {
     if (!selectedLook) return;
+    const lookId = selectedLook.id;
     setLooks(
-      looks.filter((look) => look.id !== selectedLook.id),
+      looks.filter((look) => look.id !== lookId),
     );
     setShowDetailDialog(false);
     setSelectedLook(null);
+    try {
+      await deleteLookAction(lookId);
+      router.refresh();
+    } catch {}
   };
 
-  const handleAddLook = (lookData: Partial<Look>) => {
+  const handleAddLook = async (lookData: Partial<Look>) => {
     const newId = (looks.length + 1).toString();
     const newLook: Look = {
       id: newId,
@@ -261,18 +182,32 @@ export function LookPage() {
     };
     setLooks([...looks, newLook]);
     setShowAddDialog(false);
+    try {
+      await createLookAction({
+        name: newLook.name,
+        tags: newLook.tags.join(','),
+        items: newLook.items.map((item, i) => ({ clothesId: item.id, sortOrder: i, role: 'ITEM' })),
+      });
+      router.refresh();
+    } catch {}
   };
 
-  const handleEditLook = (lookData: Partial<Look>) => {
+  const handleEditLook = async (lookData: Partial<Look>) => {
     if (!selectedLook) return;
+    const lookId = selectedLook.id;
+    const updatedLook = {
+      name: lookData.name || selectedLook.name,
+      tags: lookData.tags || selectedLook.tags,
+      items: lookData.items || selectedLook.items,
+    };
     setLooks(
       looks.map((look) =>
-        look.id === selectedLook.id
+        look.id === lookId
           ? {
               ...look,
-              name: lookData.name || look.name,
-              tags: lookData.tags || look.tags,
-              items: lookData.items || look.items,
+              name: updatedLook.name,
+              tags: updatedLook.tags,
+              items: updatedLook.items,
             }
           : look
       )
@@ -280,6 +215,14 @@ export function LookPage() {
     setShowEditDialog(false);
     setShowDetailDialog(false);
     setSelectedLook(null);
+    try {
+      await updateLookAction(lookId, {
+        name: updatedLook.name,
+        tags: updatedLook.tags.join(','),
+        items: updatedLook.items.map((item, i) => ({ clothesId: item.id, sortOrder: i, role: 'ITEM' })),
+      });
+      router.refresh();
+    } catch {}
   };
 
   const handleShareLook = () => {
@@ -739,6 +682,51 @@ export function LookPage() {
 
       {/* 룩 목록 */}
       <div className="flex-1 overflow-y-auto pb-24">
+        {filteredLooks.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full px-6">
+            <div
+              className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4"
+            >
+              <Plus size={28} color="#999" strokeWidth={1.5} />
+            </div>
+            <p
+              className="text-black mb-1"
+              style={{
+                fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                fontSize: "16px",
+                fontWeight: 600,
+              }}
+            >
+              {looks.length === 0 ? t('looks.emptyTitle') : t('looks.noResults')}
+            </p>
+            <p
+              className="text-[#999] text-center mb-6"
+              style={{
+                fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                fontSize: "13px",
+                fontWeight: 400,
+              }}
+            >
+              {looks.length === 0 ? t('looks.emptyDescription') : t('looks.noResultsDescription')}
+            </p>
+            {looks.length === 0 && (
+              <button
+                onClick={() => setShowAddDialog(true)}
+                className="px-6 py-3 text-white hover:opacity-90 transition-opacity flex items-center gap-2"
+                style={{
+                  borderRadius: "12px",
+                  backgroundColor: "#000",
+                  fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                }}
+              >
+                <Plus size={18} color="#fff" strokeWidth={2} />
+                {t('looks.createFirst')}
+              </button>
+            )}
+          </div>
+        ) : (
         <div className="px-6" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           {filteredLooks.map((look, index) => (
             <div
@@ -843,6 +831,7 @@ export function LookPage() {
             </div>
           ))}
         </div>
+        )}
       </div>
 
       {/* 룩 상세보기 다이얼로그 */}

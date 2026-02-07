@@ -16,41 +16,93 @@ import { motion, AnimatePresence } from "motion/react";
 import { Dialog } from "@base-ui/react/dialog";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import type { LocationItem } from "@/shared/api/locations.types";
+import type { RecommendationResponse } from "@/shared/api/recommendations.types";
+import { createLocationAction, updateLocationAction, deleteLocationAction } from "@/shared/api/actions/locations.action";
 
 const outfitImage = "";
 
-export function HomePage() {
+const skyToCondition = (sky: string): string => {
+  if (sky.includes("맑")) return "sunny";
+  if (sky.includes("비") || sky.includes("rain")) return "rainy";
+  if (sky.includes("바람") || sky.includes("wind")) return "windy";
+  return "cloudy";
+};
+
+interface HomePageProps {
+  initialLocations?: LocationItem[];
+  initialRecommendation?: RecommendationResponse | null;
+  defaultLocation?: LocationItem | null;
+  isLoggedIn?: boolean;
+}
+
+export function HomePage({
+  initialLocations = [],
+  initialRecommendation = null,
+  defaultLocation = null,
+  isLoggedIn = false,
+}: HomePageProps) {
   const { t } = useTranslation();
   const router = useRouter();
 
-  const [weather, setWeather] = useState({
-    temp: 18,
-    condition: "cloudy",
-    location: "서울",
-    maxTemp: 22,
-    minTemp: 14,
-    windSpeed: 2.5,
-    precipitation: 20,
-    humidity: 65,
-    tips: [
-      "가벼운 니트와 데님으로 레이어링하기 좋은 날씨예요",
-      "바람이 불 수 있으니 가디건을 챙겨보세요",
-      "편안한 스니커즈와 함께 스타일리시하게",
-    ],
+  const [weather, setWeather] = useState(() => {
+    if (initialRecommendation?.weather?.display) {
+      const d = initialRecommendation.weather.display;
+      return {
+        temp: d.tempCurrent,
+        condition: skyToCondition(d.sky),
+        location: d.locationName || defaultLocation?.alias || "서울",
+        maxTemp: d.tempMax,
+        minTemp: d.tempMin,
+        windSpeed: parseFloat(d.wind) || 0,
+        precipitation: parseFloat(d.precipitationProbability) || 0,
+        humidity: 0,
+        tips: d.message ? [d.message] : [
+          "가벼운 니트와 데님으로 레이어링하기 좋은 날씨예요",
+        ],
+      };
+    }
+    return {
+      temp: 18,
+      condition: "cloudy",
+      location: "서울",
+      maxTemp: 22,
+      minTemp: 14,
+      windSpeed: 2.5,
+      precipitation: 20,
+      humidity: 65,
+      tips: [
+        "가벼운 니트와 데님으로 레이어링하기 좋은 날씨예요",
+        "바람이 불 수 있으니 가디건을 챙겨보세요",
+        "편안한 스니커즈와 함께 스타일리시하게",
+      ],
+    };
   });
 
-  const [outfits] = useState([
-    { id: 1, imageUrl: outfitImage, description: "캐주얼 데일리룩" },
-    { id: 2, imageUrl: outfitImage, description: "캐주얼 데일리룩" },
-    { id: 3, imageUrl: outfitImage, description: "캐주얼 데일리룩" },
-  ]);
+  const [outfits] = useState(() => {
+    if (initialRecommendation?.recommendation) {
+      const rec = initialRecommendation.recommendation;
+      return [
+        { id: 1, imageUrl: rec.lookImageUrl || outfitImage, description: rec.description || "추천 데일리룩" },
+      ];
+    }
+    return [
+      { id: 1, imageUrl: outfitImage, description: "캐주얼 데일리룩" },
+      { id: 2, imageUrl: outfitImage, description: "캐주얼 데일리룩" },
+      { id: 3, imageUrl: outfitImage, description: "캐주얼 데일리룩" },
+    ];
+  });
 
   const [currentOutfitIndex, setCurrentOutfitIndex] = useState(0);
   const [showWeatherDetail, setShowWeatherDetail] = useState(false);
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [isAddingLocation, setIsAddingLocation] = useState(false);
   const [newLocationAlias, setNewLocationAlias] = useState("");
-  const [locations, setLocations] = useState(["서울", "부산", "제주"]);
+  const [locations, setLocations] = useState(() =>
+    initialLocations.length > 0
+      ? initialLocations.map(l => l.alias)
+      : ["서울", "부산", "제주"]
+  );
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -85,18 +137,39 @@ export function HomePage() {
     }
   };
 
-  const handleAddLocation = () => {
+  const handleAddLocation = async () => {
     if (newLocationAlias.trim()) {
-      setLocations([...locations, newLocationAlias.trim()]);
+      const alias = newLocationAlias.trim();
+      setLocations([...locations, alias]);
       setNewLocationAlias("");
       setIsAddingLocation(false);
+      try {
+        await createLocationAction({
+          name: alias,
+          lat: 37.5665,
+          lon: 126.978,
+          timezone: "Asia/Seoul",
+          alias,
+          isDefault: false,
+        });
+        router.refresh();
+      } catch { /* 오프라인 시 로컬 상태만 업데이트 */ }
     }
   };
 
-  const handleSelectLocation = (location: string) => {
+  const handleSelectLocation = async (location: string) => {
     setIsLoading(true);
     setWeather({ ...weather, location });
     setShowLocationDialog(false);
+
+    const matched = initialLocations.find(l => l.alias === location);
+    if (matched) {
+      try {
+        await updateLocationAction(matched.id, { isDefault: true });
+        router.refresh();
+      } catch {}
+    }
+
     setTimeout(() => {
       setIsLoading(false);
     }, 2000);
@@ -122,7 +195,7 @@ export function HomePage() {
         </h1>
         <div className="flex-1 flex justify-end">
           <button
-            onClick={() => router.push("/notifications?recent=true")}
+            onClick={() => router.push(isLoggedIn ? "/notifications?recent=true" : "/login")}
             className="relative p-2 hover:opacity-70 transition-opacity"
             aria-label="알림"
           >
@@ -234,7 +307,13 @@ export function HomePage() {
                               <button
                                 className="w-full bg-black text-white px-4 py-3 hover:opacity-90 transition-opacity"
                                 style={{ borderRadius: "24px", fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "14px", fontWeight: 600 }}
-                                onClick={() => setIsAddingLocation(true)}
+                                onClick={() => {
+                                  if (!isLoggedIn) {
+                                    router.push('/login');
+                                    return;
+                                  }
+                                  setIsAddingLocation(true);
+                                }}
                               >
                                 {t('home.addNewLocation')}
                               </button>

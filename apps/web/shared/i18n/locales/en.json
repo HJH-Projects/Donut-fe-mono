@@ -67,6 +67,11 @@
     "enterTagPlaceholder": "Type here...",
     "addTag": "Add",
     "noImage": "No image",
+    "emptyTitle": "No items yet",
+    "emptyDescription": "Add your first item to the closet",
+    "addFirst": "Add Item",
+    "noResults": "No matching items",
+    "noResultsDescription": "Try a different category",
     "categories": {
       "outer": "Outer",
       "top": "Top",
@@ -140,6 +145,11 @@
       "deleteLink": "Delete Link",
       "viewCount": "{{count}} views"
     },
+    "emptyTitle": "No looks yet",
+    "emptyDescription": "Create your first look from closet items",
+    "createFirst": "Create Look",
+    "noResults": "No matching looks",
+    "noResultsDescription": "Try different search terms or filters",
     "tagOptions": {
       "casual": "Casual",
       "office": "Office",
