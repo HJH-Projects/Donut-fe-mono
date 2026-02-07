@@ -1,11 +1,11 @@
 'use client';
 
 import { Home, Shirt, Sparkles, User } from "lucide-react";
-import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 
 export function BottomNav() {
-  const router = useRouter();
   const pathname = usePathname();
   const { t } = useTranslation();
 
@@ -29,9 +29,10 @@ export function BottomNav() {
           const Icon = item.icon;
           const isActive = pathname === item.path;
           return (
-            <button
+            <Link
               key={item.id}
-              onClick={() => router.push(item.path)}
+              href={item.path}
+              prefetch={true}
               className="flex flex-col items-center gap-1 transition-all duration-200"
             >
               <Icon
@@ -51,7 +52,7 @@ export function BottomNav() {
               >
                 {item.label}
               </span>
-            </button>
+            </Link>
           );
         })}
       </div>
