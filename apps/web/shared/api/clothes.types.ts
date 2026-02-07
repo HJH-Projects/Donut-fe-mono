@@ -4,6 +4,7 @@ export type ClothesItem = {
   category: 'TOP' | 'BOTTOM' | 'OUTER' | 'SHOES' | 'ACCESSORY';
   color: string;
   imageUrl: string;
+  isFavorite?: boolean;
   createdAt: string;
 };
 

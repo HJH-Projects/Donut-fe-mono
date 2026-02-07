@@ -2,6 +2,7 @@ export type LookItem = {
   id: string;
   name: string;
   tags: string;
+  isFavorite?: boolean;
   items: Array<{
     id: string;
     clothesId: string;

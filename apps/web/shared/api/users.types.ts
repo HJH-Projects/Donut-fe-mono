@@ -13,3 +13,10 @@ export type UserStats = {
   grade: string;
   gradeProgress: number;
 };
+
+export type UserSettings = {
+  temperatureUnit: 'CELSIUS' | 'FAHRENHEIT';
+  notificationsEnabled: boolean;
+  weatherAlertEnabled: boolean;
+  language: string;
+};

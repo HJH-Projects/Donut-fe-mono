@@ -1,5 +1,7 @@
-import { serverKy } from './server';
+import { unstable_cache } from 'next/cache';
+import { createCachedKy, getRequestCookies } from './server';
 import type { UserProfile, UserStats } from './users.types';
+import { CACHE_TAGS } from './cache-tags';
 
 const getGrade = (total: number) => {
   if (total >= 60) return { grade: 'Platinum', progress: (total - 60) / 40 };
@@ -9,24 +11,40 @@ const getGrade = (total: number) => {
 };
 
 export const getMeServer = async () => {
-  return await serverKy.get('users/me').json<UserProfile>();
+  const cookieString = await getRequestCookies();
+  return unstable_cache(
+    async () => {
+      const ky = createCachedKy(cookieString);
+      return await ky.get('users/me').json<UserProfile>();
+    },
+    ['user-me'],
+    { tags: [CACHE_TAGS.USER], revalidate: 300 }
+  )();
 };
 
-export const getUserStatsServer = async (): Promise<UserStats> => {
-  const [clothes, looks] = await Promise.all([
-    serverKy.get('clothes').json<unknown[]>(),
-    serverKy.get('looks').json<unknown[]>(),
-  ]);
+export const getUserStatsServer = async () => {
+  const cookieString = await getRequestCookies();
+  return unstable_cache(
+    async (): Promise<UserStats> => {
+      const ky = createCachedKy(cookieString);
+      const [clothes, looks] = await Promise.all([
+        ky.get('clothes').json<unknown[]>(),
+        ky.get('looks').json<unknown[]>(),
+      ]);
 
-  const closetCount = Array.isArray(clothes) ? clothes.length : 0;
-  const lookCount = Array.isArray(looks) ? looks.length : 0;
-  const total = closetCount + lookCount;
-  const gradeInfo = getGrade(total);
+      const closetCount = Array.isArray(clothes) ? clothes.length : 0;
+      const lookCount = Array.isArray(looks) ? looks.length : 0;
+      const total = closetCount + lookCount;
+      const gradeInfo = getGrade(total);
 
-  return {
-    closetCount,
-    lookCount,
-    grade: gradeInfo.grade,
-    gradeProgress: Math.min(Math.max(gradeInfo.progress, 0), 1),
-  };
+      return {
+        closetCount,
+        lookCount,
+        grade: gradeInfo.grade,
+        gradeProgress: Math.min(Math.max(gradeInfo.progress, 0), 1),
+      };
+    },
+    ['user-stats'],
+    { tags: [CACHE_TAGS.USER_STATS], revalidate: 600 }
+  )();
 };
