@@ -1,11 +1,14 @@
 'use client';
 
-import { ChevronLeft, Plus, Minus } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { Plus, Minus } from "lucide-react";
+import { useState, type ReactNode } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { useTranslation } from "react-i18next";
-import type { FAQItem } from "@/shared/api/faqs.types";
+
+type FAQItem = {
+  id: string;
+  question: string;
+  answer: string;
+};
 
 const fallbackFaqs: FAQItem[] = [
   {
@@ -37,11 +40,10 @@ const fallbackFaqs: FAQItem[] = [
 
 interface FaqPageProps {
   initialFaqs?: FAQItem[];
+  header?: ReactNode;
 }
 
-export function FaqPage({ initialFaqs = [] }: FaqPageProps) {
-  const router = useRouter();
-  const { t } = useTranslation();
+export function FaqPage({ initialFaqs = [], header }: FaqPageProps) {
   const [openId, setOpenId] = useState<string | null>(null);
 
   const faqs = initialFaqs.length > 0 ? initialFaqs : fallbackFaqs;
@@ -51,27 +53,8 @@ export function FaqPage({ initialFaqs = [] }: FaqPageProps) {
   };
 
   return (
-    <div className="min-h-screen w-full max-w-[500px] mx-auto flex flex-col pb-24" style={{ backgroundColor: "#FFFFFF" }}>
-      <div className="flex-shrink-0 px-6 pt-6 pb-6 flex items-center justify-center relative">
-        <button
-          onClick={() => router.push("/my")}
-          className="absolute left-6 p-2 hover:bg-gray-50 transition-colors -ml-2"
-          style={{ borderRadius: "var(--radius-md)" }}
-        >
-          <ChevronLeft size={24} color="#000" strokeWidth={2} />
-        </button>
-        <h1
-          className="text-black text-center"
-          style={{
-            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-            fontSize: "24px",
-            fontWeight: 700,
-            letterSpacing: "-0.02em",
-          }}
-        >
-          FAQ
-        </h1>
-      </div>
+    <div className="flex-1 min-h-0 w-full max-w-[500px] mx-auto flex flex-col pb-24" style={{ backgroundColor: "#FFFFFF" }}>
+      {header}
 
       <div className="flex-1 px-6">
         <div className="space-y-3">

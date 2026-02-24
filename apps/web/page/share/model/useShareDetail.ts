@@ -1,0 +1,137 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import type { CommentResponseDto, ShareLinkDetailResponseDto } from '@/shared/api/orvalSchema';
+import {
+  postShareCommentsApi,
+  getShareCommentsApi,
+  deleteShareCommentApi,
+} from '@/shared/api/endpointTags/comments';
+import { getSharesDetailApi } from '@/shared/api/endpointTags/shares';
+import { clientKy } from '@/features/api/clientKy';
+import { toApiError, type ApiError } from '@/shared/api/error';
+
+type LookItem = {
+  id: string;
+  name: string;
+  category: string;
+  imageUrl: string;
+};
+
+type Look = {
+  id: string;
+  name: string;
+  tags: string[];
+  items: LookItem[];
+  user: { id: string; nickname: string; profileImg: string | null } | null;
+};
+
+export type Comment = {
+  id: string;
+  userId: string;
+  author: string;
+  content: string;
+  createdAt: Date;
+};
+
+function mapShareDetailToLocal(detail: ShareLinkDetailResponseDto): Look {
+  return {
+    id: detail.look.id,
+    name: detail.look.name,
+    tags: [],
+    items: (detail.look.items || []).map((item) => ({
+      id: item.clothesId || item.id,
+      name: '',
+      category: item.role || '',
+      imageUrl: '',
+    })),
+    user: detail.look.user,
+  };
+}
+
+function mapApiCommentToLocal(c: CommentResponseDto): Comment {
+  return {
+    id: c.id,
+    userId: c.user.id,
+    author: c.user.nickname,
+    content: c.content,
+    createdAt: new Date(c.createdAt || Date.now()),
+  };
+}
+
+interface UseShareDetailOptions {
+  sharePath: string;
+  initialShareDetail?: ShareLinkDetailResponseDto | null;
+  initialComments?: CommentResponseDto[];
+}
+
+export function useShareDetail({
+  sharePath,
+  initialShareDetail = null,
+  initialComments = [],
+}: UseShareDetailOptions) {
+  const [look, setLook] = useState<Look | null>(
+    initialShareDetail ? mapShareDetailToLocal(initialShareDetail) : null,
+  );
+  const [comments, setComments] = useState<Comment[]>(() =>
+    initialComments.map(mapApiCommentToLocal),
+  );
+  const [isBootstrapped, setIsBootstrapped] = useState(
+    !!initialShareDetail || initialComments.length > 0,
+  );
+  const [error, setError] = useState<ApiError | null>(null);
+
+  useEffect(() => {
+    if (isBootstrapped) return;
+
+    Promise.all([
+      getSharesDetailApi(clientKy, sharePath).catch(() => null),
+      getShareCommentsApi(clientKy, sharePath).catch(() => []),
+    ])
+      .then(([detail, nextComments]) => {
+        if (detail) setLook(mapShareDetailToLocal(detail));
+        setComments(nextComments.map(mapApiCommentToLocal));
+      })
+      .catch(async (e) => {
+        const apiError = await toApiError(e);
+        setError(apiError);
+      })
+      .finally(() => setIsBootstrapped(true));
+  }, [isBootstrapped, sharePath]);
+
+  const addComment = async (content: string) => {
+    const comment: Comment = {
+      id: Date.now().toString(),
+      userId: 'current-user-id',
+      author: '나',
+      content,
+      createdAt: new Date(),
+    };
+    setComments((prev) => [...prev, comment]);
+
+    try {
+      await postShareCommentsApi(clientKy, sharePath, { content });
+    } catch {
+      /* 오프라인 시 로컬 상태만 업데이트 */
+    }
+  };
+
+  const deleteComment = async (commentId: string) => {
+    setComments((prev) => prev.filter((c) => c.id !== commentId));
+
+    try {
+      await deleteShareCommentApi(clientKy, sharePath, commentId);
+    } catch {
+      /* 오프라인 시 로컬 상태만 업데이트 */
+    }
+  };
+
+  return {
+    look,
+    comments,
+    isBootstrapped,
+    error,
+    addComment,
+    deleteComment,
+  };
+}

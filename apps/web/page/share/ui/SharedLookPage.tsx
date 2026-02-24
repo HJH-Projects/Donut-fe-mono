@@ -5,32 +5,8 @@ import { useRouter } from "next/navigation";
 import { Share2, Trash2, Link2, Copy, X } from "lucide-react";
 import { ImageWithFallback } from "@/shared/ui/ImageWithFallback";
 import { useTranslation } from "react-i18next";
-import type { ShareLinkDetail } from "@/shared/api/shares.types";
-import type { CommentItem as ApiCommentItem } from "@/shared/api/comments.types";
-import { createCommentAction, deleteCommentAction } from "@/shared/api/actions/comments.action";
-
-type LookItem = {
-  id: string;
-  name: string;
-  category: string;
-  imageUrl: string;
-};
-
-type Look = {
-  id: string;
-  name: string;
-  tags: string[];
-  items: LookItem[];
-  user: { id: string; nickname: string; profileImg: string | null } | null;
-};
-
-type Comment = {
-  id: string;
-  userId: string;
-  author: string;
-  content: string;
-  createdAt: Date;
-};
+import type { CommentResponseDto, ShareLinkDetailResponseDto } from "@/shared/api/orvalSchema";
+import { useShareDetail } from "../model/useShareDetail";
 
 type SharedLink = {
   id: string;
@@ -38,45 +14,24 @@ type SharedLink = {
   createdAt: Date;
 };
 
-function mapShareDetailToLocal(detail: ShareLinkDetail): Look {
-  return {
-    id: detail.look.id,
-    name: detail.look.name,
-    tags: [],
-    items: (detail.look.items || []).map(item => ({
-      id: item.clothesId,
-      name: '',
-      category: item.role,
-      imageUrl: '',
-    })),
-    user: detail.look.user,
-  };
-}
-
-function mapApiCommentToLocal(c: ApiCommentItem): Comment {
-  return {
-    id: c.id,
-    userId: c.user.id,
-    author: c.user.nickname,
-    content: c.content,
-    createdAt: new Date(c.createdAt),
-  };
-}
-
 interface SharedLookPageProps {
   sharePath: string;
-  initialShareDetail?: ShareLinkDetail | null;
-  initialComments?: ApiCommentItem[];
+  initialShareDetail?: ShareLinkDetailResponseDto | null;
+  initialComments?: CommentResponseDto[];
   isLoggedIn?: boolean;
 }
 
 export function SharedLookPage({ sharePath, initialShareDetail = null, initialComments = [], isLoggedIn = false }: SharedLookPageProps) {
   const { t } = useTranslation();
   const router = useRouter();
-  const [look, setLook] = useState<Look | null>(initialShareDetail ? mapShareDetailToLocal(initialShareDetail) : null);
-  const [comments, setComments] = useState<Comment[]>(() =>
-    initialComments.map(mapApiCommentToLocal)
-  );
+
+  const {
+    look,
+    comments,
+    addComment,
+    deleteComment,
+  } = useShareDetail({ sharePath, initialShareDetail, initialComments });
+
   const [newComment, setNewComment] = useState({ content: "" });
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showLinkCreator, setShowLinkCreator] = useState(false);
@@ -100,20 +55,9 @@ export function SharedLookPage({ sharePath, initialShareDetail = null, initialCo
       alert(t('sharedLook.commentRequired'));
       return;
     }
-    const comment: Comment = {
-      id: Date.now().toString(),
-      userId: currentUser.id,
-      author: currentUser.name,
-      content: newComment.content,
-      createdAt: new Date(),
-    };
-    setComments([...comments, comment]);
     const content = newComment.content;
     setNewComment({ content: "" });
-
-    try {
-      await createCommentAction(sharePath, { content });
-    } catch { /* 오프라인 시 로컬 상태만 업데이트 */ }
+    await addComment(content);
   };
 
   const formatDate = (date: Date) => {
@@ -183,11 +127,7 @@ export function SharedLookPage({ sharePath, initialShareDetail = null, initialCo
 
   const handleDeleteComment = async (commentId: string) => {
     if (confirm(t('sharedLook.deleteCommentConfirm'))) {
-      setComments(comments.filter((c) => c.id !== commentId));
-
-      try {
-        await deleteCommentAction(sharePath, commentId);
-      } catch { /* 오프라인 시 로컬 상태만 업데이트 */ }
+      await deleteComment(commentId);
     }
   };
 

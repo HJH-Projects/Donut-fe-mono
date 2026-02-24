@@ -9,18 +9,14 @@ import {
   Edit2,
   Trash2,
 } from "lucide-react";
-import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useRef, type ReactNode } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { ImageWithFallback } from "@/shared/ui/ImageWithFallback";
+import { PlusAction } from "@/shared/ui/PlusAction";
 import { useTranslation } from "react-i18next";
-import type { ClothesItem } from "@/shared/api/clothes.types";
-import {
-  createClothesAction,
-  updateClothesAction,
-  deleteClothesAction,
-} from "@/shared/api/actions/clothes.action";
-import { uploadToS3 } from "@/shared/utils/uploadToS3";
+import type { ClothesResponseDto } from "@/shared/api/orvalSchema";
+import { uploadToS3 } from "@/shared/model/utils/uploadToS3";
+import { useClothes, type ClothingItem } from "../model/useClothes";
 
 // 카테고리 정의
 const CATEGORIES = {
@@ -67,44 +63,19 @@ const MATERIALS = [
   "혼방",
 ];
 
-type ClothingItem = {
-  id: string;
-  name: string;
-  category1: string;
-  category2: string;
-  season: string[];
-  color: string[];
-  brand: string;
-  material: string;
-  size: string;
-  memo: string;
-  imageUrl: string;
-  isFavorite: boolean;
-};
-
 interface ClosetPageProps {
-  initialClothes?: ClothesItem[];
+  initialClothes?: ClothesResponseDto[];
+  header?: ReactNode;
 }
 
-function getCategoryGroup(category: ClothesItem['category']): string {
-  const map: Record<string, string> = {
-    TOP: '상의',
-    BOTTOM: '하의',
-    OUTER: '아우터',
-    SHOES: '신발',
-    ACCESSORY: '악세사리',
-  };
-  return map[category] || '전체';
-}
-
-export function ClosetPage({ initialClothes = [] }: ClosetPageProps) {
+export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
   const { t } = useTranslation();
-  const router = useRouter();
   const [selectedCategory, setSelectedCategory] =
     useState("전체");
   const [showFavoriteOnly, setShowFavoriteOnly] =
     useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
+
   const [showDetailDialog, setShowDetailDialog] =
     useState(false);
   const [selectedItem, setSelectedItem] =
@@ -115,22 +86,13 @@ export function ClosetPage({ initialClothes = [] }: ClosetPageProps) {
   );
   const [isProcessing, setIsProcessing] = useState(false);
   const [isEditingImage, setIsEditingImage] = useState(false);
-  const [clothes, setClothes] = useState<ClothingItem[]>(() => {
-    return initialClothes.map((item) => ({
-      id: item.id,
-      name: item.title,
-      category1: getCategoryGroup(item.category),
-      category2: '',
-      season: [],
-      color: [item.color],
-      brand: '',
-      material: '',
-      size: '',
-      memo: '',
-      imageUrl: item.imageUrl,
-      isFavorite: false,
-    }));
-  });
+  const {
+    clothes,
+    addClothing,
+    updateClothing,
+    removeClothing,
+    toggleFavorite,
+  } = useClothes({ initialClothes });
 
   const [newClothing, setNewClothing] = useState<
     Partial<ClothingItem>
@@ -155,13 +117,7 @@ export function ClosetPage({ initialClothes = [] }: ClosetPageProps) {
   const [uploadedPublicUrl, setUploadedPublicUrl] = useState<string | null>(null);
 
   const handleToggleFavorite = (id: string) => {
-    setClothes(
-      clothes.map((item) =>
-        item.id === id
-          ? { ...item, isFavorite: !item.isFavorite }
-          : item,
-      ),
-    );
+    toggleFavorite(id);
   };
 
   const handleItemClick = (item: ClothingItem) => {
@@ -259,7 +215,6 @@ export function ClosetPage({ initialClothes = [] }: ClosetPageProps) {
       isFavorite: false,
     };
 
-    setClothes([...clothes, newItem]);
     setShowAddDialog(false);
     setAddStep("method");
     setNewClothing({
@@ -278,74 +233,27 @@ export function ClosetPage({ initialClothes = [] }: ClosetPageProps) {
     pendingUploadFileRef.current = null;
     setUploadedPublicUrl(null);
 
-    try {
-      const categoryMap: Record<string, ClothesItem['category']> = {
-        '상의': 'TOP',
-        '하의': 'BOTTOM',
-        '아우터': 'OUTER',
-        '신발': 'SHOES',
-        '악세사리': 'ACCESSORY',
-      };
-      await createClothesAction({
-        title: newItem.name,
-        category: categoryMap[newItem.category1] || 'TOP',
-        color: newItem.color[0] || '',
-        imageUrl: finalImageUrl,
-      });
-      router.refresh();
-    } catch {
-      /* 오프라인 시 로컬 상태만 업데이트 */
-    }
+    await addClothing(newItem, finalImageUrl);
   };
 
   const handleUpdateClothing = async () => {
     if (!selectedItem) return;
 
-    setClothes(
-      clothes.map((item) =>
-        item.id === selectedItem.id ? selectedItem : item,
-      ),
-    );
     setShowDetailDialog(false);
     setSelectedItem(null);
     setEditMode(false);
 
-    try {
-      const categoryMap: Record<string, ClothesItem['category']> = {
-        '상의': 'TOP',
-        '하의': 'BOTTOM',
-        '아우터': 'OUTER',
-        '신발': 'SHOES',
-        '악세사리': 'ACCESSORY',
-      };
-      await updateClothesAction(selectedItem.id, {
-        title: selectedItem.name,
-        category: categoryMap[selectedItem.category1] || 'TOP',
-        color: selectedItem.color[0] || '',
-        imageUrl: selectedItem.imageUrl,
-      });
-      router.refresh();
-    } catch {
-      /* 오프라인 시 로컬 상태만 업데이트 */
-    }
+    await updateClothing(selectedItem);
   };
 
   const handleDeleteClothing = async () => {
     if (!selectedItem) return;
 
     const deletedId = selectedItem.id;
-    setClothes(
-      clothes.filter((item) => item.id !== selectedItem.id),
-    );
     setShowDetailDialog(false);
     setSelectedItem(null);
 
-    try {
-      await deleteClothesAction(deletedId);
-      router.refresh();
-    } catch {
-      /* 오프라인 시 로컬 상태만 업데이트 */
-    }
+    await removeClothing(deletedId);
   };
 
   const handleCancelAdd = () => {
@@ -398,30 +306,12 @@ export function ClosetPage({ initialClothes = [] }: ClosetPageProps) {
     : filteredClothes;
 
   return (
-    <div className="h-screen w-full max-w-[500px] mx-auto bg-white flex flex-col overflow-hidden">
-      {/* 상단 브랜드 네임 + 추가 버튼 */}
-      <div className="flex-shrink-0 px-6 pt-6 pb-6 flex items-center justify-center relative">
-        <h1
-          className="text-black text-center"
-          style={{
-            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-            fontSize: "24px",
-            fontWeight: 700,
-            letterSpacing: "-0.02em",
-          }}
-        >
-          Closet
-        </h1>
-        <button
-          onClick={() => setShowAddDialog(true)}
-          className="absolute right-6 text-white p-2 hover:opacity-90 transition-opacity"
-          style={{
-            borderRadius: "12px",
-            backgroundColor: "#000",
-          }}
-        >
-          <Plus size={20} color="#fff" strokeWidth={2} />
-        </button>
+    <div className="flex-1 min-h-0 w-full bg-white flex flex-col overflow-hidden">
+      <div className="flex-shrink-0 relative">
+        {header}
+        <div className="absolute right-6 top-1/2 -translate-y-1/2">
+          <PlusAction onClick={() => setShowAddDialog(true)} />
+        </div>
       </div>
 
       {/* 카테고리 슬라이드 */}

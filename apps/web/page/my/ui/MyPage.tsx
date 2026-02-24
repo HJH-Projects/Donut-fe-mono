@@ -5,17 +5,15 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { useTranslation } from "react-i18next";
-import type { UserProfile } from "@/shared/api/users.types";
-import type { UserStats } from "@/shared/api/users.types";
-import { updateProfileAction } from "@/shared/api/actions/users.action";
-import { logout } from "@/shared/api/auth";
+import type { UserProfileResponseDto } from "@/shared/api/orvalSchema";
+import { useProfile } from "../model/useProfile";
 
 type TemperatureUnit = "celsius" | "fahrenheit";
 type Language = "ko" | "en";
 
 interface MyPageProps {
-  initialProfile?: UserProfile | null;
-  initialStats?: UserStats | null;
+  initialProfile?: UserProfileResponseDto | null;
+  initialStats?: { closetCount: number; lookCount: number } | null;
 }
 
 export function MyPage({ initialProfile = null, initialStats = null }: MyPageProps) {
@@ -30,23 +28,31 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
   const [temperatureUnit, setTemperatureUnit] =
     useState<TemperatureUnit>("celsius");
   const [language, setLanguage] = useState<Language>(i18n.language as Language);
-  const [nickname, setNickname] = useState(initialProfile?.nickname || "패션러버");
   const [tempNickname, setTempNickname] = useState("");
 
+  const {
+    stats,
+    nickname,
+    updateNickname,
+  } = useProfile({ initialProfile, initialStats });
+
   const userProfile = {
-    nickname: nickname,
-    email: initialProfile?.email || "fashion@example.com",
-    closetCount: initialStats?.closetCount ?? 15,
+    nickname,
+    email: "fashion@example.com",
+    closetCount: stats?.closetCount ?? 15,
     closetFavoriteCount: 0,
-    looksCount: initialStats?.lookCount ?? 3,
+    looksCount: stats?.lookCount ?? 3,
     looksFavoriteCount: 0,
   };
 
   const handleLogout = async () => {
     if (confirm(t('profile.logoutConfirm'))) {
       try {
-        await logout();
-        router.push('/login');
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include',
+        });
+        router.push('/');
       } catch {
         alert(t('profile.logoutSuccess'));
       }
@@ -64,12 +70,8 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
       return;
     }
     const newNickname = tempNickname.trim();
-    setNickname(newNickname);
     setShowNicknameDialog(false);
-    try {
-      await updateProfileAction({ nickname: newNickname });
-      router.refresh();
-    } catch { /* 오프라인 시 로컬 상태만 업데이트 */ }
+    await updateNickname(newNickname);
   };
 
   const handleLanguageChange = (newLang: Language) => {
@@ -79,7 +81,7 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
 
   return (
     <div
-      className="min-h-screen w-full max-w-[500px] mx-auto flex flex-col pb-24"
+      className="flex-1 min-h-0 w-full flex flex-col overflow-y-auto pb-24"
       style={{ backgroundColor: "#FFFFFF" }}
     >
       {/* 상단 타이틀 - Playfair Display */}
@@ -94,7 +96,7 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
             lineHeight: "1.1",
           }}
         >
-          {t('profile.title')}
+          {'Donut'}
         </h1>
       </div>
 

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getGoogleAuthUrl, getKakaoAuthUrl } from '@/shared/api/auth';
-import { getMeClient } from '@/shared/api/users.client';
+import { getUsersMeApi } from '@/shared/api/endpointTags/users';
+import { clientKy } from '@/features/api/clientKy';
 
 export const useLoginPopup = () => {
   const router = useRouter();
@@ -19,7 +19,7 @@ export const useLoginPopup = () => {
       if (event.data?.type === 'LOGIN_SUCCESS') {
         const storedNext = sessionStorage.getItem('login:next');
         sessionStorage.removeItem('login:next');
-        getMeClient()
+        getUsersMeApi(clientKy)
           .catch(() => {
             alert('로그인 정보를 확인하지 못했습니다.');
           })
@@ -42,9 +42,13 @@ export const useLoginPopup = () => {
     const left = window.screen.width / 2 - width / 2;
     const top = window.screen.height / 2 - height / 2;
 
-    const url = provider === 'google' ? getGoogleAuthUrl() : getKakaoAuthUrl();
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || '';
+    const url =
+      provider === 'google'
+        ? `${apiBase}/auth/google`
+        : `${apiBase}/auth/kakao`;
     sessionStorage.setItem('login:next', nextPath);
-    
+
     window.open(
       url,
       'loginPopup',

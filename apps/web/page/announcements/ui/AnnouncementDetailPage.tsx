@@ -1,9 +1,13 @@
 'use client';
 
-import { ChevronLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useTranslation } from "react-i18next";
-import type { AnnouncementDetail } from "@/shared/api/announcements.types";
+import { type ReactNode } from "react";
+
+type AnnouncementDetail = {
+  id: string;
+  title: string;
+  content: string;
+  date: string;
+};
 
 const fallbackAnnouncementData: Record<string, AnnouncementDetail> = {
   "1": {
@@ -40,19 +44,17 @@ const fallbackAnnouncementData: Record<string, AnnouncementDetail> = {
 
 interface AnnouncementDetailPageProps {
   initialAnnouncement?: AnnouncementDetail | null;
+  header?: ReactNode;
 }
 
-export function AnnouncementDetailPage({ initialAnnouncement = null }: AnnouncementDetailPageProps) {
-  const { t } = useTranslation();
-  const router = useRouter();
-
+export function AnnouncementDetailPage({ initialAnnouncement = null, header }: AnnouncementDetailPageProps) {
   // initialAnnouncement이 없으면 fallback 데이터에서 검색하지 않고 null 유지
   // (RSC에서 이미 id로 fetch하므로 여기서는 fallback만 표시)
   const announcement = initialAnnouncement;
 
   if (!announcement) {
     return (
-      <div className="min-h-screen w-full max-w-[500px] mx-auto flex flex-col items-center justify-center" style={{ backgroundColor: "#FFFFFF" }}>
+      <div className="flex-1 min-h-0 w-full max-w-[500px] mx-auto flex flex-col items-center justify-center" style={{ backgroundColor: "#FFFFFF" }}>
         <p
           style={{
             fontFamily: "var(--font-inter), 'Inter', sans-serif",
@@ -68,27 +70,8 @@ export function AnnouncementDetailPage({ initialAnnouncement = null }: Announcem
   }
 
   return (
-    <div className="min-h-screen w-full max-w-[500px] mx-auto flex flex-col pb-24" style={{ backgroundColor: "#FFFFFF" }}>
-      <div className="flex-shrink-0 px-6 pt-6 pb-6 flex items-center justify-center relative">
-        <button
-          onClick={() => router.push("/announcements")}
-          className="absolute left-6 p-2 hover:bg-gray-50 transition-colors -ml-2"
-          style={{ borderRadius: "var(--radius-md)" }}
-        >
-          <ChevronLeft size={24} color="#000" strokeWidth={2} />
-        </button>
-        <h1
-          className="text-black text-center"
-          style={{
-            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-            fontSize: "24px",
-            fontWeight: 700,
-            letterSpacing: "-0.02em",
-          }}
-        >
-          {t('announcements.title')}
-        </h1>
-      </div>
+    <div className="flex-1 min-h-0 w-full max-w-[500px] mx-auto flex flex-col pb-24" style={{ backgroundColor: "#FFFFFF" }}>
+      {header}
 
       <div className="flex-1 px-6">
         <h2

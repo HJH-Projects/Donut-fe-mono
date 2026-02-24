@@ -1,30 +1,16 @@
 'use client';
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { ImageWithFallback } from "@/shared/ui/ImageWithFallback";
 import { LookForm } from "@/shared/ui/LookForm";
+import { PlusAction } from "@/shared/ui/PlusAction";
 import { useTranslation } from "react-i18next";
 import { Plus, Heart, Search, ArrowLeft, ArrowRight, Share2, X, Trash2, Edit2, Link2, Check, Copy } from "lucide-react";
-import type { ClothesItem as ApiClothesItem } from '@/shared/api/clothes.types';
-import type { LookItem as ApiLookItem } from '@/shared/api/looks.types';
-import { createLookAction, updateLookAction, deleteLookAction } from '@/shared/api/actions/looks.action';
-
-type LookItem = {
-  id: string;
-  name: string;
-  category: string;
-  imageUrl: string;
-};
-
-type Look = {
-  id: string;
-  name: string;
-  tags: string[];
-  items: LookItem[];
-  isFavorite: boolean;
-};
+import type { ClothesResponseDto, LookResponseDto } from '@/shared/api/orvalSchema';
+import { useLooks, type Look, type LookItem } from '../model/useLooks';
+import { useClothes } from '@/page/closet/model/useClothes';
 
 type SharedLink = {
   id: string;
@@ -34,16 +20,18 @@ type SharedLink = {
 };
 
 interface LookPageProps {
-  initialLooks?: ApiLookItem[];
-  initialClothes?: ApiClothesItem[];
+  initialLooks?: LookResponseDto[];
+  initialClothes?: ClothesResponseDto[];
+  header?: ReactNode;
 }
 
-export function LookPage({ initialLooks = [], initialClothes = [] }: LookPageProps) {
+export function LookPage({ initialLooks = [], initialClothes = [], header }: LookPageProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const [showFavoriteOnly, setShowFavoriteOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
+
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -55,32 +43,21 @@ export function LookPage({ initialLooks = [], initialClothes = [] }: LookPagePro
   const [linkName, setLinkName] = useState("");
   const tagScrollRef = useRef<HTMLDivElement>(null);
 
-  // 옷장 아이템 데이터 (API)
-  const [closetItems] = useState<LookItem[]>(() => {
-    const categoryMap: Record<string, string> = { TOP: '상의', BOTTOM: '하의', OUTER: '아우터', SHOES: '신발', ACCESSORY: '악세사리' };
-    return initialClothes.map(item => ({
-      id: item.id,
-      name: item.title,
-      category: categoryMap[item.category] || item.category,
-      imageUrl: item.imageUrl,
-    }));
-  });
+  const {
+    looks,
+    addLook: hookAddLook,
+    editLook: hookEditLook,
+    removeLook: hookRemoveLook,
+    toggleFavorite,
+  } = useLooks({ initialLooks });
 
-  // 룩 데이터 (API)
-  const [looks, setLooks] = useState<Look[]>(() => {
-    return initialLooks.map(look => ({
-      id: look.id,
-      name: look.name,
-      tags: look.tags ? look.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
-      items: (look.items || []).map(item => ({
-        id: item.clothes?.id || item.clothesId,
-        name: item.clothes?.title || '',
-        category: item.clothes?.category || '',
-        imageUrl: item.clothes?.imageUrl || '',
-      })),
-      isFavorite: false,
-    }));
-  });
+  const { clothes: clothesData } = useClothes({ initialClothes });
+  const closetItems: LookItem[] = clothesData.map((c) => ({
+    id: c.id,
+    name: c.name,
+    category: c.category1,
+    imageUrl: c.imageUrl,
+  }));
 
   const [newLook, setNewLook] = useState<Partial<Look>>({
     name: "",
@@ -109,13 +86,7 @@ export function LookPage({ initialLooks = [], initialClothes = [] }: LookPagePro
   });
 
   const handleToggleFavorite = (id: string) => {
-    setLooks(
-      looks.map((look) =>
-        look.id === id
-          ? { ...look, isFavorite: !look.isFavorite }
-          : look,
-      ),
-    );
+    toggleFavorite(id);
   };
 
   const handleLookClick = (look: Look) => {
@@ -160,69 +131,27 @@ export function LookPage({ initialLooks = [], initialClothes = [] }: LookPagePro
   const handleDeleteLook = async () => {
     if (!selectedLook) return;
     const lookId = selectedLook.id;
-    setLooks(
-      looks.filter((look) => look.id !== lookId),
-    );
     setShowDetailDialog(false);
     setSelectedLook(null);
-    try {
-      await deleteLookAction(lookId);
-      router.refresh();
-    } catch {}
+    await hookRemoveLook(lookId);
   };
 
   const handleAddLook = async (lookData: Partial<Look>) => {
-    const newId = (looks.length + 1).toString();
-    const newLook: Look = {
-      id: newId,
-      name: lookData.name || "",
-      tags: lookData.tags || [],
-      items: lookData.items || [],
-      isFavorite: false,
-    };
-    setLooks([...looks, newLook]);
     setShowAddDialog(false);
-    try {
-      await createLookAction({
-        name: newLook.name,
-        tags: newLook.tags.join(','),
-        items: newLook.items.map((item, i) => ({ clothesId: item.id, sortOrder: i, role: 'ITEM' })),
-      });
-      router.refresh();
-    } catch {}
+    await hookAddLook(lookData);
   };
 
   const handleEditLook = async (lookData: Partial<Look>) => {
     if (!selectedLook) return;
     const lookId = selectedLook.id;
-    const updatedLook = {
-      name: lookData.name || selectedLook.name,
-      tags: lookData.tags || selectedLook.tags,
-      items: lookData.items || selectedLook.items,
-    };
-    setLooks(
-      looks.map((look) =>
-        look.id === lookId
-          ? {
-              ...look,
-              name: updatedLook.name,
-              tags: updatedLook.tags,
-              items: updatedLook.items,
-            }
-          : look
-      )
-    );
     setShowEditDialog(false);
     setShowDetailDialog(false);
     setSelectedLook(null);
-    try {
-      await updateLookAction(lookId, {
-        name: updatedLook.name,
-        tags: updatedLook.tags.join(','),
-        items: updatedLook.items.map((item, i) => ({ clothesId: item.id, sortOrder: i, role: 'ITEM' })),
-      });
-      router.refresh();
-    } catch {}
+    await hookEditLook(lookId, {
+      name: lookData.name || selectedLook.name,
+      tags: lookData.tags || selectedLook.tags,
+      items: lookData.items || selectedLook.items,
+    });
   };
 
   const handleShareLook = () => {
@@ -546,30 +475,12 @@ export function LookPage({ initialLooks = [], initialClothes = [] }: LookPagePro
   };
 
   return (
-    <div className="h-screen w-full max-w-[500px] mx-auto flex flex-col overflow-hidden" style={{ backgroundColor: "#FFFFFF" }}>
-      {/* 상단 타이틀 + 추가 버튼 */}
-      <div className="flex-shrink-0 px-6 pt-6 pb-6 flex items-center justify-center relative">
-        <h1
-          className="text-black text-center"
-          style={{
-            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-            fontSize: "24px",
-            fontWeight: 700,
-            letterSpacing: "-0.02em",
-          }}
-        >
-          Looks
-        </h1>
-        <button
-          onClick={() => setShowAddDialog(true)}
-          className="absolute right-6 text-white p-2 hover:opacity-90 transition-opacity"
-          style={{
-            borderRadius: "12px",
-            backgroundColor: "#000",
-          }}
-        >
-          <Plus size={20} color="#fff" strokeWidth={2} />
-        </button>
+    <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden" style={{ backgroundColor: "#FFFFFF" }}>
+      <div className="flex-shrink-0 relative">
+        {header}
+        <div className="absolute right-6 top-1/2 -translate-y-1/2">
+          <PlusAction onClick={() => setShowAddDialog(true)} />
+        </div>
       </div>
 
       {/* 필터 토글 + 검색 + 룩 개수 표시 */}

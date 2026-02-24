@@ -1,12 +1,19 @@
 'use client';
 
-import { ChevronLeft, Plus, Minus } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Plus, Minus } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useState, type ReactNode } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { useTranslation } from "react-i18next";
-import type { NotificationItem } from "@/shared/api/notifications.types";
-import { markNotificationReadAction } from "@/shared/api/actions/notifications.action";
+
+type NotificationItem = {
+  id: string;
+  title: string;
+  message: string;
+  date: string;
+  isRead: boolean;
+  detail?: string;
+  imageUrl?: string;
+};
 
 const fallbackNotifications: NotificationItem[] = [
   {
@@ -51,11 +58,10 @@ const fallbackNotifications: NotificationItem[] = [
 
 interface NotificationsPageProps {
   initialNotifications?: NotificationItem[];
+  header?: ReactNode;
 }
 
-export function NotificationsPage({ initialNotifications = [] }: NotificationsPageProps) {
-  const router = useRouter();
-  const { t } = useTranslation();
+export function NotificationsPage({ initialNotifications = [], header }: NotificationsPageProps) {
   const searchParams = useSearchParams();
   const isRecentView = searchParams.get("recent") === "true";
   const [openId, setOpenId] = useState<string | null>(null);
@@ -83,35 +89,13 @@ export function NotificationsPage({ initialNotifications = [] }: NotificationsPa
       setOpenId(id);
       if (!readState[id]) {
         setReadState((prev) => ({ ...prev, [id]: true }));
-        try {
-          await markNotificationReadAction(id);
-        } catch { /* 오프라인 시 로컬 상태만 업데이트 */ }
       }
     }
   };
 
   return (
-    <div className="min-h-screen w-full max-w-[500px] mx-auto flex flex-col pb-24" style={{ backgroundColor: "#FFFFFF" }}>
-      <div className="flex-shrink-0 px-6 pt-6 pb-6 flex items-center justify-center relative">
-        <button
-          onClick={() => router.push("/my")}
-          className="absolute left-6 p-2 hover:bg-gray-50 transition-colors -ml-2"
-          style={{ borderRadius: "var(--radius-md)" }}
-        >
-          <ChevronLeft size={24} color="#000" strokeWidth={2} />
-        </button>
-        <h1
-          className="text-black text-center"
-          style={{
-            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-            fontSize: "24px",
-            fontWeight: 700,
-            letterSpacing: "-0.02em",
-          }}
-        >
-          {t('notifications.title')}
-        </h1>
-      </div>
+    <div className="flex-1 min-h-0 w-full max-w-[500px] mx-auto flex flex-col pb-24" style={{ backgroundColor: "#FFFFFF" }}>
+      {header}
 
       <div className="flex-1 px-6">
         <div className="space-y-3">

@@ -1,9 +1,14 @@
 'use client';
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTranslation } from "react-i18next";
-import type { AnnouncementListItem } from "@/shared/api/announcements.types";
+import { type ReactNode } from "react";
+
+type AnnouncementListItem = {
+  id: string;
+  title: string;
+  date: string;
+};
 
 const fallbackAnnouncements: AnnouncementListItem[] = [
   { id: "1", title: "앱 v2.0 업데이트", date: "2026-02-05" },
@@ -15,38 +20,19 @@ const fallbackAnnouncements: AnnouncementListItem[] = [
 
 interface AnnouncementsPageProps {
   initialAnnouncements?: AnnouncementListItem[];
+  header?: ReactNode;
 }
 
-export function AnnouncementsPage({ initialAnnouncements = [] }: AnnouncementsPageProps) {
+export function AnnouncementsPage({ initialAnnouncements = [], header }: AnnouncementsPageProps) {
   const router = useRouter();
-  const { t } = useTranslation();
 
   const announcements = initialAnnouncements.length > 0
     ? initialAnnouncements
     : fallbackAnnouncements;
 
   return (
-    <div className="min-h-screen w-full max-w-[500px] mx-auto flex flex-col pb-24" style={{ backgroundColor: "#FFFFFF" }}>
-      <div className="flex-shrink-0 px-6 pt-6 pb-6 flex items-center justify-center relative">
-        <button
-          onClick={() => router.push("/my")}
-          className="absolute left-6 p-2 hover:bg-gray-50 transition-colors -ml-2"
-          style={{ borderRadius: "var(--radius-md)" }}
-        >
-          <ChevronLeft size={24} color="#000" strokeWidth={2} />
-        </button>
-        <h1
-          className="text-black text-center"
-          style={{
-            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-            fontSize: "24px",
-            fontWeight: 700,
-            letterSpacing: "-0.02em",
-          }}
-        >
-          {t('announcements.title')}
-        </h1>
-      </div>
+    <div className="flex-1 min-h-0 w-full max-w-[500px] mx-auto flex flex-col pb-24" style={{ backgroundColor: "#FFFFFF" }}>
+      {header}
 
       <div className="flex-1 px-6">
         <div className="space-y-3">
