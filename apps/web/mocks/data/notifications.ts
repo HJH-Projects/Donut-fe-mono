@@ -1,4 +1,4 @@
-import type { NotificationItem } from '@/shared/api/notifications.types';
+import type { NotificationItem } from '../types';
 
 export const mockNotifications: NotificationItem[] = [
   {

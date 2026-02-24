@@ -1,4 +1,4 @@
-import type { AnnouncementListItem, AnnouncementDetail } from '@/shared/api/announcements.types';
+import type { AnnouncementListItem, AnnouncementDetail } from '../types';
 
 export const mockAnnouncementList: AnnouncementListItem[] = [
   { id: '1', title: '앱 v2.0 업데이트', date: '2026-02-05' },

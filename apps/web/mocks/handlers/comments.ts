@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { mockComments } from '../data/comments';
-import type { CommentItem } from '@/shared/api/comments.types';
+import type { CommentItem } from '../types';
 
 const comments: CommentItem[] = [...mockComments];
 let nextId = 100;

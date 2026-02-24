@@ -1,4 +1,4 @@
-import type { FAQItem } from '@/shared/api/faqs.types';
+import type { FAQItem } from '../types';
 
 export const mockFaqs: FAQItem[] = [
   {

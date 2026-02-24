@@ -1,4 +1,4 @@
-import type { CommentItem } from '@/shared/api/comments.types';
+import type { CommentItem } from '../types';
 
 export const mockComments: CommentItem[] = [
   {
