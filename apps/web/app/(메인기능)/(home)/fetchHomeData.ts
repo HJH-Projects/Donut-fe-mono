@@ -79,7 +79,11 @@ export async function fetchHomeDataGuest(ky: KyInstance): Promise<HomeInitialDat
 
   const [weather, recommendation] = await Promise.all([
     getLocationWeatherApi(ky, defaultLocation.id).catch(() => null),
-    getRecommendationsLookApi(ky, { gender: getRandomGender() }).catch(() => null),
+    getRecommendationsLookApi(ky, {
+      latitude: defaultLocation.lat,
+      longitude: defaultLocation.lon,
+      gender: getRandomGender(),
+    }).catch(() => null),
   ]);
 
   return {
