@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { useTranslation } from "react-i18next";
 import type { UserProfileResponseDto } from "@/shared/api/orvalSchema";
+import Spinner from "@/shared/ui/Spinner";
 import { useProfile } from "../model/useProfile";
 
 type TemperatureUnit = "celsius" | "fahrenheit";
@@ -33,7 +34,9 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
   const {
     stats,
     nickname,
+    isResettingNickname,
     updateNickname,
+    resetNickname,
   } = useProfile({ initialProfile, initialStats });
 
   const userProfile = {
@@ -72,6 +75,11 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
     const newNickname = tempNickname.trim();
     setShowNicknameDialog(false);
     await updateNickname(newNickname);
+  };
+
+  const handleResetNickname = async () => {
+    setShowNicknameDialog(false);
+    await resetNickname();
   };
 
   const handleLanguageChange = (newLang: Language) => {
@@ -418,19 +426,45 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
               />
             </div>
 
-            <button
-              onClick={handleSaveNickname}
-              className="w-full py-4 text-white transition-all hover:opacity-90"
-              style={{
-                backgroundColor: "#000",
-                borderRadius: "var(--radius-pill)",
-                fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                fontSize: "16px",
-                fontWeight: 700,
-              }}
-            >
-              {t('profile.apply')}
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={handleResetNickname}
+                disabled={isResettingNickname}
+                className="flex-1 py-4 transition-all hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+                style={{
+                  backgroundColor: "#FFFFFF",
+                  borderRadius: "var(--radius-pill)",
+                  border: "1.5px solid #E5E5E5",
+                  color: "#000",
+                  fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                  fontSize: "16px",
+                  fontWeight: 700,
+                }}
+              >
+                {isResettingNickname ? (
+                  <>
+                    <Spinner size="sm" className="text-[#555555]" />
+                    {t('profile.resetNickname')}
+                  </>
+                ) : (
+                  t('profile.resetNickname')
+                )}
+              </button>
+              <button
+                onClick={handleSaveNickname}
+                disabled={isResettingNickname}
+                className="flex-1 py-4 text-white transition-all hover:opacity-90"
+                style={{
+                  backgroundColor: "#000",
+                  borderRadius: "var(--radius-pill)",
+                  fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                  fontSize: "16px",
+                  fontWeight: 700,
+                }}
+              >
+                {t('profile.apply')}
+              </button>
+            </div>
           </Dialog.Popup>
         </Dialog.Portal>
       </Dialog.Root>

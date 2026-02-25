@@ -21,3 +21,9 @@ export const patchUsersProfileApi = (
 export const postUsersResetApi = (ky: KyInstance, options?: ApiRequestOptions) => {
   return ky.post('users/reset', options).then(() => undefined);
 };
+
+export const postUsersResetNicknameApi = (ky: KyInstance, options?: ApiRequestOptions) => {
+  return ky
+    .post('users/nickname/reset', options)
+    .then((res) => res.json<{ nickname: string }>());
+};

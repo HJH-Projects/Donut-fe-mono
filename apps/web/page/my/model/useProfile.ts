@@ -3,7 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UserProfileResponseDto } from '@/shared/api/orvalSchema';
-import { getUsersMeApi, patchUsersProfileApi } from '@/shared/api/endpointTags/users';
+import {
+  getUsersMeApi,
+  patchUsersProfileApi,
+  postUsersResetNicknameApi,
+} from '@/shared/api/endpointTags/users';
 import { getClothesApi } from '@/shared/api/endpointTags/clothes';
 import { getLooksApi } from '@/shared/api/endpointTags/looks';
 import { clientKy } from '@/features/api/clientKy';
@@ -21,6 +25,7 @@ export function useProfile({ initialProfile = null, initialStats = null }: UsePr
   const [stats, setStats] = useState<{ closetCount: number; lookCount: number } | null>(initialStats);
   const [nickname, setNickname] = useState(initialProfile?.nickname || '패션러버');
   const [isBootstrapped, setIsBootstrapped] = useState(!!(initialProfile && initialStats));
+  const [isResettingNickname, setIsResettingNickname] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
 
   useEffect(() => {
@@ -59,12 +64,28 @@ export function useProfile({ initialProfile = null, initialStats = null }: UsePr
     }
   };
 
+  const resetNickname = async () => {
+    setIsResettingNickname(true);
+    try {
+      const resetResult = await postUsersResetNicknameApi(clientKy);
+      setNickname(resetResult.nickname);
+      setProfile((prev) => (prev ? { ...prev, nickname: resetResult.nickname } : prev));
+      router.refresh();
+    } catch {
+      /* API 에러 시 무시 */
+    } finally {
+      setIsResettingNickname(false);
+    }
+  };
+
   return {
     profile,
     stats,
     nickname,
     isBootstrapped,
+    isResettingNickname,
     error,
     updateNickname,
+    resetNickname,
   };
 }

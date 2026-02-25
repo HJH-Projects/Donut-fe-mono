@@ -190,6 +190,7 @@
     "editNickname": "닉네임 변경",
     "nickname": "닉네임",
     "enterNickname": "닉네임을 입력해주세요",
+    "resetNickname": "닉네임 초기화",
     "apply": "설정하기",
     "confirm": "확인",
     "settingsDialog": {

@@ -190,6 +190,7 @@
     "editNickname": "Edit Nickname",
     "nickname": "Nickname",
     "enterNickname": "Please enter nickname",
+    "resetNickname": "Reset Nickname",
     "apply": "Apply",
     "confirm": "Confirm",
     "settingsDialog": {
