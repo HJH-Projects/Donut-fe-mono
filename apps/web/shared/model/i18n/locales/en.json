@@ -17,7 +17,11 @@
     "addNewLocation": "Add New Location",
     "addCurrentLocation": "Add Current Location",
     "enterLocationAlias": "Enter an alias to save this location",
-    "locationAliasPlaceholder": "e.g., Home, Office, etc."
+    "locationAliasPlaceholder": "e.g., Home, Office, etc.",
+    "editLocations": "Edit",
+    "editLocationsDone": "Done",
+    "selectLocationToEdit": "Select a location to edit",
+    "deleteLocationConfirm": "Are you sure you want to delete \"{{alias}}\"?"
   },
   "closet": {
     "title": "Closet",

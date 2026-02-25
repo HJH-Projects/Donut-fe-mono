@@ -17,7 +17,11 @@
     "addNewLocation": "새 지역 추가",
     "addCurrentLocation": "현재 위치 추가",
     "enterLocationAlias": "현재 위치를 저장할 별칭을 입력하세요",
-    "locationAliasPlaceholder": "예: 우리집, 회사 등"
+    "locationAliasPlaceholder": "예: 우리집, 회사 등",
+    "editLocations": "편집",
+    "editLocationsDone": "완료",
+    "selectLocationToEdit": "수정할 지역을 선택하세요",
+    "deleteLocationConfirm": "\"{{alias}}\"을(를) 삭제하시겠습니까?"
   },
   "closet": {
     "title": "옷장",
