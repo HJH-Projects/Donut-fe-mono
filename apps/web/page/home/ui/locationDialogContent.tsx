@@ -1,5 +1,8 @@
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MapPin, Check, Trash2 } from 'lucide-react';
+import KakaoMapPicker, { type KakaoMapPickerRef } from '@/features/map/KakaoMapPicker';
+import KakaoMapSearch from '@/features/map/KakaoMapSearch';
 import type { HomeLocationOption } from './home.types';
 
 const FONT = "var(--font-inter), 'Inter', sans-serif";
@@ -61,7 +64,7 @@ export const ConfirmDeleteContent = ({
 interface AddLocationContentProps {
   alias: string;
   onAliasChange: (value: string) => void;
-  onSave: () => void;
+  onSave: (coords: { lat: number; lon: number; name: string }) => void;
   onCancel: () => void;
 }
 
@@ -72,16 +75,40 @@ export const AddLocationContent = ({
   onCancel,
 }: AddLocationContentProps) => {
   const { t } = useTranslation();
+  const mapRef = useRef<KakaoMapPickerRef>(null);
+  const [selectedCoords, setSelectedCoords] = useState<{
+    lat: number;
+    lon: number;
+    name: string;
+  } | null>(null);
+
+  const handleLocationSelect = (location: { lat: number; lon: number; name: string }) => {
+    setSelectedCoords(location);
+  };
+
+  const handleSearchSelect = (place: { lat: number; lon: number; name: string }) => {
+    mapRef.current?.moveTo(place.lat, place.lon);
+  };
+
+  const handleSave = () => {
+    if (!selectedCoords || !alias.trim()) return;
+    onSave(selectedCoords);
+  };
+
+  const canSave = Boolean(selectedCoords && alias.trim());
+
   return (
     <>
       <h2
         className="text-black mb-4"
         style={{ fontFamily: FONT, fontSize: '18px', fontWeight: 600 }}
       >
-        {t('home.addCurrentLocation')}
+        {t('home.addNewLocation')}
       </h2>
+      <KakaoMapSearch onSelect={handleSearchSelect} />
+      <KakaoMapPicker ref={mapRef} onLocationSelect={handleLocationSelect} />
       <p
-        className="text-[#555555] mb-6"
+        className="text-[#555555] mb-2"
         style={{ fontFamily: FONT, fontSize: '13px', fontWeight: 400, lineHeight: '1.5' }}
       >
         {t('home.enterLocationAlias')}
@@ -100,7 +127,7 @@ export const AddLocationContent = ({
           fontWeight: 400,
         }}
         onKeyDown={(e) => {
-          if (e.key === 'Enter') onSave();
+          if (e.key === 'Enter') handleSave();
         }}
       />
       <div className="flex gap-2">
@@ -118,9 +145,17 @@ export const AddLocationContent = ({
           {t('common.cancel')}
         </button>
         <button
-          onClick={onSave}
+          onClick={handleSave}
+          disabled={!canSave}
           className="flex-1 bg-black text-white px-4 py-3 hover:opacity-90 transition-opacity"
-          style={{ borderRadius: '24px', fontFamily: FONT, fontSize: '14px', fontWeight: 600 }}
+          style={{
+            borderRadius: '24px',
+            fontFamily: FONT,
+            fontSize: '14px',
+            fontWeight: 600,
+            opacity: canSave ? 1 : 0.5,
+            cursor: canSave ? 'pointer' : 'not-allowed',
+          }}
         >
           {t('common.save')}
         </button>

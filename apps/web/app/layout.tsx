@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
 
+import Script from "next/script";
 import "./globals.css";
 import { I18nProvider } from "@/shared/model/i18n/I18nProvider";
 import { MSWProvider } from "@/shared/model/providers/MSWProvider";
@@ -27,6 +28,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
+      <Script
+        src={`//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAPS_JS_KEY}&autoload=false&libraries=services`}
+        strategy="afterInteractive"
+      />
       <body
         className={`${playfair.variable} ${inter.variable} antialiased bg-[#f5f5f5]` } 
       >

@@ -18,24 +18,9 @@ import {
   LocationListContent,
 } from './locationDialogContent';
 
-const DEFAULT_COORDS = { latitude: 37.5665, longitude: 126.978 };
-
 type DialogMode = 'select' | 'edit' | 'add' | 'confirmDelete';
 
 const FONT = "var(--font-inter), 'Inter', sans-serif";
-
-function getCoords(): Promise<{ lat: number; lon: number }> {
-  return new Promise((resolve) => {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      resolve({ lat: DEFAULT_COORDS.latitude, lon: DEFAULT_COORDS.longitude });
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-      () => resolve({ lat: DEFAULT_COORDS.latitude, lon: DEFAULT_COORDS.longitude }),
-    );
-  });
-}
 
 function toLocationOption(dto: {
   id: string;
@@ -102,20 +87,19 @@ const LocationDialog = ({
     clearEditing();
   };
 
-  const handleSaveNewLocation = async () => {
+  const handleSaveNewLocation = async (coords: { lat: number; lon: number; name: string }) => {
     if (!alias.trim()) return;
-    const name = alias.trim();
+    const userAlias = alias.trim();
     setAlias('');
     setMode('select');
 
     try {
-      const coords = await getCoords();
       const created = await postLocationsApi(clientKy, {
-        name,
+        name: coords.name,
         lat: coords.lat,
         lon: coords.lon,
         timezone: 'Asia/Seoul',
-        alias: name,
+        alias: userAlias,
         isDefault: false,
       });
       const newLoc = toLocationOption(created);
@@ -222,7 +206,7 @@ const LocationDialog = ({
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 bg-black/30 z-50" />
         <Dialog.Popup
-          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 z-50 w-[90%] max-w-[400px]"
+          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 z-50 w-[90%] max-w-[400px] max-h-[85vh] overflow-y-auto"
           style={{ borderRadius: '24px' }}
           onClick={() => {
             if (mode === 'edit' && editingId) clearEditing();

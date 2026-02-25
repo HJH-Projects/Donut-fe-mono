@@ -21,7 +21,11 @@
     "editLocations": "Edit",
     "editLocationsDone": "Done",
     "selectLocationToEdit": "Select a location to edit",
-    "deleteLocationConfirm": "Are you sure you want to delete \"{{alias}}\"?"
+    "deleteLocationConfirm": "Are you sure you want to delete \"{{alias}}\"?",
+    "searchLocation": "Search place (e.g., Gangnam Station)",
+    "tapToSelectLocation": "Tap the map to select a location",
+    "noSearchResults": "No search results",
+    "currentLocation": "Current location"
   },
   "closet": {
     "title": "Closet",

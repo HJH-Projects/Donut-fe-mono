@@ -64,6 +64,14 @@ body {
   color: var(--color-black);
 }
 
+.kakao-map-picker {
+  background-color: #F2EDE4;
+}
+
+.kakao-map-picker > div {
+  background-color: #F2EDE4;
+}
+
 /* Scrollbar Hide */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
