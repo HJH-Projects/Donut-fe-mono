@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { MapPin, Check, Trash2 } from 'lucide-react';
 import KakaoMapPicker, { type KakaoMapPickerRef } from '@/features/map/KakaoMapPicker';
 import KakaoMapSearch from '@/features/map/KakaoMapSearch';
+import Spinner from '@/shared/ui/Spinner';
 import type { HomeLocationOption } from './home.types';
 
 const FONT = "var(--font-inter), 'Inter', sans-serif";
@@ -171,6 +172,7 @@ interface LocationListContentProps {
   selectedLocation: string;
   editingId: string | null;
   editAlias: string;
+  isUpdatingAlias: boolean;
   headerAction: { label: string; onClick: () => void };
   onEditAliasChange: (value: string) => void;
   onSelectLocation: (loc: HomeLocationOption) => void;
@@ -186,6 +188,7 @@ export const LocationListContent = ({
   selectedLocation,
   editingId,
   editAlias,
+  isUpdatingAlias,
   headerAction,
   onEditAliasChange,
   onSelectLocation,
@@ -226,6 +229,7 @@ export const LocationListContent = ({
               mode={mode}
               editingId={editingId}
               editAlias={editAlias}
+              isUpdatingAlias={isUpdatingAlias}
               selectedLocation={selectedLocation}
               onEditAliasChange={onEditAliasChange}
               onSelect={onSelectLocation}
@@ -255,6 +259,7 @@ interface LocationItemProps {
   mode: 'select' | 'edit';
   editingId: string | null;
   editAlias: string;
+  isUpdatingAlias: boolean;
   selectedLocation: string;
   onEditAliasChange: (value: string) => void;
   onSelect: (loc: HomeLocationOption) => void;
@@ -268,6 +273,7 @@ const LocationItem = ({
   mode,
   editingId,
   editAlias,
+  isUpdatingAlias,
   selectedLocation,
   onEditAliasChange,
   onSelect,
@@ -292,6 +298,7 @@ const LocationItem = ({
 
     if (editingId === loc.id) {
       const canUpdateAlias = Boolean(editAlias.trim() && editAlias.trim() !== loc.alias);
+      const canSubmit = canUpdateAlias && !isUpdatingAlias;
 
       return (
         <div
@@ -304,21 +311,27 @@ const LocationItem = ({
             onChange={(e) => onEditAliasChange(e.target.value)}
             className="flex-1 outline-none text-black"
             style={{ fontFamily: FONT, fontSize: '14px', fontWeight: 500 }}
+            disabled={isUpdatingAlias}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && canUpdateAlias) onUpdateAlias();
+              if (e.key === 'Enter' && canSubmit) onUpdateAlias();
             }}
             autoFocus
           />
           <button
-            disabled={!canUpdateAlias}
-            className="hover:opacity-70 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+            disabled={!canSubmit}
+            className="inline-flex items-center justify-center w-5 h-5 hover:opacity-70 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={onUpdateAlias}
             aria-label="확인"
           >
-            <Check size={16} color="#555555" strokeWidth={1.5} />
+            {isUpdatingAlias ? (
+              <Spinner size="sm" className="inline-flex text-[#555555]" />
+            ) : (
+              <Check size={16} color="#555555" strokeWidth={1.5} />
+            )}
           </button>
           <button
-            className="hover:opacity-70 transition-opacity"
+            className="hover:opacity-70 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+            disabled={isUpdatingAlias}
             onClick={() => onRequestDelete(loc.id!)}
             aria-label="삭제"
           >

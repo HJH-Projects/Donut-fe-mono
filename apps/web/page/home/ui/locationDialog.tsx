@@ -55,6 +55,7 @@ const LocationDialog = ({
   const [alias, setAlias] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editAlias, setEditAlias] = useState('');
+  const [isUpdatingAlias, setIsUpdatingAlias] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const resetAll = () => {
@@ -62,12 +63,14 @@ const LocationDialog = ({
     setAlias('');
     setEditingId(null);
     setEditAlias('');
+    setIsUpdatingAlias(false);
     setDeletingId(null);
   };
 
   const clearEditing = () => {
     setEditingId(null);
     setEditAlias('');
+    setIsUpdatingAlias(false);
   };
 
   const handleEnterAdd = async () => {
@@ -120,6 +123,7 @@ const LocationDialog = ({
     const current = locations.find((loc) => loc.id === editingId);
     if (!current || current.alias === nextAlias) return;
 
+    setIsUpdatingAlias(true);
     try {
       const updated = await patchLocationsApi(clientKy, editingId, {
         alias: nextAlias,
@@ -129,6 +133,8 @@ const LocationDialog = ({
       clearEditing();
     } catch {
       /* API 에러 시 무시 */
+    } finally {
+      setIsUpdatingAlias(false);
     }
   };
 
@@ -191,6 +197,7 @@ const LocationDialog = ({
         selectedLocation={selectedLocation}
         editingId={editingId}
         editAlias={editAlias}
+        isUpdatingAlias={isUpdatingAlias}
         headerAction={headerAction()}
         onEditAliasChange={setEditAlias}
         onSelectLocation={onSelectLocation}
