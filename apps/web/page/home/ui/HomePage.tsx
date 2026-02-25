@@ -27,6 +27,7 @@ const HomePage = ({
     locations,
     isLoading,
     selectLocation,
+    updateDisplayedLocationAlias,
     setLocations,
   } = useHomeData({
     isLoggedIn,
@@ -55,6 +56,7 @@ const HomePage = ({
         onToggleWeatherDetail={() => setShowWeatherDetail((prev) => !prev)}
         locations={locations}
         onSelectLocation={selectLocation}
+        onLocationAliasUpdated={updateDisplayedLocationAlias}
         setLocations={setLocations}
       />
 

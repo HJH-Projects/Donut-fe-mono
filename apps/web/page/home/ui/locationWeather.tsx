@@ -13,6 +13,7 @@ interface LocationWeatherProps {
   onToggleWeatherDetail: () => void;
   locations: HomeLocationOption[];
   onSelectLocation: (loc: HomeLocationOption) => void;
+  onLocationAliasUpdated: (prevAlias: string, nextAlias: string) => void;
   setLocations: Dispatch<SetStateAction<HomeLocationOption[]>>;
 }
 
@@ -38,6 +39,7 @@ const LocationWeather = ({
   onToggleWeatherDetail,
   locations,
   onSelectLocation,
+  onLocationAliasUpdated,
   setLocations,
 }: LocationWeatherProps) =>{
   return (
@@ -101,6 +103,7 @@ const LocationWeather = ({
                     locations={locations}
                     selectedLocation={weather.location}
                     onSelectLocation={onSelectLocation}
+                    onLocationAliasUpdated={onLocationAliasUpdated}
                     setLocations={setLocations}
                   />
                   <p

@@ -40,6 +40,7 @@ interface LocationDialogProps {
   locations: HomeLocationOption[];
   selectedLocation: string;
   onSelectLocation: (location: HomeLocationOption) => void;
+  onLocationAliasUpdated: (prevAlias: string, nextAlias: string) => void;
   setLocations: Dispatch<SetStateAction<HomeLocationOption[]>>;
 }
 
@@ -47,6 +48,7 @@ const LocationDialog = ({
   locations,
   selectedLocation,
   onSelectLocation,
+  onLocationAliasUpdated,
   setLocations,
 }: LocationDialogProps) => {
   const { t } = useTranslation();
@@ -130,6 +132,7 @@ const LocationDialog = ({
       });
       const updatedLoc = toLocationOption(updated);
       setLocations((prev) => prev.map((loc) => (loc.id === editingId ? updatedLoc : loc)));
+      onLocationAliasUpdated(current.alias, updatedLoc.alias);
       clearEditing();
     } catch {
       /* API 에러 시 무시 */

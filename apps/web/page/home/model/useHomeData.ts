@@ -107,6 +107,16 @@ export function useHomeData({
     [fetchLocationData],
   );
 
+  const updateDisplayedLocationAlias = useCallback(
+    (prevAlias: string, nextAlias: string) => {
+      setWeather((prev) => {
+        if (prev.location !== prevAlias) return prev;
+        return { ...prev, location: nextAlias };
+      });
+    },
+    [],
+  );
+
   // 서버에서 날씨를 못 가져온 경우 클라이언트에서 재시도
   useEffect(() => {
     if (!defaultLocation || initialWeather) return;
@@ -124,6 +134,7 @@ export function useHomeData({
     locations,
     isLoading,
     selectLocation,
+    updateDisplayedLocationAlias,
     setLocations,
   };
 }
