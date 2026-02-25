@@ -79,6 +79,12 @@ const KakaoMapPicker = forwardRef<KakaoMapPickerRef, KakaoMapPickerProps>(
             reverseGeocode(latlng.getLat(), latlng.getLng());
           });
 
+          // 마커를 드래그해서 놓았을 때도 같은 방식으로 주소/좌표를 갱신한다.
+          kakao.maps.event.addListener(marker, 'dragend', () => {
+            const latlng = marker.getPosition();
+            reverseGeocode(latlng.getLat(), latlng.getLng());
+          });
+
           setMapCreated(true);
         } else {
           // 4-B) 이미 지도 인스턴스가 있으면 재생성하지 않고 중심/마커만 이동.
