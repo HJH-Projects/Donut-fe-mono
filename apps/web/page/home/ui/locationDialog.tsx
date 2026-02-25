@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type Dispatch, type SetStateAction } from 'react';
+import { useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dialog } from '@base-ui/react/dialog';
 import { Settings } from 'lucide-react';
@@ -58,21 +58,33 @@ const LocationDialog = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editAlias, setEditAlias] = useState('');
   const [isUpdatingAlias, setIsUpdatingAlias] = useState(false);
+  const [isEnteringEdit, setIsEnteringEdit] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const enterEditTimerRef = useRef<number | null>(null);
 
   const resetAll = () => {
+    if (enterEditTimerRef.current) {
+      window.clearTimeout(enterEditTimerRef.current);
+      enterEditTimerRef.current = null;
+    }
     setMode('select');
     setAlias('');
     setEditingId(null);
     setEditAlias('');
     setIsUpdatingAlias(false);
+    setIsEnteringEdit(false);
     setDeletingId(null);
   };
 
   const clearEditing = () => {
+    if (enterEditTimerRef.current) {
+      window.clearTimeout(enterEditTimerRef.current);
+      enterEditTimerRef.current = null;
+    }
     setEditingId(null);
     setEditAlias('');
     setIsUpdatingAlias(false);
+    setIsEnteringEdit(false);
   };
 
   const handleEnterAdd = async () => {
@@ -84,7 +96,12 @@ const LocationDialog = ({
   const handleEnterEdit = async () => {
     const ok = await checkAuth();
     if (!ok) return;
-    setMode('edit');
+    setIsEnteringEdit(true);
+    enterEditTimerRef.current = window.setTimeout(() => {
+      setMode('edit');
+      setIsEnteringEdit(false);
+      enterEditTimerRef.current = null;
+    }, 120);
   };
 
   const handleExitEdit = () => {
@@ -197,7 +214,7 @@ const LocationDialog = ({
       <LocationListContent
         mode={mode}
         locations={locations}
-        selectedLocation={selectedLocation}
+        selectedLocation={isEnteringEdit ? '' : selectedLocation}
         editingId={editingId}
         editAlias={editAlias}
         isUpdatingAlias={isUpdatingAlias}
