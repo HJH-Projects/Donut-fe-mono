@@ -19,7 +19,5 @@ export async function POST() {
     response.headers.append('set-cookie', setCookie);
   }
 
-  response.cookies.delete('accessToken');
-  response.cookies.delete('refreshToken');
   return response;
 }
