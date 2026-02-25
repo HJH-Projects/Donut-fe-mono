@@ -57,7 +57,7 @@ const LocationWeather = ({
             className="flex items-center gap-3 cursor-pointer hover:opacity-70 transition-opacity z-10"
           >
             {renderWeatherIcon(weather.condition)}
-            <div>
+            <div className="text-left">
               <p
                 className="text-black"
                 style={{
