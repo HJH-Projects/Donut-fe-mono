@@ -1,16 +1,28 @@
 'use client';
 
-import { useState, type Dispatch, type SetStateAction } from "react";
-import { useRouter } from "next/navigation";
-import { useTranslation } from "react-i18next";
-import { Dialog } from "@base-ui/react/dialog";
-import { MapPin, Settings } from "lucide-react";
-import { postLocationsApi } from "@/shared/api/endpointTags/locations";
-import { clientKy } from "@/features/api/clientKy";
-import { authGuard } from "@/features/auth/authGuard";
-import type { HomeLocationOption } from "./home.types";
+import { useState, type Dispatch, type SetStateAction } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Dialog } from '@base-ui/react/dialog';
+import { Settings } from 'lucide-react';
+import {
+  postLocationsApi,
+  patchLocationsApi,
+  deleteLocationsApi,
+} from '@/shared/api/endpointTags/locations';
+import { clientKy } from '@/features/api/clientKy';
+import { useAuthGuard } from '@/features/auth/useAuthGuard';
+import type { HomeLocationOption } from './home.types';
+import {
+  ConfirmDeleteContent,
+  AddLocationContent,
+  LocationListContent,
+} from './locationDialogContent';
 
 const DEFAULT_COORDS = { latitude: 37.5665, longitude: 126.978 };
+
+type DialogMode = 'select' | 'edit' | 'add' | 'confirmDelete';
+
+const FONT = "var(--font-inter), 'Inter', sans-serif";
 
 function getCoords(): Promise<{ lat: number; lon: number }> {
   return new Promise((resolve) => {
@@ -25,7 +37,11 @@ function getCoords(): Promise<{ lat: number; lon: number }> {
   });
 }
 
-function toLocationOption(dto: { id: string; alias: string; location: { id: string; lat: number; lon: number } }): HomeLocationOption {
+function toLocationOption(dto: {
+  id: string;
+  alias: string;
+  location: { id: string; lat: number; lon: number };
+}): HomeLocationOption {
   return {
     id: dto.id,
     locationId: dto.location.id,
@@ -48,32 +64,49 @@ const LocationDialog = ({
   onSelectLocation,
   setLocations,
 }: LocationDialogProps) => {
-  const router = useRouter();
   const { t } = useTranslation();
-  const [isAdding, setIsAdding] = useState(false);
-  const [alias, setAlias] = useState("");
+  const checkAuth = useAuthGuard();
+  const [mode, setMode] = useState<DialogMode>('select');
+  const [alias, setAlias] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editAlias, setEditAlias] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const handleAddNewLocation = async () => {
-    const status = await authGuard();
-    if (status === 'unauthenticated') {
-      router.push('/login');
-      return;
-    }
-    if (status === 'refresh_needed') {
-      const res = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
-      if (!res.ok) {
-        router.push('/login');
-        return;
-      }
-    }
-    setIsAdding(true);
+  const resetAll = () => {
+    setMode('select');
+    setAlias('');
+    setEditingId(null);
+    setEditAlias('');
+    setDeletingId(null);
   };
 
-  const handleSave = async () => {
+  const clearEditing = () => {
+    setEditingId(null);
+    setEditAlias('');
+  };
+
+  const handleEnterAdd = async () => {
+    const ok = await checkAuth();
+    if (!ok) return;
+    setMode('add');
+  };
+
+  const handleEnterEdit = async () => {
+    const ok = await checkAuth();
+    if (!ok) return;
+    setMode('edit');
+  };
+
+  const handleExitEdit = () => {
+    setMode('select');
+    clearEditing();
+  };
+
+  const handleSaveNewLocation = async () => {
     if (!alias.trim()) return;
     const name = alias.trim();
-    setAlias("");
-    setIsAdding(false);
+    setAlias('');
+    setMode('select');
 
     try {
       const coords = await getCoords();
@@ -92,99 +125,115 @@ const LocationDialog = ({
     }
   };
 
-  const handleCancel = () => {
-    setIsAdding(false);
-    setAlias("");
+  const handleEditLocation = (loc: HomeLocationOption) => {
+    setEditingId(loc.id);
+    setEditAlias(loc.alias);
+  };
+
+  const handleUpdateAlias = async () => {
+    if (!editingId || !editAlias.trim()) return;
+    try {
+      const updated = await patchLocationsApi(clientKy, editingId, {
+        alias: editAlias.trim(),
+      });
+      const updatedLoc = toLocationOption(updated);
+      setLocations((prev) => prev.map((loc) => (loc.id === editingId ? updatedLoc : loc)));
+      clearEditing();
+    } catch {
+      /* API 에러 시 무시 */
+    }
+  };
+
+  const handleRequestDelete = (id: string) => {
+    setDeletingId(id);
+    setMode('confirmDelete');
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingId) return;
+    try {
+      await deleteLocationsApi(clientKy, deletingId);
+      setLocations((prev) => prev.filter((loc) => loc.id !== deletingId));
+      clearEditing();
+    } catch {
+      /* API 에러 시 무시 */
+    }
+    setDeletingId(null);
+    setMode('edit');
+  };
+
+  const handleCancelDelete = () => {
+    setDeletingId(null);
+    setMode('edit');
+  };
+
+  const headerAction = () => {
+    if (editingId) return { label: t('common.cancel'), onClick: clearEditing };
+    if (mode === 'edit') return { label: t('home.editLocationsDone'), onClick: handleExitEdit };
+    return { label: t('home.editLocations'), onClick: handleEnterEdit };
+  };
+
+  const renderContent = () => {
+    if (mode === 'confirmDelete') {
+      if (!deletingId) return undefined;
+      return (
+        <ConfirmDeleteContent
+          deletingAlias={locations.find((l) => l.id === deletingId)?.alias ?? ''}
+          onCancel={handleCancelDelete}
+          onConfirm={handleConfirmDelete}
+        />
+      );
+    }
+
+    if (mode === 'add') {
+      return (
+        <AddLocationContent
+          alias={alias}
+          onAliasChange={setAlias}
+          onSave={handleSaveNewLocation}
+          onCancel={resetAll}
+        />
+      );
+    }
+
+    return (
+      <LocationListContent
+        mode={mode}
+        locations={locations}
+        selectedLocation={selectedLocation}
+        editingId={editingId}
+        editAlias={editAlias}
+        headerAction={headerAction()}
+        onEditAliasChange={setEditAlias}
+        onSelectLocation={onSelectLocation}
+        onEditLocation={handleEditLocation}
+        onUpdateAlias={handleUpdateAlias}
+        onRequestDelete={handleRequestDelete}
+        onAddNewLocation={handleEnterAdd}
+      />
+    );
   };
 
   return (
     <Dialog.Root>
-      <Dialog.Trigger
-        className="mt-1 hover:opacity-70 transition-opacity"
-        aria-label="지역 설정"
-      >
+      <Dialog.Trigger className="mt-1 hover:opacity-70 transition-opacity" aria-label="지역 설정">
         <Settings size={14} color="#555555" strokeWidth={1.5} />
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 bg-black/30 z-50" />
         <Dialog.Popup
           className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 z-50 w-[90%] max-w-[400px]"
-          style={{ borderRadius: "24px" }}
+          style={{ borderRadius: '24px' }}
+          onClick={() => {
+            if (mode === 'edit' && editingId) clearEditing();
+          }}
         >
-          {!isAdding ? (
-            <>
-              <h2 className="text-black mb-4" style={{ fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "18px", fontWeight: 600 }}>
-                {t('home.location')}
-              </h2>
-              <p className="text-[#555555] mb-6" style={{ fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "13px", fontWeight: 400, lineHeight: "1.5" }}>
-                {t('home.selectLocation')}
-              </p>
-              <div className="space-y-2 mb-6">
-                {locations.map((loc) => (
-                  <button
-                    key={loc.locationId}
-                    className="w-full flex items-center gap-2 px-4 py-3 hover:bg-gray-50 transition-colors"
-                    style={{
-                      borderRadius: "16px",
-                      border: selectedLocation === loc.alias ? "1.5px solid #000" : "1.5px solid #E5E5E5",
-                    }}
-                    onClick={() => onSelectLocation(loc)}
-                  >
-                    <MapPin size={16} color="#555555" strokeWidth={1.5} />
-                    <span className="text-black" style={{ fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "14px", fontWeight: 500 }}>
-                      {loc.alias}
-                    </span>
-                  </button>
-                ))}
-              </div>
-              <button
-                className="w-full bg-black text-white px-4 py-3 hover:opacity-90 transition-opacity"
-                style={{ borderRadius: "24px", fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "14px", fontWeight: 600 }}
-                onClick={handleAddNewLocation}
-              >
-                {t('home.addNewLocation')}
-              </button>
-            </>
-          ) : (
-            <>
-              <h2 className="text-black mb-4" style={{ fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "18px", fontWeight: 600 }}>
-                {t('home.addCurrentLocation')}
-              </h2>
-              <p className="text-[#555555] mb-6" style={{ fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "13px", fontWeight: 400, lineHeight: "1.5" }}>
-                {t('home.enterLocationAlias')}
-              </p>
-              <input
-                type="text"
-                value={alias}
-                onChange={(e) => setAlias(e.target.value)}
-                placeholder={t('home.locationAliasPlaceholder')}
-                className="w-full px-4 py-3 mb-6 outline-none"
-                style={{ borderRadius: "16px", border: "1.5px solid #E5E5E5", fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "14px", fontWeight: 400 }}
-                onKeyDown={(e) => { if (e.key === "Enter") handleSave(); }}
-              />
-              <div className="flex gap-2">
-                <button
-                  className="flex-1 px-4 py-3 hover:bg-gray-50 transition-colors"
-                  style={{ borderRadius: "24px", border: "1.5px solid #E5E5E5", fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "14px", fontWeight: 600 }}
-                  onClick={handleCancel}
-                >
-                  {t('common.cancel')}
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="flex-1 bg-black text-white px-4 py-3 hover:opacity-90 transition-opacity"
-                  style={{ borderRadius: "24px", fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "14px", fontWeight: 600 }}
-                >
-                  {t('common.save')}
-                </button>
-              </div>
-            </>
-          )}
+          {renderContent()}
           <Dialog.Close
             className="absolute top-4 right-4 text-[#555555] hover:opacity-70 transition-opacity"
             aria-label="닫기"
-            style={{ fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "24px" }}
-            onClick={handleCancel}
+            style={{ fontFamily: FONT, fontSize: '24px' }}
+            onClick={resetAll}
           >
             ×
           </Dialog.Close>
@@ -192,6 +241,6 @@ const LocationDialog = ({
       </Dialog.Portal>
     </Dialog.Root>
   );
-}
+};
 
 export default LocationDialog;
