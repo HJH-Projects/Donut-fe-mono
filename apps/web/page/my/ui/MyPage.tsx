@@ -1,16 +1,23 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { ChevronRight, LogOut, Pencil } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { Dialog } from "@base-ui/react/dialog";
-import { useTranslation } from "react-i18next";
-import type { UserProfileResponseDto } from "@/shared/api/orvalSchema";
-import Spinner from "@/shared/ui/Spinner";
-import { useProfile } from "../model/useProfile";
+import { ChevronRight, LogOut, Pencil } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { Dialog } from '@base-ui/react/dialog';
+import { useTranslation } from 'react-i18next';
+import type { UserProfileResponseDto } from '@/shared/api/orvalSchema';
+import Spinner from '@/shared/ui/Spinner';
+import { useProfile } from '../model/useProfile';
 
-type TemperatureUnit = "celsius" | "fahrenheit";
-type Language = "ko" | "en";
+type TemperatureUnit = 'celsius' | 'fahrenheit';
+type Language = 'ko' | 'en';
+const TEMPERATURE_UNIT_KEY = 'temperatureUnit';
+const LANGUAGE_KEY = 'language';
+
+function normalizeLanguage(value: string): Language {
+  return value.toLowerCase().startsWith('ko') ? 'ko' : 'en';
+}
 
 interface MyPageProps {
   initialProfile?: UserProfileResponseDto | null;
@@ -20,28 +27,21 @@ interface MyPageProps {
 export function MyPage({ initialProfile = null, initialStats = null }: MyPageProps) {
   const router = useRouter();
   const { t, i18n } = useTranslation();
-  const [showSettingsDialog, setShowSettingsDialog] =
-    useState(false);
-  const [showLanguageDialog, setShowLanguageDialog] =
-    useState(false);
-  const [showNicknameDialog, setShowNicknameDialog] =
-    useState(false);
-  const [temperatureUnit, setTemperatureUnit] =
-    useState<TemperatureUnit>("celsius");
-  const [language, setLanguage] = useState<Language>(i18n.language as Language);
-  const [tempNickname, setTempNickname] = useState("");
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [showLanguageDialog, setShowLanguageDialog] = useState(false);
+  const [showNicknameDialog, setShowNicknameDialog] = useState(false);
+  const [temperatureUnit, setTemperatureUnit] = useState<TemperatureUnit>('celsius');
+  const [language, setLanguage] = useState<Language>(normalizeLanguage(i18n.language));
+  const [tempNickname, setTempNickname] = useState('');
 
-  const {
-    stats,
-    nickname,
-    isResettingNickname,
-    updateNickname,
-    resetNickname,
-  } = useProfile({ initialProfile, initialStats });
+  const { stats, nickname, isResettingNickname, updateNickname, resetNickname } = useProfile({
+    initialProfile,
+    initialStats,
+  });
 
   const userProfile = {
     nickname,
-    email: "fashion@example.com",
+    email: 'fashion@example.com',
     closetCount: stats?.closetCount ?? 15,
     closetFavoriteCount: 0,
     looksCount: stats?.lookCount ?? 3,
@@ -84,13 +84,30 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
 
   const handleLanguageChange = (newLang: Language) => {
     setLanguage(newLang);
+    localStorage.setItem(LANGUAGE_KEY, newLang);
     i18n.changeLanguage(newLang);
+  };
+
+  useEffect(() => {
+    const savedUnit = localStorage.getItem(TEMPERATURE_UNIT_KEY);
+    if (savedUnit === 'celsius' || savedUnit === 'fahrenheit') {
+      setTemperatureUnit(savedUnit);
+    }
+  }, []);
+
+  useEffect(() => {
+    setLanguage(normalizeLanguage(i18n.language));
+  }, [i18n.language]);
+
+  const handleTemperatureUnitChange = (unit: TemperatureUnit) => {
+    setTemperatureUnit(unit);
+    localStorage.setItem(TEMPERATURE_UNIT_KEY, unit);
   };
 
   return (
     <div
       className="flex-1 min-h-0 w-full flex flex-col overflow-y-auto pb-24"
-      style={{ backgroundColor: "#FFFFFF" }}
+      style={{ backgroundColor: '#FFFFFF' }}
     >
       {/* 상단 타이틀 - Playfair Display */}
       <div className="flex-shrink-0 px-6 pt-12 pb-10">
@@ -98,10 +115,10 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
           className="text-black"
           style={{
             fontFamily: "var(--font-playfair), 'Playfair Display', serif",
-            fontSize: "42px",
+            fontSize: '42px',
             fontWeight: 700,
-            fontStyle: "italic",
-            lineHeight: "1.1",
+            fontStyle: 'italic',
+            lineHeight: '1.1',
           }}
         >
           {'Donut'}
@@ -113,8 +130,8 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
         <div
           className="p-8"
           style={{
-            backgroundColor: "#000000",
-            borderRadius: "var(--radius-xl)",
+            backgroundColor: '#000000',
+            borderRadius: 'var(--radius-xl)',
           }}
         >
           <div className="flex items-center justify-between mb-2">
@@ -122,10 +139,10 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
               className=""
               style={{
                 fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                color: "rgba(255, 255, 255, 1)",
-                fontSize: "24px",
+                color: 'rgba(255, 255, 255, 1)',
+                fontSize: '24px',
                 fontWeight: 700,
-                letterSpacing: "-0.02em",
+                letterSpacing: '-0.02em',
               }}
             >
               {userProfile.nickname}
@@ -133,7 +150,7 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
             <button
               onClick={handleOpenNicknameDialog}
               className="p-1.5 hover:bg-white/10 transition-colors"
-              style={{ borderRadius: "6px" }}
+              style={{ borderRadius: '6px' }}
             >
               <Pencil size={18} color="rgba(255, 255, 255, 0.7)" strokeWidth={2} />
             </button>
@@ -141,9 +158,9 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
           <p
             className="mb-6"
             style={{
-              color: "rgba(255, 255, 255, 0.7)",
+              color: 'rgba(255, 255, 255, 0.7)',
               fontFamily: "var(--font-inter), 'Inter', sans-serif",
-              fontSize: "15px",
+              fontSize: '15px',
               fontWeight: 400,
             }}
           >
@@ -157,20 +174,20 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
                 className="text-white mb-1"
                 style={{
                   fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                  fontSize: "28px",
+                  fontSize: '28px',
                   fontWeight: 700,
-                  lineHeight: "1",
+                  lineHeight: '1',
                 }}
               >
                 {userProfile.closetCount}
               </p>
               <p
                 style={{
-                  color: "rgba(255, 255, 255, 0.5)",
+                  color: 'rgba(255, 255, 255, 0.5)',
                   fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                  fontSize: "13px",
+                  fontSize: '13px',
                   fontWeight: 500,
-                  letterSpacing: "0.02em",
+                  letterSpacing: '0.02em',
                 }}
               >
                 {t('profile.closetItems')}
@@ -182,20 +199,20 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
                 className="text-white mb-1"
                 style={{
                   fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                  fontSize: "28px",
+                  fontSize: '28px',
                   fontWeight: 700,
-                  lineHeight: "1",
+                  lineHeight: '1',
                 }}
               >
                 {userProfile.looksCount}
               </p>
               <p
                 style={{
-                  color: "rgba(255, 255, 255, 0.5)",
+                  color: 'rgba(255, 255, 255, 0.5)',
                   fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                  fontSize: "13px",
+                  fontSize: '13px',
                   fontWeight: 500,
-                  letterSpacing: "0.02em",
+                  letterSpacing: '0.02em',
                 }}
               >
                 {t('profile.totalLooks')}
@@ -212,11 +229,11 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
           className="mb-4"
           style={{
             fontFamily: "var(--font-inter), 'Inter', sans-serif",
-            fontSize: "13px",
+            fontSize: '13px',
             fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            color: "#737373",
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            color: '#737373',
           }}
         >
           {t('profile.settings')}
@@ -227,16 +244,16 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
             onClick={() => setShowSettingsDialog(true)}
             className="w-full px-6 py-5 flex items-center justify-between transition-all hover:bg-gray-50"
             style={{
-              backgroundColor: "#FFFFFF",
-              border: "1px solid #E5E5E5",
-              borderRadius: "var(--radius-lg)",
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #E5E5E5',
+              borderRadius: 'var(--radius-lg)',
             }}
           >
             <span
               className="text-black"
               style={{
                 fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                fontSize: "16px",
+                fontSize: '16px',
                 fontWeight: 600,
               }}
             >
@@ -249,16 +266,16 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
             onClick={() => setShowLanguageDialog(true)}
             className="w-full px-6 py-5 flex items-center justify-between transition-all hover:bg-gray-50"
             style={{
-              backgroundColor: "#FFFFFF",
-              border: "1px solid #E5E5E5",
-              borderRadius: "var(--radius-lg)",
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #E5E5E5',
+              borderRadius: 'var(--radius-lg)',
             }}
           >
             <span
               className="text-black"
               style={{
                 fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                fontSize: "16px",
+                fontSize: '16px',
                 fontWeight: 600,
               }}
             >
@@ -273,11 +290,11 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
           className="mb-4"
           style={{
             fontFamily: "var(--font-inter), 'Inter', sans-serif",
-            fontSize: "13px",
+            fontSize: '13px',
             fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            color: "#737373",
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            color: '#737373',
           }}
         >
           {t('profile.support')}
@@ -285,19 +302,19 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
 
         <div className="space-y-2 mb-8">
           <button
-            onClick={() => router.push("/announcements")}
+            onClick={() => router.push('/announcements')}
             className="w-full px-6 py-5 flex items-center justify-between transition-all hover:bg-gray-50"
             style={{
-              backgroundColor: "#FFFFFF",
-              border: "1px solid #E5E5E5",
-              borderRadius: "var(--radius-lg)",
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #E5E5E5',
+              borderRadius: 'var(--radius-lg)',
             }}
           >
             <span
               className="text-black"
               style={{
                 fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                fontSize: "16px",
+                fontSize: '16px',
                 fontWeight: 600,
               }}
             >
@@ -307,19 +324,19 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
           </button>
 
           <button
-            onClick={() => router.push("/faq")}
+            onClick={() => router.push('/faq')}
             className="w-full px-6 py-5 flex items-center justify-between transition-all hover:bg-gray-50"
             style={{
-              backgroundColor: "#FFFFFF",
-              border: "1px solid #E5E5E5",
-              borderRadius: "var(--radius-lg)",
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #E5E5E5',
+              borderRadius: 'var(--radius-lg)',
             }}
           >
             <span
               className="text-black"
               style={{
                 fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                fontSize: "16px",
+                fontSize: '16px',
                 fontWeight: 600,
               }}
             >
@@ -329,19 +346,19 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
           </button>
 
           <button
-            onClick={() => router.push("/notifications")}
+            onClick={() => router.push('/notifications')}
             className="w-full px-6 py-5 flex items-center justify-between transition-all hover:bg-gray-50"
             style={{
-              backgroundColor: "#FFFFFF",
-              border: "1px solid #E5E5E5",
-              borderRadius: "var(--radius-lg)",
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #E5E5E5',
+              borderRadius: 'var(--radius-lg)',
             }}
           >
             <span
               className="text-black"
               style={{
                 fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                fontSize: "16px",
+                fontSize: '16px',
                 fontWeight: 600,
               }}
             >
@@ -356,8 +373,8 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
           onClick={handleLogout}
           className="w-full px-6 py-5 flex items-center justify-center gap-3 transition-all hover:opacity-80 mt-4"
           style={{
-            backgroundColor: "#000000",
-            borderRadius: "var(--radius-pill)",
+            backgroundColor: '#000000',
+            borderRadius: 'var(--radius-pill)',
           }}
         >
           <LogOut size={18} color="#FFFFFF" strokeWidth={2} />
@@ -365,7 +382,7 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
             className="text-white"
             style={{
               fontFamily: "var(--font-inter), 'Inter', sans-serif",
-              fontSize: "16px",
+              fontSize: '16px',
               fontWeight: 700,
             }}
           >
@@ -375,17 +392,14 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
       </div>
 
       {/* 닉네임 설정 다이얼로그 */}
-      <Dialog.Root
-        open={showNicknameDialog}
-        onOpenChange={setShowNicknameDialog}
-      >
+      <Dialog.Root open={showNicknameDialog} onOpenChange={setShowNicknameDialog}>
         <Dialog.Portal>
           <Dialog.Backdrop className="fixed inset-0 bg-black/40 z-50" />
           <Dialog.Popup
             className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[420px]"
             style={{
-              borderRadius: "var(--radius-xl)",
-              padding: "32px",
+              borderRadius: 'var(--radius-xl)',
+              padding: '32px',
             }}
             aria-describedby={undefined}
           >
@@ -393,7 +407,7 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
               className="text-black mb-8"
               style={{
                 fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                fontSize: "28px",
+                fontSize: '28px',
                 fontWeight: 700,
               }}
             >
@@ -405,10 +419,10 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
                 className="text-black mb-4"
                 style={{
                   fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                  fontSize: "13px",
+                  fontSize: '13px',
                   fontWeight: 600,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
                 }}
               >
                 {t('profile.nickname')}
@@ -420,7 +434,7 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 style={{
                   fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                  fontSize: "15px",
+                  fontSize: '15px',
                   fontWeight: 400,
                 }}
               />
@@ -432,12 +446,12 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
                 disabled={isResettingNickname}
                 className="flex-1 py-4 transition-all hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
                 style={{
-                  backgroundColor: "#FFFFFF",
-                  borderRadius: "var(--radius-pill)",
-                  border: "1.5px solid #E5E5E5",
-                  color: "#000",
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: 'var(--radius-pill)',
+                  border: '1.5px solid #E5E5E5',
+                  color: '#000',
                   fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                  fontSize: "16px",
+                  fontSize: '16px',
                   fontWeight: 700,
                 }}
               >
@@ -455,10 +469,10 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
                 disabled={isResettingNickname}
                 className="flex-1 py-4 text-white transition-all hover:opacity-90"
                 style={{
-                  backgroundColor: "#000",
-                  borderRadius: "var(--radius-pill)",
+                  backgroundColor: '#000',
+                  borderRadius: 'var(--radius-pill)',
                   fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                  fontSize: "16px",
+                  fontSize: '16px',
                   fontWeight: 700,
                 }}
               >
@@ -470,17 +484,14 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
       </Dialog.Root>
 
       {/* 환경설정 다이얼로그 */}
-      <Dialog.Root
-        open={showSettingsDialog}
-        onOpenChange={setShowSettingsDialog}
-      >
+      <Dialog.Root open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
         <Dialog.Portal>
           <Dialog.Backdrop className="fixed inset-0 bg-black/40 z-50" />
           <Dialog.Popup
             className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[420px]"
             style={{
-              borderRadius: "var(--radius-xl)",
-              padding: "32px",
+              borderRadius: 'var(--radius-xl)',
+              padding: '32px',
             }}
             aria-describedby={undefined}
           >
@@ -488,7 +499,7 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
               className="text-black mb-8"
               style={{
                 fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                fontSize: "28px",
+                fontSize: '28px',
                 fontWeight: 700,
               }}
             >
@@ -500,50 +511,40 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
                 className="text-black mb-4"
                 style={{
                   fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                  fontSize: "13px",
+                  fontSize: '13px',
                   fontWeight: 600,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
                 }}
               >
                 {t('profile.settingsDialog.temperatureUnit')}
               </h3>
               <div className="flex gap-3">
                 <button
-                  onClick={() => setTemperatureUnit("celsius")}
+                  onClick={() => handleTemperatureUnitChange('celsius')}
                   className="flex-1 py-4 transition-all"
                   style={{
-                    backgroundColor:
-                      temperatureUnit === "celsius" ? "#000" : "#FFFFFF",
-                    color:
-                      temperatureUnit === "celsius" ? "#FFFFFF" : "#000",
-                    borderRadius: "var(--radius-pill)",
-                    border:
-                      temperatureUnit === "celsius"
-                        ? "none"
-                        : "1.5px solid #E5E5E5",
+                    backgroundColor: temperatureUnit === 'celsius' ? '#000' : '#FFFFFF',
+                    color: temperatureUnit === 'celsius' ? '#FFFFFF' : '#000',
+                    borderRadius: 'var(--radius-pill)',
+                    border: temperatureUnit === 'celsius' ? 'none' : '1.5px solid #E5E5E5',
                     fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                    fontSize: "15px",
+                    fontSize: '15px',
                     fontWeight: 700,
                   }}
                 >
                   {t('profile.settingsDialog.celsius')}
                 </button>
                 <button
-                  onClick={() => setTemperatureUnit("fahrenheit")}
+                  onClick={() => handleTemperatureUnitChange('fahrenheit')}
                   className="flex-1 py-4 transition-all"
                   style={{
-                    backgroundColor:
-                      temperatureUnit === "fahrenheit" ? "#000" : "#FFFFFF",
-                    color:
-                      temperatureUnit === "fahrenheit" ? "#FFFFFF" : "#000",
-                    borderRadius: "var(--radius-pill)",
-                    border:
-                      temperatureUnit === "fahrenheit"
-                        ? "none"
-                        : "1.5px solid #E5E5E5",
+                    backgroundColor: temperatureUnit === 'fahrenheit' ? '#000' : '#FFFFFF',
+                    color: temperatureUnit === 'fahrenheit' ? '#FFFFFF' : '#000',
+                    borderRadius: 'var(--radius-pill)',
+                    border: temperatureUnit === 'fahrenheit' ? 'none' : '1.5px solid #E5E5E5',
                     fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                    fontSize: "15px",
+                    fontSize: '15px',
                     fontWeight: 700,
                   }}
                 >
@@ -556,10 +557,10 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
               onClick={() => setShowSettingsDialog(false)}
               className="w-full py-4 text-white transition-all hover:opacity-90"
               style={{
-                backgroundColor: "#000",
-                borderRadius: "var(--radius-pill)",
+                backgroundColor: '#000',
+                borderRadius: 'var(--radius-pill)',
                 fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                fontSize: "16px",
+                fontSize: '16px',
                 fontWeight: 700,
               }}
             >
@@ -570,17 +571,14 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
       </Dialog.Root>
 
       {/* 언어 설정 다이얼로그 */}
-      <Dialog.Root
-        open={showLanguageDialog}
-        onOpenChange={setShowLanguageDialog}
-      >
+      <Dialog.Root open={showLanguageDialog} onOpenChange={setShowLanguageDialog}>
         <Dialog.Portal>
           <Dialog.Backdrop className="fixed inset-0 bg-black/40 z-50" />
           <Dialog.Popup
             className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[420px]"
             style={{
-              borderRadius: "var(--radius-xl)",
-              padding: "32px",
+              borderRadius: 'var(--radius-xl)',
+              padding: '32px',
             }}
             aria-describedby={undefined}
           >
@@ -588,7 +586,7 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
               className="text-black mb-8"
               style={{
                 fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                fontSize: "28px",
+                fontSize: '28px',
                 fontWeight: 700,
               }}
             >
@@ -600,50 +598,40 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
                 className="text-black mb-4"
                 style={{
                   fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                  fontSize: "13px",
+                  fontSize: '13px',
                   fontWeight: 600,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
                 }}
               >
                 {t('profile.languageDialog.language')}
               </h3>
               <div className="flex gap-3">
                 <button
-                  onClick={() => handleLanguageChange("ko")}
+                  onClick={() => handleLanguageChange('ko')}
                   className="flex-1 py-4 transition-all"
                   style={{
-                    backgroundColor:
-                      language === "ko" ? "#000" : "#FFFFFF",
-                    color:
-                      language === "ko" ? "#FFFFFF" : "#000",
-                    borderRadius: "var(--radius-pill)",
-                    border:
-                      language === "ko"
-                        ? "none"
-                        : "1.5px solid #E5E5E5",
+                    backgroundColor: language === 'ko' ? '#000' : '#FFFFFF',
+                    color: language === 'ko' ? '#FFFFFF' : '#000',
+                    borderRadius: 'var(--radius-pill)',
+                    border: language === 'ko' ? 'none' : '1.5px solid #E5E5E5',
                     fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                    fontSize: "15px",
+                    fontSize: '15px',
                     fontWeight: 700,
                   }}
                 >
                   {t('profile.languageDialog.korean')}
                 </button>
                 <button
-                  onClick={() => handleLanguageChange("en")}
+                  onClick={() => handleLanguageChange('en')}
                   className="flex-1 py-4 transition-all"
                   style={{
-                    backgroundColor:
-                      language === "en" ? "#000" : "#FFFFFF",
-                    color:
-                      language === "en" ? "#FFFFFF" : "#000",
-                    borderRadius: "var(--radius-pill)",
-                    border:
-                      language === "en"
-                        ? "none"
-                        : "1.5px solid #E5E5E5",
+                    backgroundColor: language === 'en' ? '#000' : '#FFFFFF',
+                    color: language === 'en' ? '#FFFFFF' : '#000',
+                    borderRadius: 'var(--radius-pill)',
+                    border: language === 'en' ? 'none' : '1.5px solid #E5E5E5',
                     fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                    fontSize: "15px",
+                    fontSize: '15px',
                     fontWeight: 700,
                   }}
                 >
@@ -656,10 +644,10 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
               onClick={() => setShowLanguageDialog(false)}
               className="w-full py-4 text-white transition-all hover:opacity-90"
               style={{
-                backgroundColor: "#000",
-                borderRadius: "var(--radius-pill)",
+                backgroundColor: '#000',
+                borderRadius: 'var(--radius-pill)',
                 fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                fontSize: "16px",
+                fontSize: '16px',
                 fontWeight: 700,
               }}
             >
