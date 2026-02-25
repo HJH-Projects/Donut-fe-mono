@@ -64,6 +64,7 @@ export const ConfirmDeleteContent = ({
 // --- 새 지역 추가 ---
 interface AddLocationContentProps {
   alias: string;
+  isSaving: boolean;
   onAliasChange: (value: string) => void;
   onSave: (coords: { lat: number; lon: number; name: string }) => void;
   onCancel: () => void;
@@ -71,6 +72,7 @@ interface AddLocationContentProps {
 
 export const AddLocationContent = ({
   alias,
+  isSaving,
   onAliasChange,
   onSave,
   onCancel,
@@ -96,7 +98,7 @@ export const AddLocationContent = ({
     onSave(selectedCoords);
   };
 
-  const canSave = Boolean(selectedCoords && alias.trim());
+  const canSave = Boolean(selectedCoords && alias.trim()) && !isSaving;
 
   return (
     <>
@@ -142,6 +144,7 @@ export const AddLocationContent = ({
             fontWeight: 600,
           }}
           onClick={onCancel}
+          disabled={isSaving}
         >
           {t('common.cancel')}
         </button>
@@ -158,7 +161,11 @@ export const AddLocationContent = ({
             cursor: canSave ? 'pointer' : 'not-allowed',
           }}
         >
-          {t('common.save')}
+          {isSaving ? (
+            <Spinner size="sm" className="inline-flex text-white" />
+          ) : (
+            t('common.save')
+          )}
         </button>
       </div>
     </>

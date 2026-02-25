@@ -58,6 +58,7 @@ const LocationDialog = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editAlias, setEditAlias] = useState('');
   const [isUpdatingAlias, setIsUpdatingAlias] = useState(false);
+  const [isAddingLocation, setIsAddingLocation] = useState(false);
   const [isEnteringEdit, setIsEnteringEdit] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const enterEditTimerRef = useRef<number | null>(null);
@@ -72,6 +73,7 @@ const LocationDialog = ({
     setEditingId(null);
     setEditAlias('');
     setIsUpdatingAlias(false);
+    setIsAddingLocation(false);
     setIsEnteringEdit(false);
     setDeletingId(null);
   };
@@ -84,6 +86,7 @@ const LocationDialog = ({
     setEditingId(null);
     setEditAlias('');
     setIsUpdatingAlias(false);
+    setIsAddingLocation(false);
     setIsEnteringEdit(false);
   };
 
@@ -110,11 +113,9 @@ const LocationDialog = ({
   };
 
   const handleSaveNewLocation = async (coords: { lat: number; lon: number; name: string }) => {
-    if (!alias.trim()) return;
+    if (!alias.trim() || isAddingLocation) return;
     const userAlias = alias.trim();
-    setAlias('');
-    setMode('select');
-
+    setIsAddingLocation(true);
     try {
       const created = await postLocationsApi(clientKy, {
         name: coords.name,
@@ -125,9 +126,13 @@ const LocationDialog = ({
         isDefault: false,
       });
       const newLoc = toLocationOption(created);
-      setLocations((prev) => [...prev, newLoc]);
+      setLocations((prev) => [newLoc, ...prev]);
+      setAlias('');
+      setMode('select');
     } catch {
       /* 오프라인 또는 API 에러 시 무시 */
+    } finally {
+      setIsAddingLocation(false);
     }
   };
 
@@ -203,6 +208,7 @@ const LocationDialog = ({
       return (
         <AddLocationContent
           alias={alias}
+          isSaving={isAddingLocation}
           onAliasChange={setAlias}
           onSave={handleSaveNewLocation}
           onCancel={resetAll}
