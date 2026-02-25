@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type {
+  ResetNicknameResponseDto,
   UpdateProfileDto,
   UpdateProfileResponseDto,
   UserProfileResponseDto,
@@ -13,6 +14,8 @@ import type {
   UsersControllerGetMe401,
   UsersControllerResetData400,
   UsersControllerResetData401,
+  UsersControllerResetNickname400,
+  UsersControllerResetNickname401,
   UsersControllerUpdateProfile400,
   UsersControllerUpdateProfile401
 } from '../orvalSchemas';
@@ -125,6 +128,60 @@ export const usersControllerUpdateProfile = async (updateProfileDto: UpdateProfi
   
   const data: usersControllerUpdateProfileResponse['data'] = body ? JSON.parse(body) : {}
   return { data, status: res.status, headers: res.headers } as usersControllerUpdateProfileResponse
+}
+
+
+/**
+ * 현재 로그인한 사용자의 닉네임을 랜덤한 새 값으로 재생성합니다.
+ * @summary 닉네임 랜덤 재생성
+ */
+export type usersControllerResetNicknameResponse200 = {
+  data: ResetNicknameResponseDto
+  status: 200
+}
+
+export type usersControllerResetNicknameResponse400 = {
+  data: UsersControllerResetNickname400
+  status: 400
+}
+
+export type usersControllerResetNicknameResponse401 = {
+  data: UsersControllerResetNickname401
+  status: 401
+}
+    
+export type usersControllerResetNicknameResponseSuccess = (usersControllerResetNicknameResponse200) & {
+  headers: Headers;
+};
+export type usersControllerResetNicknameResponseError = (usersControllerResetNicknameResponse400 | usersControllerResetNicknameResponse401) & {
+  headers: Headers;
+};
+
+export type usersControllerResetNicknameResponse = (usersControllerResetNicknameResponseSuccess | usersControllerResetNicknameResponseError)
+
+export const getUsersControllerResetNicknameUrl = () => {
+
+
+  
+
+  return `/users/nickname/reset`
+}
+
+export const usersControllerResetNickname = async ( options?: RequestInit): Promise<usersControllerResetNicknameResponse> => {
+  
+  const res = await fetch(getUsersControllerResetNicknameUrl(),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+)
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  
+  const data: usersControllerResetNicknameResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as usersControllerResetNicknameResponse
 }
 
 
