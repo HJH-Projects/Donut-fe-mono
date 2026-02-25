@@ -291,6 +291,8 @@ const LocationItem = ({
     }
 
     if (editingId === loc.id) {
+      const canUpdateAlias = Boolean(editAlias.trim() && editAlias.trim() !== loc.alias);
+
       return (
         <div
           className="w-full flex items-center gap-2 px-4 py-3"
@@ -303,12 +305,13 @@ const LocationItem = ({
             className="flex-1 outline-none text-black"
             style={{ fontFamily: FONT, fontSize: '14px', fontWeight: 500 }}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') onUpdateAlias();
+              if (e.key === 'Enter' && canUpdateAlias) onUpdateAlias();
             }}
             autoFocus
           />
           <button
-            className="hover:opacity-70 transition-opacity"
+            disabled={!canUpdateAlias}
+            className="hover:opacity-70 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={onUpdateAlias}
             aria-label="확인"
           >

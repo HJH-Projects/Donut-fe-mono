@@ -116,9 +116,13 @@ const LocationDialog = ({
 
   const handleUpdateAlias = async () => {
     if (!editingId || !editAlias.trim()) return;
+    const nextAlias = editAlias.trim();
+    const current = locations.find((loc) => loc.id === editingId);
+    if (!current || current.alias === nextAlias) return;
+
     try {
       const updated = await patchLocationsApi(clientKy, editingId, {
-        alias: editAlias.trim(),
+        alias: nextAlias,
       });
       const updatedLoc = toLocationOption(updated);
       setLocations((prev) => prev.map((loc) => (loc.id === editingId ? updatedLoc : loc)));
