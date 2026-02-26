@@ -5,6 +5,7 @@ import Script from "next/script";
 import "./globals.css";
 import { I18nProvider } from "@/shared/model/i18n/I18nProvider";
 import { MSWProvider } from "@/shared/model/providers/MSWProvider";
+import { ToastProvider } from "@/shared/ui/ToastProvider";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -38,7 +39,9 @@ export default function RootLayout({
         <div className="mx-auto w-full max-w-[500px]"  >
           <I18nProvider>
             <MSWProvider>
-              {children}
+              <ToastProvider>
+                {children}
+              </ToastProvider>
             </MSWProvider>
           </I18nProvider>
         </div>

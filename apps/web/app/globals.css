@@ -126,3 +126,116 @@ body {
 .card-active {
   background-color: #f3f4f6;
 }
+
+/* Toast */
+.ootd-toast-viewport {
+  position: fixed;
+  z-index: 9999;
+  width: 100%;
+  max-width: 500px;
+  top: 56px;
+  right: 0;
+  left: 0;
+  margin: 0 auto;
+  pointer-events: none;
+}
+
+.ootd-toast {
+  --gap: 0.5rem;
+  --peek: 0.5rem;
+  --scale: calc(max(0, 1 - (var(--toast-index) * 0.1)));
+  --shrink: calc(1 - var(--scale));
+  --height: var(--toast-frontmost-height, var(--toast-height));
+  --offset-y: calc(
+    var(--toast-offset-y) + (var(--toast-index) * var(--gap)) + var(--toast-swipe-movement-y)
+  );
+
+  position: absolute;
+  box-sizing: border-box;
+  top: 0;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 20px;
+  background-color: #111111;
+  color: #ffffff;
+  pointer-events: auto;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 0.28);
+  transform-origin: top center;
+  user-select: none;
+  transition:
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.5s,
+    height 0.15s;
+  z-index: calc(1000 - var(--toast-index));
+  height: var(--height);
+  transform:
+    translateX(var(--toast-swipe-movement-x, 0))
+    translateY(calc(
+      var(--toast-swipe-movement-y, 0) +
+      (var(--toast-index, 0) * var(--peek)) +
+      (var(--shrink) * var(--height, 0))
+    ))
+    scale(var(--scale));
+}
+
+.ootd-toast[data-expanded] {
+  transform: translateX(var(--toast-swipe-movement-x, 0)) translateY(var(--offset-y));
+  height: var(--toast-height);
+}
+
+.ootd-toast[data-starting-style],
+.ootd-toast[data-ending-style] {
+  transform: translateY(-150%);
+}
+
+.ootd-toast[data-limited] {
+  opacity: 0;
+}
+
+.ootd-toast[data-ending-style] {
+  opacity: 0;
+}
+
+.ootd-toast[data-ending-style][data-swipe-direction='up'] {
+  transform: translateY(calc(var(--toast-swipe-movement-y, 0) - 150%));
+}
+
+.ootd-toast::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  bottom: 100%;
+  left: 0;
+  height: calc(var(--gap) + 1px);
+}
+
+.ootd-toast-content {
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  transition: opacity 0.25s;
+}
+
+.ootd-toast-content[data-behind] {
+  opacity: 0;
+}
+
+.ootd-toast-content[data-expanded] {
+  opacity: 1;
+}
+
+.ootd-toast-close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  display: flex;
+  flex-shrink: 0;
+}
