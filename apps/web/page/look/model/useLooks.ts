@@ -92,8 +92,8 @@ export function useLooks({ initialLooks = [], skipBootstrap = false }: UseLooksO
       });
       await invalidateLooks();
       router.refresh();
-    } catch {
-      toast.error('룩을 추가하는 데 실패했습니다.');
+    } catch (e) {
+      toast.apiError(await toApiError(e), '룩을 추가하는 데 실패했습니다.');
     }
   };
 
@@ -117,8 +117,8 @@ export function useLooks({ initialLooks = [], skipBootstrap = false }: UseLooksO
       });
       await invalidateLooks();
       router.refresh();
-    } catch {
-      toast.error('룩을 수정하는 데 실패했습니다.');
+    } catch (e) {
+      toast.apiError(await toApiError(e), '룩을 수정하는 데 실패했습니다.');
     }
   };
 
@@ -129,8 +129,8 @@ export function useLooks({ initialLooks = [], skipBootstrap = false }: UseLooksO
       await deleteLooksApi(clientKy, id);
       await invalidateLooks();
       router.refresh();
-    } catch {
-      toast.error('룩을 삭제하는 데 실패했습니다.');
+    } catch (e) {
+      toast.apiError(await toApiError(e), '룩을 삭제하는 데 실패했습니다.');
     }
   };
 

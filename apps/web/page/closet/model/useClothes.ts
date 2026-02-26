@@ -102,8 +102,8 @@ export function useClothes({ initialClothes = [] }: UseClothesOptions = {}) {
       });
       await invalidateClothes();
       router.refresh();
-    } catch {
-      toast.error('옷을 추가하는 데 실패했습니다.');
+    } catch (e) {
+      toast.apiError(await toApiError(e), '옷을 추가하는 데 실패했습니다.');
     }
   };
 
@@ -121,8 +121,8 @@ export function useClothes({ initialClothes = [] }: UseClothesOptions = {}) {
       });
       await invalidateClothes();
       router.refresh();
-    } catch {
-      toast.error('옷 정보를 수정하는 데 실패했습니다.');
+    } catch (e) {
+      toast.apiError(await toApiError(e), '옷 정보를 수정하는 데 실패했습니다.');
     }
   };
 
@@ -133,8 +133,8 @@ export function useClothes({ initialClothes = [] }: UseClothesOptions = {}) {
       await deleteClothesApi(clientKy, id);
       await invalidateClothes();
       router.refresh();
-    } catch {
-      toast.error('옷을 삭제하는 데 실패했습니다.');
+    } catch (e) {
+      toast.apiError(await toApiError(e), '옷을 삭제하는 데 실패했습니다.');
     }
   };
 
