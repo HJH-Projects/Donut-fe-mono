@@ -905,7 +905,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
         <Dialog.Portal>
           <Dialog.Backdrop className="fixed inset-0 bg-black/30 z-50" />
           <Dialog.Popup
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[400px]"
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[400px] max-h-[85vh] flex flex-col overflow-hidden"
             style={{
               borderRadius: '24px',
             }}
@@ -926,7 +926,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
         <Dialog.Portal>
           <Dialog.Backdrop className="fixed inset-0 bg-black/30 z-50" />
           <Dialog.Popup
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[400px]"
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[400px] max-h-[85vh] flex flex-col overflow-hidden"
             style={{
               borderRadius: '24px',
             }}

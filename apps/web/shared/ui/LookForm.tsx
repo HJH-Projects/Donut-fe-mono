@@ -124,7 +124,7 @@ export function LookForm({
   };
 
   return (
-    <div className="flex flex-col h-full max-h-[85vh]">
+    <div className="flex flex-col h-full">
       {/* 헤더 */}
       <div className="flex-shrink-0 p-6 pb-4 bg-white">
         <h2
