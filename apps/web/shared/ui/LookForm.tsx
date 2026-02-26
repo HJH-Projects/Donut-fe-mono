@@ -126,29 +126,17 @@ export function LookForm({
   return (
     <div className="flex flex-col h-full max-h-[85vh]">
       {/* 헤더 */}
-      <div className="flex-shrink-0 p-6 pb-4 border-b border-gray-100">
+      <div className="flex-shrink-0 p-6 pb-4 bg-white">
         <h2
-          className="text-black mb-1"
+          className="text-black"
           style={{
             fontFamily: "var(--font-inter), 'Inter', sans-serif",
-            fontSize: "24px",
-            fontWeight: 700,
-            letterSpacing: "-0.02em",
+            fontSize: "18px",
+            fontWeight: 600,
           }}
         >
           {mode === "add" ? t('looks.addLook') : t('looks.editLook')}
         </h2>
-        <p
-          className="text-[#666] mb-6"
-          style={{
-            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-            fontSize: "14px",
-            fontWeight: 400,
-            lineHeight: "1.5",
-          }}
-        >
-          {t('looks.selectItemsDescription')}
-        </p>
       </div>
 
       {/* 폼 내용 */}
