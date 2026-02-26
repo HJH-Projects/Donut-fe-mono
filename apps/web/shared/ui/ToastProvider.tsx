@@ -1,6 +1,8 @@
 'use client';
+import { useEffect } from 'react';
 import { Toast } from '@base-ui/react/toast';
 import { X, CheckCircle2, AlertCircle, Info } from 'lucide-react';
+import { pendingInstantCloseIds } from '@/shared/model/useToast';
 
 type ToastType = 'success' | 'error' | 'info';
 
@@ -14,15 +16,24 @@ const CONFIG: Record<ToastType, { Icon: typeof CheckCircle2 }> = {
 
 function ToastList() {
   const { toasts } = Toast.useToastManager();
+
+  useEffect(() => {
+    const currentIds = new Set(toasts.map((t) => t.id));
+    for (const id of pendingInstantCloseIds) {
+      if (!currentIds.has(id)) pendingInstantCloseIds.delete(id);
+    }
+  }, [toasts]);
+
   return toasts.map((toast) => {
     const type = (toast.type as ToastType) ?? 'info';
     const { Icon } = CONFIG[type];
+    const isInstant = pendingInstantCloseIds.has(toast.id);
     return (
       <Toast.Root
         key={toast.id}
         toast={toast}
         swipeDirection="up"
-        className="ootd-toast"
+        className={isInstant ? 'ootd-toast ootd-toast--instant' : 'ootd-toast'}
       >
         <Toast.Content className="ootd-toast-content">
           <span style={{ display: 'flex', flexShrink: 0 }}>

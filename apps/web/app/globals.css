@@ -200,6 +200,10 @@ body {
   opacity: 0;
 }
 
+.ootd-toast--instant[data-ending-style] {
+  transition-duration: 1ms !important;
+}
+
 .ootd-toast[data-ending-style][data-swipe-direction='up'] {
   transform: translateY(calc(var(--toast-swipe-movement-y, 0) - 150%));
 }
