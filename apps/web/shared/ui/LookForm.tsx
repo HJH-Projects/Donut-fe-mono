@@ -513,7 +513,7 @@ export function LookForm({
       </div>
 
       {/* 하단 버튼 */}
-      <div className="flex-shrink-0 p-6 pt-4 border-t border-gray-100 flex gap-3">
+      <div className="flex-shrink-0 px-6 pb-6 pt-3 flex gap-3">
         <button
           onClick={onCancel}
           className="flex-1 px-5 py-3 hover:bg-gray-50 transition-colors"
