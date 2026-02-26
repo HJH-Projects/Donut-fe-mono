@@ -1,13 +1,14 @@
+import { getCachedClothes } from '@/page/closet/model/getCachedClothes';
+import { getCachedLooks } from '@/page/look/model/getCachedLooks';
 import { LookPage } from '@/page/look/ui/LookPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
-import { serverKy } from '@/features/api/serverKy';
-import { getLooksApi } from '@/shared/api/endpointTags/looks';
-import { getClothesApi } from '@/shared/api/endpointTags/clothes';
+
+export const LOOKS_CACHE_TAG = 'looks';
 
 export default async function Page() {
   const [initialLooks, initialClothes] = await Promise.all([
-    getLooksApi(serverKy).catch(() => []),
-    getClothesApi(serverKy).catch(() => []),
+    getCachedLooks().catch(() => []),
+    getCachedClothes().catch(() => []),
   ]);
 
   return (
