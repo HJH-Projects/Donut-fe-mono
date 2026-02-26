@@ -600,7 +600,7 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                 </div>
 
                 {/* 스크롤 가능한 폼 */}
-                <div className="flex-1 overflow-y-auto px-6 pb-6">
+                <div className="flex-1 overflow-y-auto px-6 pb-2">
                   <div className="space-y-4">
                     {/* 이미지 미리보기 */}
                     {newClothing.imageUrl && (
@@ -1058,37 +1058,41 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                       />
                     </div>
 
-                    {/* 버튼 */}
-                    <div className="flex gap-2 pt-2">
-                      <button
-                        onClick={handleCancelAdd}
-                        className="flex-1 px-4 py-3 hover:bg-gray-50 transition-colors"
-                        style={{
-                          borderRadius: '24px',
-                          border: '1.5px solid #E5E5E5',
-                          fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                          fontSize: '14px',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {t('common.cancel')}
-                      </button>
-                      <button
-                        onClick={handleAddClothing}
-                        disabled={!newClothing.name || !newClothing.category1}
-                        className="flex-1 text-white px-4 py-3 hover:opacity-90 transition-opacity disabled:opacity-50"
-                        style={{
-                          borderRadius: '24px',
-                          backgroundColor: '#000',
-                          fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                          fontSize: '14px',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {t('closet.register')}
-                      </button>
-                    </div>
                   </div>
+                </div>
+
+                {/* 고정 푸터 버튼 */}
+                <div
+                  className="flex-shrink-0 flex gap-2 px-6 pb-6 pt-3 bg-white"
+                  style={{ borderRadius: '0 0 24px 24px' }}
+                >
+                  <button
+                    onClick={handleCancelAdd}
+                    className="flex-1 px-4 py-3 hover:bg-gray-50 transition-colors"
+                    style={{
+                      borderRadius: '24px',
+                      border: '1.5px solid #E5E5E5',
+                      fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                      fontSize: '14px',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {t('common.cancel')}
+                  </button>
+                  <button
+                    onClick={handleAddClothing}
+                    disabled={!newClothing.name || !newClothing.category1}
+                    className="flex-1 text-white px-4 py-3 hover:opacity-90 transition-opacity disabled:opacity-50"
+                    style={{
+                      borderRadius: '24px',
+                      backgroundColor: '#000',
+                      fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                      fontSize: '14px',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {t('closet.register')}
+                  </button>
                 </div>
               </>
             )}
@@ -1138,7 +1142,7 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                 </div>
 
                 {/* 스크롤 가능한 내용 */}
-                <div className="flex-1 overflow-y-auto px-6 pb-6">
+                <div className="flex-1 overflow-y-auto px-6 pb-2">
                   <div className="space-y-4">
                     {/* 이미지 */}
                     <div className="relative">
@@ -1769,70 +1773,76 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                       )}
                     </div>
 
-                    {/* 버튼 */}
-                    {!editMode ? (
-                      <div className="flex gap-2 pt-2">
-                        <button
-                          onClick={() => setEditMode(true)}
-                          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 hover:bg-gray-50 transition-colors"
-                          style={{
-                            borderRadius: '24px',
-                            border: '1.5px solid #E5E5E5',
-                            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                            fontSize: '14px',
-                            fontWeight: 600,
-                          }}
-                        >
-                          <Edit2 size={16} strokeWidth={2} />
-                          {t('common.edit')}
-                        </button>
-                        <button
-                          onClick={handleDeleteClothing}
-                          className="flex-1 flex items-center justify-center gap-2 text-white px-4 py-3 hover:opacity-90 transition-opacity"
-                          style={{
-                            borderRadius: '24px',
-                            backgroundColor: '#000',
-                            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                            fontSize: '14px',
-                            fontWeight: 600,
-                          }}
-                        >
-                          <Trash2 size={16} strokeWidth={2} />
-                          {t('common.delete')}
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex gap-2 pt-2">
-                        <button
-                          onClick={handleCancelDetail}
-                          className="flex-1 px-4 py-3 hover:bg-gray-50 transition-colors"
-                          style={{
-                            borderRadius: '24px',
-                            border: '1.5px solid #E5E5E5',
-                            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                            fontSize: '14px',
-                            fontWeight: 600,
-                          }}
-                        >
-                          {t('common.cancel')}
-                        </button>
-                        <button
-                          onClick={handleUpdateClothing}
-                          disabled={!selectedItem.name || !selectedItem.category1}
-                          className="flex-1 text-white px-4 py-3 hover:opacity-90 transition-opacity disabled:opacity-50"
-                          style={{
-                            borderRadius: '24px',
-                            backgroundColor: '#000',
-                            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                            fontSize: '14px',
-                            fontWeight: 600,
-                          }}
-                        >
-                          {t('closet.save')}
-                        </button>
-                      </div>
-                    )}
                   </div>
+                </div>
+
+                {/* 고정 푸터 버튼 */}
+                <div
+                  className="flex-shrink-0 flex gap-2 px-6 pb-6 pt-3 bg-white"
+                  style={{ borderRadius: '0 0 24px 24px' }}
+                >
+                  {!editMode ? (
+                    <>
+                      <button
+                        onClick={() => setEditMode(true)}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 hover:bg-gray-50 transition-colors"
+                        style={{
+                          borderRadius: '24px',
+                          border: '1.5px solid #E5E5E5',
+                          fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                          fontSize: '14px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <Edit2 size={16} strokeWidth={2} />
+                        {t('common.edit')}
+                      </button>
+                      <button
+                        onClick={handleDeleteClothing}
+                        className="flex-1 flex items-center justify-center gap-2 text-white px-4 py-3 hover:opacity-90 transition-opacity"
+                        style={{
+                          borderRadius: '24px',
+                          backgroundColor: '#000',
+                          fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                          fontSize: '14px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <Trash2 size={16} strokeWidth={2} />
+                        {t('common.delete')}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={handleCancelDetail}
+                        className="flex-1 px-4 py-3 hover:bg-gray-50 transition-colors"
+                        style={{
+                          borderRadius: '24px',
+                          border: '1.5px solid #E5E5E5',
+                          fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                          fontSize: '14px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {t('common.cancel')}
+                      </button>
+                      <button
+                        onClick={handleUpdateClothing}
+                        disabled={!selectedItem.name || !selectedItem.category1}
+                        className="flex-1 text-white px-4 py-3 hover:opacity-90 transition-opacity disabled:opacity-50"
+                        style={{
+                          borderRadius: '24px',
+                          backgroundColor: '#000',
+                          fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                          fontSize: '14px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {t('closet.save')}
+                      </button>
+                    </>
+                  )}
                 </div>
               </>
             )}
