@@ -1,18 +1,12 @@
-import {
-  postUploadsPresignApi,
-  postUploadsCompleteApi,
-} from '@/shared/api/endpointTags/uploads';
-import { CreatePresignedUrlDtoContentType } from '@/shared/api/orvalSchema';
+import { postUploadsPresignApi, postUploadsCompleteApi } from '@/shared/api/endpointTags/uploads';
+import { CreatePresignedUrlDtoContentType } from '@/shared/model/orvalSchemas';
 import { clientKy } from '@/features/api/clientKy';
 
 export type UploadResult = {
   publicUrl: string;
 };
 
-export async function uploadToS3(
-  file: File,
-  type: 'clothes' | 'profile',
-): Promise<UploadResult> {
+export async function uploadToS3(file: File, type: 'clothes' | 'profile'): Promise<UploadResult> {
   const allowedContentTypes = new Set<string>(Object.values(CreatePresignedUrlDtoContentType));
   const contentType = (
     allowedContentTypes.has(file.type) ? file.type : 'image/jpeg'

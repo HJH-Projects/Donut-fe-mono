@@ -1,4 +1,4 @@
-import type * as S from '../../orvalSchema';
+import type * as S from '../../../model/orvalSchemas';
 import type { ApiRequestOptions, KyInstance } from '../_types';
 
 export const getSharesDetailApi = (ky: KyInstance, path: string, options?: ApiRequestOptions) => {
@@ -10,7 +10,9 @@ export const postSharesApi = (
   payload: S.CreateShareLinkDto,
   options?: ApiRequestOptions,
 ) => {
-  return ky.post('shares', { ...options, json: payload }).then((res) => res.json<S.ShareLinkResponseDto>());
+  return ky
+    .post('shares', { ...options, json: payload })
+    .then((res) => res.json<S.ShareLinkResponseDto>());
 };
 
 export const patchSharesApi = (

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import type { UserProfileResponseDto } from '@/shared/api/orvalSchema';
+import type { UserProfileResponseDto } from '@/shared/model/orvalSchemas';
 import {
   getUsersMeApi,
   patchUsersProfileApi,
@@ -22,7 +22,9 @@ export function useProfile({ initialProfile = null, initialStats = null }: UsePr
   const router = useRouter();
 
   const [profile, setProfile] = useState<UserProfileResponseDto | null>(initialProfile);
-  const [stats, setStats] = useState<{ closetCount: number; lookCount: number } | null>(initialStats);
+  const [stats, setStats] = useState<{ closetCount: number; lookCount: number } | null>(
+    initialStats,
+  );
   const [nickname, setNickname] = useState(initialProfile?.nickname || '패션러버');
   const [isBootstrapped, setIsBootstrapped] = useState(!!(initialProfile && initialStats));
   const [isResettingNickname, setIsResettingNickname] = useState(false);

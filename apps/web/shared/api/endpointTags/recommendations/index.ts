@@ -1,4 +1,4 @@
-import type * as S from '../../orvalSchema';
+import type * as S from '../../../model/orvalSchemas';
 import type { ApiRequestOptions, KyInstance } from '../_types';
 
 export const getRecommendationsLookApi = (

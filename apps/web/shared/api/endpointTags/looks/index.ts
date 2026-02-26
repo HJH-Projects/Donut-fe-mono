@@ -1,4 +1,4 @@
-import type * as S from '../../orvalSchema';
+import type * as S from '../../../model/orvalSchemas';
 import type { ApiRequestOptions, KyInstance } from '../_types';
 
 export const postLooksApi = (
@@ -6,7 +6,9 @@ export const postLooksApi = (
   payload: S.CreateLookDto,
   options?: ApiRequestOptions,
 ) => {
-  return ky.post('looks', { ...options, json: payload }).then((res) => res.json<S.LookResponseDto>());
+  return ky
+    .post('looks', { ...options, json: payload })
+    .then((res) => res.json<S.LookResponseDto>());
 };
 
 export const getLooksApi = (ky: KyInstance, options?: ApiRequestOptions) => {
@@ -23,7 +25,9 @@ export const patchLooksApi = (
   payload: S.UpdateLookDto,
   options?: ApiRequestOptions,
 ) => {
-  return ky.patch(`looks/${id}`, { ...options, json: payload }).then((res) => res.json<S.LookResponseDto>());
+  return ky
+    .patch(`looks/${id}`, { ...options, json: payload })
+    .then((res) => res.json<S.LookResponseDto>());
 };
 
 export const deleteLooksApi = (ky: KyInstance, id: string, options?: ApiRequestOptions) => {

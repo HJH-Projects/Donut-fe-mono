@@ -1,4 +1,4 @@
-import type * as S from '../../orvalSchema';
+import type * as S from '../../../model/orvalSchemas';
 import type { ApiRequestOptions, KyInstance } from '../_types';
 
 export const postLocationsApi = (
@@ -6,11 +6,15 @@ export const postLocationsApi = (
   payload: S.CreateLocationDto,
   options?: ApiRequestOptions,
 ) => {
-  return ky.post('locations', { ...options, json: payload }).then((res) => res.json<S.UserLocationResponseDto>());
+  return ky
+    .post('locations', { ...options, json: payload })
+    .then((res) => res.json<S.UserLocationResponseDto>());
 };
 
 export const getLocationsApi = (ky: KyInstance, options?: ApiRequestOptions) => {
-  return ky.get('locations', options).then((res) => res.json<S.UserLocationResponseDto[] | S.LocationDto>());
+  return ky
+    .get('locations', options)
+    .then((res) => res.json<S.UserLocationResponseDto[] | S.LocationDto>());
 };
 
 export const patchLocationsApi = (
@@ -25,7 +29,9 @@ export const patchLocationsApi = (
 };
 
 export const deleteLocationsApi = (ky: KyInstance, id: string, options?: ApiRequestOptions) => {
-  return ky.delete(`locations/${id}`, options).then((res) => res.json<S.UserLocationDeleteResponseDto>());
+  return ky
+    .delete(`locations/${id}`, options)
+    .then((res) => res.json<S.UserLocationDeleteResponseDto>());
 };
 
 export const getLocationWeatherApi = (ky: KyInstance, id: string, options?: ApiRequestOptions) => {

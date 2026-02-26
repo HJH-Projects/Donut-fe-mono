@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { CommentResponseDto, ShareLinkDetailResponseDto } from '@/shared/api/orvalSchema';
+import type { CommentResponseDto, ShareLinkDetailResponseDto } from '@/shared/model/orvalSchemas';
 import {
   postShareCommentsApi,
   getShareCommentsApi,

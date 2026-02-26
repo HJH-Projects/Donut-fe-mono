@@ -1,5 +1,5 @@
 import type { HomeWeatherState } from "../ui/home.types";
-import type { WeatherResponseDto } from "@/shared/api/orvalSchema";
+import type { WeatherResponseDto } from '@/shared/model/orvalSchemas';
 
 export const toWeatherCondition = (snapshot: WeatherResponseDto): "sunny" | "cloudy" | "rainy" | "windy" => {
   if (snapshot.precipitationTypeCode && snapshot.precipitationTypeCode > 0) return "rainy";

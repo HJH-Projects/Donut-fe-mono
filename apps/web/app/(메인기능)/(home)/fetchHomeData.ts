@@ -1,5 +1,5 @@
 import type { KyInstance } from '@/shared/api/endpointTags/_types';
-import type { UserLocationResponseDto, LocationDto, WeatherResponseDto } from '@/shared/api/orvalSchema';
+import type { UserLocationResponseDto, LocationDto, WeatherResponseDto } from '@/shared/model/orvalSchemas';
 import type { HomeRecommendation } from '@/page/home/ui/home.types';
 import { getLocationsApi, getLocationWeatherApi } from '@/shared/api/endpointTags/locations';
 import { getRecommendationsLookApi } from '@/shared/api/endpointTags/recommendations';

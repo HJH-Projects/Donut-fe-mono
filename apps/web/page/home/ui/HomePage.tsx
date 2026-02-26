@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import type { WeatherResponseDto } from "@/shared/api/orvalSchema";
+import type { WeatherResponseDto } from '@/shared/model/orvalSchemas';
 import type { HomeLocation } from "@/app/(메인기능)/(home)/fetchHomeData";
 import type { HomeRecommendation } from "./home.types";
 import LocationWeather from "./locationWeather";

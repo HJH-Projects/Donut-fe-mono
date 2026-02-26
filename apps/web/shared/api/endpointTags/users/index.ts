@@ -1,4 +1,4 @@
-import type * as S from '../../orvalSchema';
+import type * as S from '../../../model/orvalSchemas';
 import type { ApiRequestOptions, KyInstance } from '../_types';
 
 export const getUsersMeApi = (ky: KyInstance, options?: ApiRequestOptions) => {
@@ -23,7 +23,5 @@ export const postUsersResetApi = (ky: KyInstance, options?: ApiRequestOptions) =
 };
 
 export const postUsersResetNicknameApi = (ky: KyInstance, options?: ApiRequestOptions) => {
-  return ky
-    .post('users/nickname/reset', options)
-    .then((res) => res.json<{ nickname: string }>());
+  return ky.post('users/nickname/reset', options).then((res) => res.json<{ nickname: string }>());
 };

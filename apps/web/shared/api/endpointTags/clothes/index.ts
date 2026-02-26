@@ -1,4 +1,4 @@
-import type * as S from '../../orvalSchema';
+import type * as S from '../../../model/orvalSchemas';
 import type { ApiRequestOptions, KyInstance } from '../_types';
 
 export const postClothesApi = (
@@ -6,7 +6,9 @@ export const postClothesApi = (
   payload: S.CreateClothesDto,
   options?: ApiRequestOptions,
 ) => {
-  return ky.post('clothes', { ...options, json: payload }).then((res) => res.json<S.ClothesResponseDto>());
+  return ky
+    .post('clothes', { ...options, json: payload })
+    .then((res) => res.json<S.ClothesResponseDto>());
 };
 
 export const getClothesApi = (ky: KyInstance, options?: ApiRequestOptions) => {
