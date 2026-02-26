@@ -12,6 +12,7 @@ import { getClothesApi } from '@/shared/api/endpointTags/clothes';
 import { getLooksApi } from '@/shared/api/endpointTags/looks';
 import { clientKy } from '@/features/api/clientKy';
 import { toApiError, type ApiError } from '@/shared/api/error';
+import { invalidateProfile } from '@/shared/api/invalidations/profile';
 
 interface UseProfileOptions {
   initialProfile?: UserProfileResponseDto | null;
@@ -60,6 +61,7 @@ export function useProfile({ initialProfile = null, initialStats = null }: UsePr
 
     try {
       await patchUsersProfileApi(clientKy, { nickname: newNickname });
+      await invalidateProfile();
       router.refresh();
     } catch {
       /* 오프라인 시 로컬 상태만 업데이트 */
@@ -72,6 +74,7 @@ export function useProfile({ initialProfile = null, initialStats = null }: UsePr
       const resetResult = await postUsersResetNicknameApi(clientKy);
       setNickname(resetResult.nickname);
       setProfile((prev) => (prev ? { ...prev, nickname: resetResult.nickname } : prev));
+      await invalidateProfile();
       router.refresh();
     } catch {
       /* API 에러 시 무시 */

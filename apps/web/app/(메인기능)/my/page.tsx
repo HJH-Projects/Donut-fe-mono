@@ -1,15 +1,15 @@
 import { MyPage } from '@/page/my/ui/MyPage';
-import { serverKy } from '@/features/api/serverKy';
-import { getUsersMeApi } from '@/shared/api/endpointTags/users';
-import { getClothesApi } from '@/shared/api/endpointTags/clothes';
-import { getLooksApi } from '@/shared/api/endpointTags/looks';
+import { getCachedProfile } from '@/page/my/model/getCachedProfile';
+import { getCachedClothes } from '@/page/closet/model/getCachedClothes';
+import { getCachedLooks } from '@/page/look/model/getCachedLooks';
+
+export const PROFILE_CACHE_TAG = 'profile';
 
 export default async function Page() {
-  const initialProfile = await getUsersMeApi(serverKy);
-
-  const [clothes, looks] = await Promise.all([
-    getClothesApi(serverKy).catch(() => []),
-    getLooksApi(serverKy).catch(() => []),
+  const [initialProfile, clothes, looks] = await Promise.all([
+    getCachedProfile().catch(() => null),
+    getCachedClothes().catch(() => []),
+    getCachedLooks().catch(() => []),
   ]);
 
   const initialStats = {
