@@ -116,6 +116,7 @@
     "editLook": "Edit Look",
     "lookName": "Look Name",
     "enterLookName": "Enter look name",
+    "selectTag": "Please select at least one tag",
     "selectItems": "Select Items",
     "selectItemsGuide": "Select items for this look (minimum 2)",
     "selectItemsDescription": "Select items from your closet to create a look",

@@ -107,6 +107,10 @@ export function LookForm({
       toast.info(t('looks.enterLookName'));
       return;
     }
+    if (selectedTags.length === 0) {
+      toast.info(t('looks.selectTag'));
+      return;
+    }
     if (selectedItems.length === 0) {
       toast.info("최소 1개 이상의 아이템을 선택해주세요");
       return;
