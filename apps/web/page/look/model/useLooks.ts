@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import type { LookResponseDto } from '@/shared/api/orvalSchema';
+import type { LookResponseDto } from '@/shared/model/orvalSchemas';
+import { useToast } from '@/shared/model/useToast';
 import {
   postLooksApi,
   getLooksApi,
@@ -11,6 +12,7 @@ import {
 } from '@/shared/api/endpointTags/looks';
 import { clientKy } from '@/features/api/clientKy';
 import { toApiError, type ApiError } from '@/shared/api/error';
+import { invalidateLooks } from '@/shared/api/invalidations/looks';
 
 export type LookItem = {
   id: string;
@@ -49,6 +51,7 @@ interface UseLooksOptions {
 
 export function useLooks({ initialLooks = [], skipBootstrap = false }: UseLooksOptions = {}) {
   const router = useRouter();
+  const toast = useToast();
 
   const [looks, setLooks] = useState<Look[]>(() => initialLooks.map(dtoToLook));
   const [isBootstrapped, setIsBootstrapped] = useState(
@@ -87,9 +90,10 @@ export function useLooks({ initialLooks = [], skipBootstrap = false }: UseLooksO
         tags: newLook.tags.join(','),
         items: newLook.items.map((item, i) => ({ clothesId: item.id, sortOrder: i, role: 'ITEM' })),
       });
+      await invalidateLooks();
       router.refresh();
     } catch {
-      /* 오프라인 시 로컬 상태만 업데이트 */
+      toast.error('룩을 추가하는 데 실패했습니다.');
     }
   };
 
@@ -111,9 +115,10 @@ export function useLooks({ initialLooks = [], skipBootstrap = false }: UseLooksO
         tags: updatedFields.tags.join(','),
         items: updatedFields.items.map((item, i) => ({ clothesId: item.id, sortOrder: i, role: 'ITEM' })),
       });
+      await invalidateLooks();
       router.refresh();
     } catch {
-      /* 오프라인 시 로컬 상태만 업데이트 */
+      toast.error('룩을 수정하는 데 실패했습니다.');
     }
   };
 
@@ -122,9 +127,10 @@ export function useLooks({ initialLooks = [], skipBootstrap = false }: UseLooksO
 
     try {
       await deleteLooksApi(clientKy, id);
+      await invalidateLooks();
       router.refresh();
     } catch {
-      /* 오프라인 시 로컬 상태만 업데이트 */
+      toast.error('룩을 삭제하는 데 실패했습니다.');
     }
   };
 

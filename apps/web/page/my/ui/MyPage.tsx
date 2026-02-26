@@ -6,9 +6,10 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Dialog } from '@base-ui/react/dialog';
 import { useTranslation } from 'react-i18next';
-import type { UserProfileResponseDto } from '@/shared/api/orvalSchema';
+import type { UserProfileResponseDto } from '@/shared/model/orvalSchemas';
 import Spinner from '@/shared/ui/Spinner';
 import { useProfile } from '../model/useProfile';
+import { useToast } from '@/shared/model/useToast';
 
 type TemperatureUnit = 'celsius' | 'fahrenheit';
 type Language = 'ko' | 'en';
@@ -27,6 +28,7 @@ interface MyPageProps {
 export function MyPage({ initialProfile = null, initialStats = null }: MyPageProps) {
   const router = useRouter();
   const { t, i18n } = useTranslation();
+  const toast = useToast();
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [showLanguageDialog, setShowLanguageDialog] = useState(false);
   const [showNicknameDialog, setShowNicknameDialog] = useState(false);
@@ -57,7 +59,7 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
         });
         router.push('/');
       } catch {
-        alert(t('profile.logoutSuccess'));
+        toast.success(t('profile.logoutSuccess'));
       }
     }
   };
@@ -69,7 +71,7 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
 
   const handleSaveNickname = async () => {
     if (!tempNickname.trim()) {
-      alert(t('profile.enterNickname'));
+      toast.info(t('profile.enterNickname'));
       return;
     }
     const newNickname = tempNickname.trim();

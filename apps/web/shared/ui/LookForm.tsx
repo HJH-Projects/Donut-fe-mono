@@ -4,6 +4,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { ImageWithFallback } from "@/shared/ui/ImageWithFallback";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/shared/model/useToast";
 
 type LookItem = {
   id: string;
@@ -54,6 +55,7 @@ export function LookForm({
   onCancel,
 }: LookFormProps) {
   const { t } = useTranslation();
+  const toast = useToast();
   const [lookName, setLookName] = useState(initialData?.name || "");
   const [selectedTags, setSelectedTags] = useState<string[]>(
     initialData?.tags || []
@@ -102,11 +104,11 @@ export function LookForm({
 
   const handleSave = () => {
     if (!lookName.trim()) {
-      alert(t('looks.enterLookName'));
+      toast.info(t('looks.enterLookName'));
       return;
     }
     if (selectedItems.length === 0) {
-      alert("최소 1개 이상의 아이템을 선택해주세요");
+      toast.info("최소 1개 이상의 아이템을 선택해주세요");
       return;
     }
 

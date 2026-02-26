@@ -1,16 +1,30 @@
 'use client';
 
-import { useState, useRef, useEffect, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
-import { Dialog } from "@base-ui/react/dialog";
-import { ImageWithFallback } from "@/shared/ui/ImageWithFallback";
-import { LookForm } from "@/shared/ui/LookForm";
-import { PlusAction } from "@/shared/ui/PlusAction";
-import { useTranslation } from "react-i18next";
-import { Plus, Heart, Search, ArrowLeft, ArrowRight, Share2, X, Trash2, Edit2, Link2, Check, Copy } from "lucide-react";
-import type { ClothesResponseDto, LookResponseDto } from '@/shared/api/orvalSchema';
+import { useState, useRef, useEffect, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
+import { Dialog } from '@base-ui/react/dialog';
+import { ImageWithFallback } from '@/shared/ui/ImageWithFallback';
+import { LookForm } from '@/shared/ui/LookForm';
+import { PlusAction } from '@/shared/ui/PlusAction';
+import { useTranslation } from 'react-i18next';
+import {
+  Plus,
+  Heart,
+  Search,
+  ArrowLeft,
+  ArrowRight,
+  Share2,
+  X,
+  Trash2,
+  Edit2,
+  Link2,
+  Check,
+  Copy,
+} from 'lucide-react';
+import type { ClothesResponseDto, LookResponseDto } from '@/shared/model/orvalSchemas';
 import { useLooks, type Look, type LookItem } from '../model/useLooks';
 import { useClothes } from '@/page/closet/model/useClothes';
+import { useToast } from '@/shared/model/useToast';
 
 type SharedLink = {
   id: string;
@@ -28,8 +42,9 @@ interface LookPageProps {
 export function LookPage({ initialLooks = [], initialClothes = [], header }: LookPageProps) {
   const { t } = useTranslation();
   const router = useRouter();
+  const toast = useToast();
   const [showFavoriteOnly, setShowFavoriteOnly] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
 
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -40,7 +55,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
   const [sharedLinks, setSharedLinks] = useState<SharedLink[]>([]);
   const [selectedLink, setSelectedLink] = useState<SharedLink | null>(null);
   const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
-  const [linkName, setLinkName] = useState("");
+  const [linkName, setLinkName] = useState('');
   const tagScrollRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -60,16 +75,14 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
   }));
 
   const [newLook, setNewLook] = useState<Partial<Look>>({
-    name: "",
+    name: '',
     tags: [],
     items: [],
     isFavorite: false,
   });
 
   // 모든 룩에서 사용 가능한 태그 추출
-  const allTags = Array.from(
-    new Set(looks.flatMap((look) => look.tags))
-  ).sort();
+  const allTags = Array.from(new Set(looks.flatMap((look) => look.tags))).sort();
 
   // 필터링된 룩 목록
   const filteredLooks = looks.filter((look) => {
@@ -79,7 +92,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       const matchesName = look.name.toLowerCase().includes(query);
-      const matchesTags = look.tags.some(tag => tag.toLowerCase().includes(query));
+      const matchesTags = look.tags.some((tag) => tag.toLowerCase().includes(query));
       if (!matchesName && !matchesTags) return false;
     }
     return true;
@@ -163,11 +176,11 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
     // 클립보드에 복사
     navigator.clipboard.writeText(shareUrl).then(
       () => {
-        alert("공유 링크가 클립보드에 복사되었습니다!");
+        toast.success('공유 링크가 클립보드에 복사되었습니다!');
       },
       () => {
-        alert("링크 복사에 실패했습니다. 다시 시도해주세요.");
-      }
+        toast.error('링크 복사에 실패했습니다. 다시 시도해주세요.');
+      },
     );
   };
 
@@ -178,34 +191,37 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
     const url = `${window.location.origin}/share/${selectedLook.id}?ref=${linkId}`;
     const newLink: SharedLink = {
       id: linkId,
-      name: linkName || "새 링크",
+      name: linkName || '새 링크',
       url: url,
       createdAt: new Date(),
     };
     setSharedLinks([newLink, ...sharedLinks]);
-    setLinkName("");
+    setLinkName('');
     setShowCreateLinkDialog(false);
   };
 
   const handleCopyLink = (url: string, linkId: string) => {
     // Try to copy to clipboard with fallback
     try {
-      navigator.clipboard.writeText(url).then(() => {
-        setCopiedLinkId(linkId);
-        setTimeout(() => setCopiedLinkId(null), 2000);
-      }).catch(() => {
-        // Fallback method
-        const textArea = document.createElement('textarea');
-        textArea.value = url;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        setCopiedLinkId(linkId);
-        setTimeout(() => setCopiedLinkId(null), 2000);
-      });
+      navigator.clipboard
+        .writeText(url)
+        .then(() => {
+          setCopiedLinkId(linkId);
+          setTimeout(() => setCopiedLinkId(null), 2000);
+        })
+        .catch(() => {
+          // Fallback method
+          const textArea = document.createElement('textarea');
+          textArea.value = url;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+          setCopiedLinkId(linkId);
+          setTimeout(() => setCopiedLinkId(null), 2000);
+        });
     } catch (err) {
       // Fallback method for older browsers or permission issues
       const textArea = document.createElement('textarea');
@@ -231,7 +247,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
   };
 
   const handleDeleteLink = (linkId: string) => {
-    if (confirm("링크를 삭제하시겠습니까?")) {
+    if (confirm('링크를 삭제하시겠습니까?')) {
       setSharedLinks(sharedLinks.filter((link) => link.id !== linkId));
     }
   };
@@ -243,7 +259,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 1) return "방금 전";
+    if (minutes < 1) return '방금 전';
     if (minutes < 60) return `${minutes}분 전`;
     if (hours < 24) return `${hours}시간 전`;
     if (days < 7) return `${days}일 전`;
@@ -256,13 +272,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
   };
 
   // 스크롤 가능한 이미지 갤러리 컴포넌트
-  const ScrollableImageGallery = ({
-    items,
-    lookId,
-  }: {
-    items: LookItem[];
-    lookId: string;
-  }) => {
+  const ScrollableImageGallery = ({ items, lookId }: { items: LookItem[]; lookId: string }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
@@ -321,27 +331,24 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
           onScroll={checkScrollButtons}
           className="overflow-x-auto overflow-y-hidden scrollbar-hide"
           style={{
-            scrollbarWidth: "none",
-            msOverflowStyle: "none",
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
           }}
         >
           <div
             className="flex items-center"
             style={{
-              gap: "8px",
-              paddingLeft: "16px",
-              paddingRight: "16px",
+              gap: '8px',
+              paddingLeft: '16px',
+              paddingRight: '16px',
             }}
           >
             {items.map((item) => (
-              <div
-                key={item.id}
-                className="flex-shrink-0"
-              >
+              <div key={item.id} className="flex-shrink-0">
                 <div
                   className="w-[64px] h-[64px] bg-gray-100 overflow-hidden shadow-sm"
                   style={{
-                    borderRadius: "100px",
+                    borderRadius: '100px',
                   }}
                 >
                   {item.imageUrl ? (
@@ -356,7 +363,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                         className="text-[#000] mb-1"
                         style={{
                           fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                          fontSize: "11px",
+                          fontSize: '11px',
                           fontWeight: 600,
                         }}
                       >
@@ -366,7 +373,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                         className="text-[#666] text-center px-2"
                         style={{
                           fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                          fontSize: "9px",
+                          fontSize: '9px',
                           fontWeight: 400,
                         }}
                       >
@@ -386,8 +393,8 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
             data-navigation-buttons
             className="absolute flex items-center gap-0.5"
             style={{
-              bottom: "-32px",
-              right: "12px",
+              bottom: '-32px',
+              right: '12px',
               zIndex: 10,
             }}
             onPointerDown={(e) => e.stopPropagation()}
@@ -417,22 +424,18 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
               disabled={!canScrollLeft}
               className="transition-all disabled:opacity-20 flex items-center justify-center active:bg-gray-200"
               style={{
-                width: "36px",
-                height: "36px",
-                borderRadius: "50%",
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
               }}
             >
-              <ArrowLeft
-                size={14}
-                color="#000"
-                strokeWidth={2}
-              />
+              <ArrowLeft size={14} color="#000" strokeWidth={2} />
             </button>
             <div
               style={{
-                width: "1px",
-                height: "10px",
-                backgroundColor: "#D9D9D9",
+                width: '1px',
+                height: '10px',
+                backgroundColor: '#D9D9D9',
               }}
             />
             <button
@@ -457,16 +460,12 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
               disabled={!canScrollRight}
               className="transition-all disabled:opacity-20 flex items-center justify-center active:bg-gray-200"
               style={{
-                width: "36px",
-                height: "36px",
-                borderRadius: "50%",
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
               }}
             >
-              <ArrowRight
-                size={14}
-                color="#000"
-                strokeWidth={2}
-              />
+              <ArrowRight size={14} color="#000" strokeWidth={2} />
             </button>
           </div>
         )}
@@ -475,7 +474,10 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
   };
 
   return (
-    <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden" style={{ backgroundColor: "#FFFFFF" }}>
+    <div
+      className="flex-1 min-h-0 w-full flex flex-col overflow-hidden"
+      style={{ backgroundColor: '#FFFFFF' }}
+    >
       <div className="flex-shrink-0 relative">
         {header}
         <div className="absolute right-6 top-1/2 -translate-y-1/2">
@@ -492,11 +494,11 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
             className="transition-all"
             style={{
               fontFamily: "var(--font-inter), 'Inter', sans-serif",
-              fontSize: "12px",
+              fontSize: '12px',
               fontWeight: !showFavoriteOnly ? 600 : 500,
-              color: !showFavoriteOnly ? "#000" : "#999",
-              background: "none",
-              border: "none",
+              color: !showFavoriteOnly ? '#000' : '#999',
+              background: 'none',
+              border: 'none',
               padding: 0,
             }}
           >
@@ -504,9 +506,9 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
           </button>
           <div
             style={{
-              width: "1px",
-              height: "12px",
-              backgroundColor: "#D9D9D9",
+              width: '1px',
+              height: '12px',
+              backgroundColor: '#D9D9D9',
             }}
           />
           <button
@@ -514,18 +516,18 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
             className="transition-all flex items-center gap-1"
             style={{
               fontFamily: "var(--font-inter), 'Inter', sans-serif",
-              fontSize: "12px",
+              fontSize: '12px',
               fontWeight: showFavoriteOnly ? 600 : 500,
-              color: showFavoriteOnly ? "#000" : "#999",
-              background: "none",
-              border: "none",
+              color: showFavoriteOnly ? '#000' : '#999',
+              background: 'none',
+              border: 'none',
               padding: 0,
             }}
           >
             <Heart
               size={12}
-              color={showFavoriteOnly ? "#000" : "#999"}
-              fill={showFavoriteOnly ? "#000" : "none"}
+              color={showFavoriteOnly ? '#000' : '#999'}
+              fill={showFavoriteOnly ? '#000' : 'none'}
               strokeWidth={2}
             />
             {t('looks.favorite')}
@@ -533,9 +535,9 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
 
           <div
             style={{
-              width: "1px",
-              height: "12px",
-              backgroundColor: "#D9D9D9",
+              width: '1px',
+              height: '12px',
+              backgroundColor: '#D9D9D9',
             }}
           />
 
@@ -554,24 +556,24 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
               placeholder={t('looks.searchPlaceholder')}
               className="pl-7 pr-2 py-1 transition-all"
               style={{
-                width: "85px",
-                borderRadius: "999px",
-                backgroundColor: "#F5F5F5",
-                border: "1px solid transparent",
+                width: '85px',
+                borderRadius: '999px',
+                backgroundColor: '#F5F5F5',
+                border: '1px solid transparent',
                 fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                fontSize: "12px",
+                fontSize: '12px',
                 fontWeight: 400,
-                color: "#000",
-                outline: "none",
+                color: '#000',
+                outline: 'none',
               }}
               onFocus={(e) => {
-                e.target.style.backgroundColor = "#FFF";
-                e.target.style.borderColor = "#E5E5E5";
+                e.target.style.backgroundColor = '#FFF';
+                e.target.style.borderColor = '#E5E5E5';
               }}
               onBlur={(e) => {
                 if (!searchQuery) {
-                  e.target.style.backgroundColor = "#F5F5F5";
-                  e.target.style.borderColor = "transparent";
+                  e.target.style.backgroundColor = '#F5F5F5';
+                  e.target.style.borderColor = 'transparent';
                 }
               }}
             />
@@ -583,11 +585,12 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
           className="text-[#555555] flex-shrink-0"
           style={{
             fontFamily: "var(--font-inter), 'Inter', sans-serif",
-            fontSize: "12px",
+            fontSize: '12px',
             fontWeight: 500,
           }}
         >
-          {filteredLooks.length}{t('looks.items')}
+          {filteredLooks.length}
+          {t('looks.items')}
         </p>
       </div>
 
@@ -595,16 +598,14 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
       <div className="flex-1 overflow-y-auto pb-24">
         {filteredLooks.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full px-6">
-            <div
-              className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4"
-            >
+            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
               <Plus size={28} color="#999" strokeWidth={1.5} />
             </div>
             <p
               className="text-black mb-1"
               style={{
                 fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                fontSize: "16px",
+                fontSize: '16px',
                 fontWeight: 600,
               }}
             >
@@ -614,7 +615,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
               className="text-[#999] text-center mb-6"
               style={{
                 fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                fontSize: "13px",
+                fontSize: '13px',
                 fontWeight: 400,
               }}
             >
@@ -625,10 +626,10 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                 onClick={() => setShowAddDialog(true)}
                 className="px-6 py-3 text-white hover:opacity-90 transition-opacity flex items-center gap-2"
                 style={{
-                  borderRadius: "12px",
-                  backgroundColor: "#000",
+                  borderRadius: '12px',
+                  backgroundColor: '#000',
                   fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                  fontSize: "14px",
+                  fontSize: '14px',
                   fontWeight: 600,
                 }}
               >
@@ -638,124 +639,114 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
             )}
           </div>
         ) : (
-        <div className="px-6" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          {filteredLooks.map((look, index) => (
-            <div
-              key={look.id}
-              onClick={(e) => handleCardClick(e, look)}
-              onPointerDown={(e) => handleCardPointerDown(e, look.id)}
-              onPointerUp={handleCardPointerUp}
-              onPointerLeave={handleCardPointerLeave}
-              className="cursor-pointer transition-all relative rounded-md"
-              style={{
-                padding: "16px",
-                backgroundColor: "#FFFFFF",
-                borderRadius: "16px",
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06)",
-              }}
-            >
-              {/* 하단 우측: 하트/공유 버튼 (absolute) */}
-              <div className="absolute bottom-4 right-4 flex items-center gap-1 z-10">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleToggleFavorite(look.id);
-                  }}
-                  className="p-1.5 hover:bg-gray-50 transition-all"
-                  style={{ borderRadius: "8px" }}
-                >
-                  <Heart
-                    size={18}
-                    color={look.isFavorite ? "#000" : "#999"}
-                    fill={look.isFavorite ? "#000" : "none"}
-                    strokeWidth={1.5}
-                  />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedLook(look);
-                    setShowShareDialog(true);
-                  }}
-                  className="p-1.5 hover:bg-gray-50 transition-all"
-                  style={{ borderRadius: "8px" }}
-                >
-                  <Share2
-                    size={18}
-                    color="#000"
-                    strokeWidth={1.5}
-                  />
-                </button>
-              </div>
-
-              {/* 상단: 이미지 갤러리 */}
-              <ScrollableImageGallery
-                items={look.items}
-                lookId={look.id}
-              />
-
-              {/* 중앙: 룩 이름 */}
-              <div className="px-4 pt-2 mb-2">
-                <h3
-                  className="text-black"
-                  style={{
-                    fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                    fontSize: "18px",
-                    fontWeight: 700,
-                    letterSpacing: "-0.01em",
-                  }}
-                >
-                  {look.name}
-                </h3>
-              </div>
-
-              {/* 하단: 태그 + 아이템 개수 */}
-              <div className="px-4">
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {look.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-3 py-1 text-white"
-                      style={{
-                        borderRadius: "999px",
-                        backgroundColor: "#000",
-                        fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                        fontSize: "11px",
-                        fontWeight: 500,
-                      }}
-                    >
-                      #{tag}
-                    </span>
-                  ))}
+          <div className="px-6" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {filteredLooks.map((look, index) => (
+              <div
+                key={look.id}
+                onClick={(e) => handleCardClick(e, look)}
+                onPointerDown={(e) => handleCardPointerDown(e, look.id)}
+                onPointerUp={handleCardPointerUp}
+                onPointerLeave={handleCardPointerLeave}
+                className="cursor-pointer transition-all relative rounded-md"
+                style={{
+                  padding: '16px',
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: '16px',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06)',
+                }}
+              >
+                {/* 하단 우측: 하트/공유 버튼 (absolute) */}
+                <div className="absolute bottom-4 right-4 flex items-center gap-1 z-10">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleFavorite(look.id);
+                    }}
+                    className="p-1.5 hover:bg-gray-50 transition-all"
+                    style={{ borderRadius: '8px' }}
+                  >
+                    <Heart
+                      size={18}
+                      color={look.isFavorite ? '#000' : '#999'}
+                      fill={look.isFavorite ? '#000' : 'none'}
+                      strokeWidth={1.5}
+                    />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedLook(look);
+                      setShowShareDialog(true);
+                    }}
+                    className="p-1.5 hover:bg-gray-50 transition-all"
+                    style={{ borderRadius: '8px' }}
+                  >
+                    <Share2 size={18} color="#000" strokeWidth={1.5} />
+                  </button>
                 </div>
-                <p
-                  className="text-[#999]"
-                  style={{
-                    fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                    fontSize: "11px",
-                    fontWeight: 400,
-                  }}
-                >
-                  아이템 {look.items.length}개
-                </p>
+
+                {/* 상단: 이미지 갤러리 */}
+                <ScrollableImageGallery items={look.items} lookId={look.id} />
+
+                {/* 중앙: 룩 이름 */}
+                <div className="px-4 pt-2 mb-2">
+                  <h3
+                    className="text-black"
+                    style={{
+                      fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                      fontSize: '18px',
+                      fontWeight: 700,
+                      letterSpacing: '-0.01em',
+                    }}
+                  >
+                    {look.name}
+                  </h3>
+                </div>
+
+                {/* 하단: 태그 + 아이템 개수 */}
+                <div className="px-4">
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {look.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="px-3 py-1 text-white"
+                        style={{
+                          borderRadius: '999px',
+                          backgroundColor: '#000',
+                          fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                          fontSize: '11px',
+                          fontWeight: 500,
+                        }}
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                  <p
+                    className="text-[#999]"
+                    style={{
+                      fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                      fontSize: '11px',
+                      fontWeight: 400,
+                    }}
+                  >
+                    아이템 {look.items.length}개
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
         )}
       </div>
 
       {/* 룩 상세보기 다이얼로그 */}
-      <Dialog.Root
-        open={showDetailDialog}
-        onOpenChange={setShowDetailDialog}
-      >
+      <Dialog.Root open={showDetailDialog} onOpenChange={setShowDetailDialog}>
         <Dialog.Portal>
           <Dialog.Backdrop className="fixed inset-0 bg-black/30 z-50" />
           <Dialog.Popup
             className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[400px] max-h-[85vh] flex flex-col"
             style={{
-              borderRadius: "24px",
+              borderRadius: '24px',
             }}
             aria-describedby={undefined}
           >
@@ -768,7 +759,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                       className="text-black mb-2"
                       style={{
                         fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                        fontSize: "20px",
+                        fontSize: '20px',
                         fontWeight: 600,
                       }}
                     >
@@ -780,10 +771,10 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                           key={tag}
                           className="px-3 py-1 text-white"
                           style={{
-                            borderRadius: "999px",
-                            backgroundColor: "#000",
+                            borderRadius: '999px',
+                            backgroundColor: '#000',
                             fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                            fontSize: "11px",
+                            fontSize: '11px',
                             fontWeight: 500,
                           }}
                         >
@@ -795,13 +786,9 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                   <button
                     onClick={() => setShowDetailDialog(false)}
                     className="p-1.5 hover:bg-gray-100 transition-colors"
-                    style={{ borderRadius: "8px" }}
+                    style={{ borderRadius: '8px' }}
                   >
-                    <X
-                      size={20}
-                      color="#000"
-                      strokeWidth={1.5}
-                    />
+                    <X size={20} color="#000" strokeWidth={1.5} />
                   </button>
                 </div>
 
@@ -811,7 +798,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                     className="text-black mb-3"
                     style={{
                       fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                      fontSize: "14px",
+                      fontSize: '14px',
                       fontWeight: 600,
                     }}
                   >
@@ -819,13 +806,10 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                   </h4>
                   <div className="grid grid-cols-2 gap-3 pb-4">
                     {selectedLook.items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex flex-col gap-2"
-                      >
+                      <div key={item.id} className="flex flex-col gap-2">
                         <div
                           className="w-full aspect-square bg-gray-200 overflow-hidden"
-                          style={{ borderRadius: "10px" }}
+                          style={{ borderRadius: '10px' }}
                         >
                           {item.imageUrl ? (
                             <ImageWithFallback
@@ -838,9 +822,8 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                               <span
                                 className="text-[#999]"
                                 style={{
-                                  fontFamily:
-                                    "var(--font-inter), 'Inter', sans-serif",
-                                  fontSize: "9px",
+                                  fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                                  fontSize: '9px',
                                   fontWeight: 500,
                                 }}
                               >
@@ -854,7 +837,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                             className="text-black mb-0.5"
                             style={{
                               fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                              fontSize: "13px",
+                              fontSize: '13px',
                               fontWeight: 600,
                             }}
                           >
@@ -864,7 +847,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                             className="text-[#666]"
                             style={{
                               fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                              fontSize: "11px",
+                              fontSize: '11px',
                               fontWeight: 400,
                             }}
                           >
@@ -882,12 +865,12 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                     onClick={handleDeleteLook}
                     className="flex-1 px-5 py-3 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
                     style={{
-                      borderRadius: "12px",
-                      border: "1.5px solid #E5E5E5",
+                      borderRadius: '12px',
+                      border: '1.5px solid #E5E5E5',
                       fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                      fontSize: "14px",
+                      fontSize: '14px',
                       fontWeight: 600,
-                      color: "#000",
+                      color: '#000',
                     }}
                   >
                     <Trash2 size={16} strokeWidth={1.5} />
@@ -900,10 +883,10 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                     }}
                     className="flex-1 px-5 py-3 flex items-center justify-center gap-2 text-white hover:opacity-90 transition-opacity"
                     style={{
-                      borderRadius: "12px",
-                      backgroundColor: "#000",
+                      borderRadius: '12px',
+                      backgroundColor: '#000',
                       fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                      fontSize: "14px",
+                      fontSize: '14px',
                       fontWeight: 600,
                     }}
                   >
@@ -918,16 +901,13 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
       </Dialog.Root>
 
       {/* 룩 추가 다이얼로그 */}
-      <Dialog.Root
-        open={showAddDialog}
-        onOpenChange={setShowAddDialog}
-      >
+      <Dialog.Root open={showAddDialog} onOpenChange={setShowAddDialog}>
         <Dialog.Portal>
           <Dialog.Backdrop className="fixed inset-0 bg-black/30 z-50" />
           <Dialog.Popup
             className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[400px]"
             style={{
-              borderRadius: "24px",
+              borderRadius: '24px',
             }}
             aria-describedby={undefined}
           >
@@ -942,16 +922,13 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
       </Dialog.Root>
 
       {/* 룩 수정 다이얼로그 */}
-      <Dialog.Root
-        open={showEditDialog}
-        onOpenChange={setShowEditDialog}
-      >
+      <Dialog.Root open={showEditDialog} onOpenChange={setShowEditDialog}>
         <Dialog.Portal>
           <Dialog.Backdrop className="fixed inset-0 bg-black/30 z-50" />
           <Dialog.Popup
             className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[400px]"
             style={{
-              borderRadius: "24px",
+              borderRadius: '24px',
             }}
             aria-describedby={undefined}
           >
@@ -972,16 +949,13 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
       </Dialog.Root>
 
       {/* 공유 링크 생성 다이얼로그 */}
-      <Dialog.Root
-        open={showCreateLinkDialog}
-        onOpenChange={setShowCreateLinkDialog}
-      >
+      <Dialog.Root open={showCreateLinkDialog} onOpenChange={setShowCreateLinkDialog}>
         <Dialog.Portal>
           <Dialog.Backdrop className="fixed inset-0 bg-black/30 z-50" />
           <Dialog.Popup
             className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[400px]"
             style={{
-              borderRadius: "24px",
+              borderRadius: '24px',
             }}
             aria-describedby={undefined}
           >
@@ -993,7 +967,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                     className="text-black"
                     style={{
                       fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                      fontSize: "20px",
+                      fontSize: '20px',
                       fontWeight: 600,
                     }}
                   >
@@ -1002,13 +976,9 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                   <button
                     onClick={() => setShowCreateLinkDialog(false)}
                     className="p-1.5 hover:bg-gray-100 transition-colors"
-                    style={{ borderRadius: "8px" }}
+                    style={{ borderRadius: '8px' }}
                   >
-                    <X
-                      size={20}
-                      color="#000"
-                      strokeWidth={1.5}
-                    />
+                    <X size={20} color="#000" strokeWidth={1.5} />
                   </button>
                 </div>
 
@@ -1018,7 +988,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                     className="text-black mb-3"
                     style={{
                       fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                      fontSize: "13px",
+                      fontSize: '13px',
                       fontWeight: 600,
                     }}
                   >
@@ -1030,12 +1000,12 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                     onChange={(e) => setLinkName(e.target.value)}
                     className="w-full px-4 py-3 text-black mb-4"
                     style={{
-                      borderRadius: "12px",
-                      backgroundColor: "#F5F5F5",
+                      borderRadius: '12px',
+                      backgroundColor: '#F5F5F5',
                       fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                      fontSize: "14px",
+                      fontSize: '14px',
                       fontWeight: 400,
-                      border: "1px solid #E5E5E5",
+                      border: '1px solid #E5E5E5',
                     }}
                     placeholder={t('looks.shareDialog.enterLinkName')}
                   />
@@ -1047,12 +1017,12 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                     onClick={() => setShowCreateLinkDialog(false)}
                     className="flex-1 px-5 py-3 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
                     style={{
-                      borderRadius: "12px",
-                      border: "1.5px solid #E5E5E5",
+                      borderRadius: '12px',
+                      border: '1.5px solid #E5E5E5',
                       fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                      fontSize: "14px",
+                      fontSize: '14px',
                       fontWeight: 600,
-                      color: "#000",
+                      color: '#000',
                     }}
                   >
                     {t('common.cancel')}
@@ -1061,10 +1031,10 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                     onClick={handleCreateLink}
                     className="flex-1 px-5 py-3 flex items-center justify-center gap-2 text-white hover:opacity-90 transition-opacity"
                     style={{
-                      borderRadius: "12px",
-                      backgroundColor: "#000",
+                      borderRadius: '12px',
+                      backgroundColor: '#000',
                       fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                      fontSize: "14px",
+                      fontSize: '14px',
                       fontWeight: 600,
                     }}
                   >
@@ -1091,7 +1061,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
           <Dialog.Popup
             className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[400px] max-h-[80vh] flex flex-col"
             style={{
-              borderRadius: "24px",
+              borderRadius: '24px',
             }}
             aria-describedby={undefined}
           >
@@ -1103,7 +1073,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                     className="text-black"
                     style={{
                       fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                      fontSize: "18px",
+                      fontSize: '18px',
                       fontWeight: 600,
                     }}
                   >
@@ -1112,7 +1082,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                   <button
                     onClick={() => setShowShareDialog(false)}
                     className="p-1 hover:bg-gray-100 transition-colors"
-                    style={{ borderRadius: "6px" }}
+                    style={{ borderRadius: '6px' }}
                   >
                     <X size={20} color="#000" strokeWidth={2} />
                   </button>
@@ -1125,27 +1095,24 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                       className="text-[#666] mb-3"
                       style={{
                         fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                        fontSize: "13px",
+                        fontSize: '13px',
                         fontWeight: 500,
                       }}
                     >
                       {t('looks.shareDialog.generatedLinks')} ({sharedLinks.length})
                     </p>
-                    <div className="max-h-[300px] overflow-y-auto" style={{ paddingTop: "8px" }}>
+                    <div className="max-h-[300px] overflow-y-auto" style={{ paddingTop: '8px' }}>
                       <div className="space-y-3">
                         {sharedLinks.map((link) => (
-                          <div
-                            key={link.id}
-                            className="relative"
-                          >
+                          <div key={link.id} className="relative">
                             {/* 체크 아이콘 - 카드 위쪽 우측에 표시 */}
                             {selectedLink?.id === link.id && (
                               <div className="absolute -top-2 right-2 z-50">
                                 <div
                                   className="w-6 h-6 flex items-center justify-center"
                                   style={{
-                                    backgroundColor: "#000",
-                                    borderRadius: "var(--radius-sm)",
+                                    backgroundColor: '#000',
+                                    borderRadius: 'var(--radius-sm)',
                                   }}
                                 >
                                   <Check size={14} color="#FFFFFF" strokeWidth={2.5} />
@@ -1154,11 +1121,16 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                             )}
 
                             <div
-                              onClick={() => setSelectedLink(selectedLink?.id === link.id ? null : link)}
+                              onClick={() =>
+                                setSelectedLink(selectedLink?.id === link.id ? null : link)
+                              }
                               className="p-3 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
                               style={{
-                                borderRadius: "12px",
-                                border: selectedLink?.id === link.id ? "2px solid #000" : "1px solid #E5E5E5",
+                                borderRadius: '12px',
+                                border:
+                                  selectedLink?.id === link.id
+                                    ? '2px solid #000'
+                                    : '1px solid #E5E5E5',
                               }}
                             >
                               <div className="flex items-start justify-between gap-2 mb-2">
@@ -1167,7 +1139,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                                     className="text-[#000] mb-1"
                                     style={{
                                       fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                                      fontSize: "14px",
+                                      fontSize: '14px',
                                       fontWeight: 600,
                                     }}
                                   >
@@ -1177,7 +1149,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                                     className="text-[#666] truncate"
                                     style={{
                                       fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                                      fontSize: "11px",
+                                      fontSize: '11px',
                                       fontWeight: 400,
                                     }}
                                     title={link.url}
@@ -1194,7 +1166,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                                     }
                                   }}
                                   className="p-1.5 hover:bg-gray-200 transition-colors flex-shrink-0"
-                                  style={{ borderRadius: "6px" }}
+                                  style={{ borderRadius: '6px' }}
                                   title="링크 삭제"
                                 >
                                   <Trash2 size={14} color="#666" strokeWidth={1.5} />
@@ -1204,7 +1176,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                                 className="text-[#999]"
                                 style={{
                                   fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                                  fontSize: "11px",
+                                  fontSize: '11px',
                                   fontWeight: 400,
                                 }}
                               >
@@ -1228,15 +1200,17 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                         onClick={() => handleCopyLink(selectedLink.url, selectedLink.id)}
                         className="w-full px-5 py-3 text-black hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
                         style={{
-                          borderRadius: "12px",
-                          backgroundColor: "#F5F5F5",
+                          borderRadius: '12px',
+                          backgroundColor: '#F5F5F5',
                           fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                          fontSize: "14px",
+                          fontSize: '14px',
                           fontWeight: 600,
                         }}
                       >
                         <Copy size={16} color="#000" strokeWidth={2} />
-                        {copiedLinkId === selectedLink.id ? t('looks.shareDialog.copied') : t('looks.shareDialog.copyLink')}
+                        {copiedLinkId === selectedLink.id
+                          ? t('looks.shareDialog.copied')
+                          : t('looks.shareDialog.copyLink')}
                       </button>
 
                       {/* 카카오톡 공유 버튼 */}
@@ -1244,10 +1218,10 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                         onClick={handleKakaoShare}
                         className="w-full px-5 py-3 text-[#3C1E1E] hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
                         style={{
-                          borderRadius: "12px",
-                          backgroundColor: "#FEE500",
+                          borderRadius: '12px',
+                          backgroundColor: '#FEE500',
                           fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                          fontSize: "14px",
+                          fontSize: '14px',
                           fontWeight: 600,
                         }}
                       >
@@ -1256,22 +1230,22 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                       </button>
                     </div>
                   ) : (
-                      /* 새 링크 생성 버튼 */
-                      <button
-                        onClick={() => setShowCreateLinkDialog(true)}
-                        className="w-full px-5 py-3 text-white hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-                        style={{
-                          borderRadius: "12px",
-                          backgroundColor: "#000",
-                          fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                          fontSize: "14px",
-                          fontWeight: 600,
-                        }}
-                      >
-                        <Link2 size={16} color="#fff" strokeWidth={2} />
-                        {t('looks.shareDialog.createLink')}
-                      </button>
-                    )}
+                    /* 새 링크 생성 버튼 */
+                    <button
+                      onClick={() => setShowCreateLinkDialog(true)}
+                      className="w-full px-5 py-3 text-white hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                      style={{
+                        borderRadius: '12px',
+                        backgroundColor: '#000',
+                        fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                        fontSize: '14px',
+                        fontWeight: 600,
+                      }}
+                    >
+                      <Link2 size={16} color="#fff" strokeWidth={2} />
+                      {t('looks.shareDialog.createLink')}
+                    </button>
+                  )}
                 </div>
               </>
             )}

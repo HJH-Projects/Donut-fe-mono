@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import type { ClothesResponseDto } from '@/shared/api/orvalSchema';
+import type { ClothesResponseDto } from '@/shared/model/orvalSchemas';
+import { useToast } from '@/shared/model/useToast';
 import {
   postClothesApi,
   getClothesApi,
@@ -11,6 +12,7 @@ import {
 } from '@/shared/api/endpointTags/clothes';
 import { clientKy } from '@/features/api/clientKy';
 import { toApiError, type ApiError } from '@/shared/api/error';
+import { invalidateClothes } from '@/shared/api/invalidations/clothes';
 
 export type ClothingItem = {
   id: string;
@@ -66,6 +68,7 @@ interface UseClothesOptions {
 
 export function useClothes({ initialClothes = [] }: UseClothesOptions = {}) {
   const router = useRouter();
+  const toast = useToast();
 
   const [clothes, setClothes] = useState<ClothingItem[]>(() =>
     initialClothes.map(dtoToClothingItem),
@@ -97,9 +100,10 @@ export function useClothes({ initialClothes = [] }: UseClothesOptions = {}) {
         color: item.color[0] || '',
         imageUrl,
       });
+      await invalidateClothes();
       router.refresh();
     } catch {
-      /* 오프라인 시 로컬 상태만 업데이트 */
+      toast.error('옷을 추가하는 데 실패했습니다.');
     }
   };
 
@@ -115,9 +119,10 @@ export function useClothes({ initialClothes = [] }: UseClothesOptions = {}) {
         color: item.color[0] || '',
         imageUrl: item.imageUrl,
       });
+      await invalidateClothes();
       router.refresh();
     } catch {
-      /* 오프라인 시 로컬 상태만 업데이트 */
+      toast.error('옷 정보를 수정하는 데 실패했습니다.');
     }
   };
 
@@ -126,9 +131,10 @@ export function useClothes({ initialClothes = [] }: UseClothesOptions = {}) {
 
     try {
       await deleteClothesApi(clientKy, id);
+      await invalidateClothes();
       router.refresh();
     } catch {
-      /* 오프라인 시 로컬 상태만 업데이트 */
+      toast.error('옷을 삭제하는 데 실패했습니다.');
     }
   };
 

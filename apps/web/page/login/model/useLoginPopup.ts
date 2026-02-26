@@ -1,12 +1,16 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getUsersMeApi } from '@/shared/api/endpointTags/users';
 import { clientKy } from '@/features/api/clientKy';
+import { useToast } from '@/shared/model/useToast';
 
 export const useLoginPopup = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get('next') || '/';
+  const toast = useToast();
+  const toastRef = useRef(toast);
+  toastRef.current = toast;
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -21,14 +25,14 @@ export const useLoginPopup = () => {
         sessionStorage.removeItem('login:next');
         getUsersMeApi(clientKy)
           .catch(() => {
-            alert('로그인 정보를 확인하지 못했습니다.');
+            toastRef.current.error('로그인 정보를 확인하지 못했습니다.');
           })
           .finally(() => {
             const target = storedNext || nextPath;
             window.location.assign(target);
           });
       } else if (event.data?.type === 'LOGIN_FAIL') {
-        alert(event.data?.error || '로그인에 실패했습니다.');
+        toastRef.current.error(event.data?.error || '로그인에 실패했습니다.');
       }
     };
 

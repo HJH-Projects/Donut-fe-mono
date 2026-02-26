@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { Share2, Trash2, Link2, Copy, X } from "lucide-react";
 import { ImageWithFallback } from "@/shared/ui/ImageWithFallback";
 import { useTranslation } from "react-i18next";
-import type { CommentResponseDto, ShareLinkDetailResponseDto } from "@/shared/api/orvalSchema";
+import type { CommentResponseDto, ShareLinkDetailResponseDto } from '@/shared/model/orvalSchemas';
 import { useShareDetail } from "../model/useShareDetail";
+import { useToast } from "@/shared/model/useToast";
 
 type SharedLink = {
   id: string;
@@ -24,6 +25,7 @@ interface SharedLookPageProps {
 export function SharedLookPage({ sharePath, initialShareDetail = null, initialComments = [], isLoggedIn = false }: SharedLookPageProps) {
   const { t } = useTranslation();
   const router = useRouter();
+  const toast = useToast();
 
   const {
     look,
@@ -52,7 +54,7 @@ export function SharedLookPage({ sharePath, initialShareDetail = null, initialCo
   const handleAddComment = async () => {
     if (requireLogin()) return;
     if (!newComment.content.trim()) {
-      alert(t('sharedLook.commentRequired'));
+      toast.info(t('sharedLook.commentRequired'));
       return;
     }
     const content = newComment.content;
@@ -116,7 +118,7 @@ export function SharedLookPage({ sharePath, initialShareDetail = null, initialCo
   };
 
   const handleKakaoShare = () => {
-    alert("카카오톡 공유 기능은 Kakao SDK 연동이 필요합니다.");
+    toast.info("카카오톡 공유 기능은 Kakao SDK 연동이 필요합니다.");
   };
 
   const handleDeleteLink = (linkId: string) => {
