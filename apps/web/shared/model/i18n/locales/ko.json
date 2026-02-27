@@ -205,6 +205,13 @@
       "language": "언어",
       "korean": "한국어",
       "english": "English"
+    },
+    "gender": "성별",
+    "genderDialog": {
+      "title": "환경설정",
+      "gender": "성별",
+      "male": "남성",
+      "female": "여성"
     }
   },
   "announcements": {

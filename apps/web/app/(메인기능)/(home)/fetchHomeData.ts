@@ -3,6 +3,7 @@ import type { UserLocationResponseDto, LocationDto, WeatherResponseDto } from '@
 import type { HomeRecommendation } from '@/page/home/ui/home.types';
 import { getLocationsApi, getLocationWeatherApi } from '@/shared/api/endpointTags/locations';
 import { getRecommendationsLookApi } from '@/shared/api/endpointTags/recommendations';
+import type { Gender } from '@/shared/model/gender';
 
 /** UserLocationResponseDto를 확장하여 id를 nullable로 허용 (비로그인 정규화용) */
 export type HomeLocation = Omit<UserLocationResponseDto, 'id'> & { id: string | null };
@@ -12,9 +13,6 @@ export interface HomeInitialData {
   initialRecommendation: HomeRecommendation | null;
   initialLocations: HomeLocation[];
 }
-
-const getRandomGender = () =>
-  Date.now() % 2 === 0 ? ('MALE' as const) : ('FEMALE' as const);
 
 function toRecommendation(
   result: Awaited<ReturnType<typeof getRecommendationsLookApi>> | null,
@@ -35,7 +33,7 @@ function toHomeLocation(dto: LocationDto): HomeLocation {
   };
 }
 
-export async function fetchHomeDataLoggedIn(ky: KyInstance): Promise<HomeInitialData> {
+export async function fetchHomeDataLoggedIn(ky: KyInstance, gender: Gender): Promise<HomeInitialData> {
   const locations = await getLocationsApi(ky).catch(() => []);
 
   if (!Array.isArray(locations)) {
@@ -47,7 +45,7 @@ export async function fetchHomeDataLoggedIn(ky: KyInstance): Promise<HomeInitial
     return {
       initialWeather: null,
       initialRecommendation: toRecommendation(
-        await getRecommendationsLookApi(ky, { gender: getRandomGender() }).catch(() => null),
+        await getRecommendationsLookApi(ky, { gender }, { cache: 'no-store' }).catch(() => null),
       ),
       initialLocations: locations,
     };
@@ -58,8 +56,8 @@ export async function fetchHomeDataLoggedIn(ky: KyInstance): Promise<HomeInitial
     getRecommendationsLookApi(ky, {
       latitude: defaultLocation.location.lat,
       longitude: defaultLocation.location.lon,
-      gender: getRandomGender(),
-    }).catch(() => null),
+      gender,
+    }, { cache: 'no-store' }).catch(() => null),
   ]);
 
   return {
@@ -69,7 +67,10 @@ export async function fetchHomeDataLoggedIn(ky: KyInstance): Promise<HomeInitial
   };
 }
 
-export async function fetchHomeDataGuest(ky: KyInstance): Promise<HomeInitialData> {
+const randomGender = (): Gender => (Math.random() < 0.5 ? 'MALE' : 'FEMALE');
+
+export async function fetchHomeDataGuest(ky: KyInstance, gender?: Gender): Promise<HomeInitialData> {
+  const resolvedGender = gender ?? randomGender();
   const result = await getLocationsApi(ky).catch(() => null);
 
   const defaultLocation = result && !Array.isArray(result) ? result : null;
@@ -82,8 +83,8 @@ export async function fetchHomeDataGuest(ky: KyInstance): Promise<HomeInitialDat
     getRecommendationsLookApi(ky, {
       latitude: defaultLocation.lat,
       longitude: defaultLocation.lon,
-      gender: getRandomGender(),
-    }).catch(() => null),
+      gender: resolvedGender,
+    }, { cache: 'no-store' }).catch(() => null),
   ]);
 
   return {

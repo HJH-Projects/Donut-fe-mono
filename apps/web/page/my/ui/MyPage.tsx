@@ -10,6 +10,8 @@ import type { UserProfileResponseDto } from '@/shared/model/orvalSchemas';
 import Spinner from '@/shared/ui/Spinner';
 import { useProfile } from '../model/useProfile';
 import { useToast } from '@/shared/model/useToast';
+import { setGenderAction } from '@/shared/api/actions/setGender';
+import type { Gender } from '@/shared/model/gender';
 
 type TemperatureUnit = 'celsius' | 'fahrenheit';
 type Language = 'ko' | 'en';
@@ -23,17 +25,20 @@ function normalizeLanguage(value: string): Language {
 interface MyPageProps {
   initialProfile?: UserProfileResponseDto | null;
   initialStats?: { closetCount: number; lookCount: number } | null;
+  initialGender?: Gender;
 }
 
-export function MyPage({ initialProfile = null, initialStats = null }: MyPageProps) {
+export function MyPage({ initialProfile = null, initialStats = null, initialGender = 'MALE' }: MyPageProps) {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const toast = useToast();
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [showLanguageDialog, setShowLanguageDialog] = useState(false);
+  const [showGenderDialog, setShowGenderDialog] = useState(false);
   const [showNicknameDialog, setShowNicknameDialog] = useState(false);
   const [temperatureUnit, setTemperatureUnit] = useState<TemperatureUnit>('celsius');
   const [language, setLanguage] = useState<Language>(normalizeLanguage(i18n.language));
+  const [gender, setGender] = useState<Gender>(initialGender);
   const [tempNickname, setTempNickname] = useState('');
 
   const { stats, nickname, isResettingNickname, updateNickname, resetNickname } = useProfile({
@@ -104,6 +109,11 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
   const handleTemperatureUnitChange = (unit: TemperatureUnit) => {
     setTemperatureUnit(unit);
     localStorage.setItem(TEMPERATURE_UNIT_KEY, unit);
+  };
+
+  const handleGenderChange = async (newGender: Gender) => {
+    setGender(newGender);
+    await setGenderAction(newGender);
   };
 
   return (
@@ -282,6 +292,28 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
               }}
             >
               {t('profile.language')}
+            </span>
+            <ChevronRight size={20} color="#A3A3A3" strokeWidth={2} />
+          </button>
+
+          <button
+            onClick={() => setShowGenderDialog(true)}
+            className="w-full px-6 py-5 flex items-center justify-between transition-all hover:bg-gray-50"
+            style={{
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #E5E5E5',
+              borderRadius: 'var(--radius-lg)',
+            }}
+          >
+            <span
+              className="text-black"
+              style={{
+                fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                fontSize: '16px',
+                fontWeight: 600,
+              }}
+            >
+              {t('profile.gender')}
             </span>
             <ChevronRight size={20} color="#A3A3A3" strokeWidth={2} />
           </button>
@@ -644,6 +676,93 @@ export function MyPage({ initialProfile = null, initialStats = null }: MyPagePro
 
             <button
               onClick={() => setShowLanguageDialog(false)}
+              className="w-full py-4 text-white transition-all hover:opacity-90"
+              style={{
+                backgroundColor: '#000',
+                borderRadius: 'var(--radius-pill)',
+                fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                fontSize: '16px',
+                fontWeight: 700,
+              }}
+            >
+              {t('profile.confirm')}
+            </button>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {/* 성별 설정 다이얼로그 */}
+      <Dialog.Root open={showGenderDialog} onOpenChange={setShowGenderDialog}>
+        <Dialog.Portal>
+          <Dialog.Backdrop className="fixed inset-0 bg-black/40 z-50" />
+          <Dialog.Popup
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[420px]"
+            style={{
+              borderRadius: 'var(--radius-xl)',
+              padding: '32px',
+            }}
+            aria-describedby={undefined}
+          >
+            <h2
+              className="text-black mb-8"
+              style={{
+                fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                fontSize: '28px',
+                fontWeight: 700,
+              }}
+            >
+              {t('profile.genderDialog.title')}
+            </h2>
+
+            <div className="mb-8">
+              <h3
+                className="text-black mb-4"
+                style={{
+                  fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                }}
+              >
+                {t('profile.genderDialog.gender')}
+              </h3>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => handleGenderChange('MALE')}
+                  className="flex-1 py-4 transition-all"
+                  style={{
+                    backgroundColor: gender === 'MALE' ? '#000' : '#FFFFFF',
+                    color: gender === 'MALE' ? '#FFFFFF' : '#000',
+                    borderRadius: 'var(--radius-pill)',
+                    border: gender === 'MALE' ? 'none' : '1.5px solid #E5E5E5',
+                    fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                    fontSize: '15px',
+                    fontWeight: 700,
+                  }}
+                >
+                  {t('profile.genderDialog.male')}
+                </button>
+                <button
+                  onClick={() => handleGenderChange('FEMALE')}
+                  className="flex-1 py-4 transition-all"
+                  style={{
+                    backgroundColor: gender === 'FEMALE' ? '#000' : '#FFFFFF',
+                    color: gender === 'FEMALE' ? '#FFFFFF' : '#000',
+                    borderRadius: 'var(--radius-pill)',
+                    border: gender === 'FEMALE' ? 'none' : '1.5px solid #E5E5E5',
+                    fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                    fontSize: '15px',
+                    fontWeight: 700,
+                  }}
+                >
+                  {t('profile.genderDialog.female')}
+                </button>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowGenderDialog(false)}
               className="w-full py-4 text-white transition-all hover:opacity-90"
               style={{
                 backgroundColor: '#000',
