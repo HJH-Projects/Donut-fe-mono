@@ -1,6 +1,6 @@
 'use server';
 
-import { CLOTHES_CACHE_TAG } from '@/app/(메인기능)/closet/page';
+import { CLOTHES_CACHE_TAG } from '@/shared/api/cacheTags';
 import { revalidateTag } from 'next/cache';
 
 export async function invalidateClothes() {

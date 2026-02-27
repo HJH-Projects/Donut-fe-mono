@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { getAccessTokenUserId } from '@/features/api/kyCookieConfig';
 import { createCachedKy } from '@/features/api/serverKy';
 import { getClothesApi } from '@/shared/api/endpointTags/clothes';
-import { CLOTHES_CACHE_TAG } from '@/app/(메인기능)/closet/page';
+import { CLOTHES_CACHE_TAG } from '@/shared/api/cacheTags';
 
 export async function getCachedClothes() {
   const cookieStore = await cookies();

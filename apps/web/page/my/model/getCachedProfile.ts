@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { getAccessTokenUserId } from '@/features/api/kyCookieConfig';
 import { createCachedKy } from '@/features/api/serverKy';
 import { getUsersMeApi } from '@/shared/api/endpointTags/users';
-import { PROFILE_CACHE_TAG } from '@/app/(메인기능)/my/page';
+import { PROFILE_CACHE_TAG } from '@/shared/api/cacheTags';
 
 export async function getCachedProfile() {
   const cookieStore = await cookies();
