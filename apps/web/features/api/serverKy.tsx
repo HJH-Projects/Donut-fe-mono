@@ -26,7 +26,7 @@ export const serverKy = ky.create({
  * unstable_cache 내부에서 사용하는 ky 인스턴스.
  * 호출 시점의 accessToken 쿠키만 주입한다.
  */
-export const createCachedKy = (accessTokenCookie: string) => {
+export const createKyWithCookie = (accessTokenCookie: string) => {
   return ky.create({
     prefixUrl: API_SOURCE_URL,
     headers: accessTokenCookie ? { Cookie: accessTokenCookie } : undefined,

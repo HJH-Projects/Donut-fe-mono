@@ -2,7 +2,7 @@ import { unstable_cache } from 'next/cache';
 import { cookies } from 'next/headers';
 
 import { getAccessTokenUserId } from '@/features/api/kyCookieConfig';
-import { createCachedKy } from '@/features/api/serverKy';
+import { createKyWithCookie } from '@/features/api/serverKy';
 import { getClothesApi } from '@/shared/api/endpointTags/clothes';
 import { CLOTHES_CACHE_TAG } from '@/shared/api/cacheTags';
 
@@ -12,7 +12,7 @@ export async function getCachedClothes() {
   const userId = await getAccessTokenUserId();
 
   return unstable_cache(
-    () => getClothesApi(createCachedKy(token ? `accessToken=${token}` : '')),
+    () => getClothesApi(createKyWithCookie(token ? `accessToken=${token}` : '')),
     [CLOTHES_CACHE_TAG, userId ?? token],
     { tags: [CLOTHES_CACHE_TAG] },
   )();
