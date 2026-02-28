@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, type Dispatch, type SetStateAction } from 'react';
+import { useState, useEffect, useRef, useCallback, type Dispatch, type SetStateAction } from 'react';
 import type { WeatherResponseDto } from '@/shared/model/orvalSchemas';
 import type { HomeLocation } from '@/app/(메인기능)/(home)/fetchHomeData';
 import { getLocationWeatherApi, patchLocationsApi } from '@/shared/api/endpointTags/locations';
@@ -66,7 +66,6 @@ export function useHomeData({
 
   const fetchLocationData = useCallback(
     async (locationId: string, locationName: string, lat: number, lon: number) => {
-      setWeather((prev) => ({ ...prev, location: locationName }));
       setIsLoading(true);
       try {
         const [snapshot, lookResult] = await Promise.all([
@@ -90,16 +89,12 @@ export function useHomeData({
     [],
   );
 
-  const selectLocation = useCallback(
-    async (loc: HomeLocationOption) => {
-      setSelectedLocation(loc);
-      if (loc.id) {
-        patchLocationsApi(clientKy, loc.id, { isDefault: true }).catch(() => {});
-      }
-      await fetchLocationData(loc.locationId, loc.alias, loc.lat, loc.lon);
-    },
-    [fetchLocationData],
-  );
+  const selectLocation = useCallback(async (loc: HomeLocationOption) => {
+    setSelectedLocation(loc);
+    if (loc.id) {
+      patchLocationsApi(clientKy, loc.id, { isDefault: true }).catch(() => {});
+    }
+  }, []);
 
   const updateDisplayedLocationAlias = useCallback((prevAlias: string, nextAlias: string) => {
     setWeather((prev) => {
@@ -108,16 +103,20 @@ export function useHomeData({
     });
   }, []);
 
-  // 선택된 지역 변경 시 날씨/추천 데이터 갱신 (초기 서버 데이터 없을 때 포함)
+  const isInitialMountRef = useRef(true);
   useEffect(() => {
-    if (!selectedLocation || initialWeather) return;
+    if (!selectedLocation) return;
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      if (initialWeather) return;
+    }
     fetchLocationData(
       selectedLocation.locationId,
       selectedLocation.alias,
       selectedLocation.lat,
       selectedLocation.lon,
     );
-  }, [selectedLocation, fetchLocationData, initialWeather]);
+  }, [selectedLocation, fetchLocationData]);
 
   return {
     weather,
