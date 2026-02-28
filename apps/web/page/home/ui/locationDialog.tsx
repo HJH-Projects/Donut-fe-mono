@@ -22,9 +22,10 @@ type DialogMode = 'select' | 'edit' | 'add' | 'confirmDelete';
 
 const FONT = "var(--font-inter), 'Inter', sans-serif";
 
-function toLocationOption(dto: {
+function dtoToLocationOption(dto: {
   id: string;
   alias: string;
+  isDefault: boolean;
   location: { id: string; lat: number; lon: number };
 }): HomeLocationOption {
   return {
@@ -33,12 +34,14 @@ function toLocationOption(dto: {
     alias: dto.alias,
     lat: dto.location.lat,
     lon: dto.location.lon,
+    isDefault: dto.isDefault,
   };
 }
 
 interface LocationDialogProps {
   locations: HomeLocationOption[];
-  selectedLocation: string;
+  selectedLocation: HomeLocationOption | null;
+  setSelectedLocation: Dispatch<SetStateAction<HomeLocationOption | null>>;
   onSelectLocation: (location: HomeLocationOption) => void;
   onLocationAliasUpdated: (prevAlias: string, nextAlias: string) => void;
   setLocations: Dispatch<SetStateAction<HomeLocationOption[]>>;
@@ -47,6 +50,7 @@ interface LocationDialogProps {
 const LocationDialog = ({
   locations,
   selectedLocation,
+  setSelectedLocation,
   onSelectLocation,
   onLocationAliasUpdated,
   setLocations,
@@ -125,7 +129,7 @@ const LocationDialog = ({
         alias: userAlias,
         isDefault: false,
       });
-      const newLoc = toLocationOption(created);
+      const newLoc = dtoToLocationOption(created);
       setLocations((prev) => [newLoc, ...prev]);
       setAlias('');
       setMode('select');
@@ -152,8 +156,9 @@ const LocationDialog = ({
       const updated = await patchLocationsApi(clientKy, editingId, {
         alias: nextAlias,
       });
-      const updatedLoc = toLocationOption(updated);
+      const updatedLoc = dtoToLocationOption(updated);
       setLocations((prev) => prev.map((loc) => (loc.id === editingId ? updatedLoc : loc)));
+      if (selectedLocation?.id === editingId) setSelectedLocation(updatedLoc);
       onLocationAliasUpdated(current.alias, updatedLoc.alias);
       clearEditing();
     } catch {
@@ -220,7 +225,7 @@ const LocationDialog = ({
       <LocationListContent
         mode={mode}
         locations={locations}
-        selectedLocation={isEnteringEdit ? '' : selectedLocation}
+        selectedLocation={isEnteringEdit ? null : selectedLocation}
         editingId={editingId}
         editAlias={editAlias}
         isUpdatingAlias={isUpdatingAlias}

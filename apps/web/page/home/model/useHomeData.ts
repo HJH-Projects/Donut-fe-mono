@@ -3,10 +3,7 @@
 import { useState, useEffect, useCallback, type Dispatch, type SetStateAction } from 'react';
 import type { WeatherResponseDto } from '@/shared/model/orvalSchemas';
 import type { HomeLocation } from '@/app/(메인기능)/(home)/fetchHomeData';
-import {
-  getLocationWeatherApi,
-  patchLocationsApi,
-} from '@/shared/api/endpointTags/locations';
+import { getLocationWeatherApi, patchLocationsApi } from '@/shared/api/endpointTags/locations';
 import { getRecommendationsLookApi } from '@/shared/api/endpointTags/recommendations';
 import { clientKy } from '@/features/api/clientKy';
 import type { HomeWeatherState, HomeRecommendation, HomeLocationOption } from '../ui/home.types';
@@ -29,13 +26,14 @@ const DEFAULT_RECOMMENDATION: HomeRecommendation = {
   description: null,
 };
 
-function toLocationOptions(locations: HomeLocation[]): HomeLocationOption[] {
+function parseHomeLocations(locations: HomeLocation[]): HomeLocationOption[] {
   return locations.map((loc) => ({
     id: loc.id,
     locationId: loc.location.id,
     alias: loc.alias,
     lat: loc.location.lat,
     lon: loc.location.lon,
+    isDefault: loc.isDefault,
   }));
 }
 
@@ -43,32 +41,27 @@ interface UseHomeDataOptions {
   isLoggedIn: boolean;
   initialWeather?: WeatherResponseDto | null;
   initialRecommendation?: HomeRecommendation | null;
-  initialLocations?: HomeLocation[];
+  initialLocations: HomeLocation[];
 }
 
 export function useHomeData({
-  isLoggedIn,
   initialWeather = null,
   initialRecommendation = null,
   initialLocations = [],
 }: UseHomeDataOptions) {
-  const defaultLocation = initialLocations.find((loc) => loc.isDefault) || null;
-
-  const [weather, setWeather] = useState<HomeWeatherState>(() => {
-    if (initialWeather) {
-      return toWeatherState(initialWeather, defaultLocation?.alias);
-    }
-    return DEFAULT_WEATHER;
-  });
-
+  const defaultLocation = parseHomeLocations(initialLocations).find((loc) => loc.isDefault) ?? null;
+  const [selectedLocation, setSelectedLocation] = useState<HomeLocationOption | null>(
+    defaultLocation,
+  );
+  const [weather, setWeather] = useState<HomeWeatherState>(
+    initialWeather ? toWeatherState(initialWeather, defaultLocation?.alias) : DEFAULT_WEATHER,
+  );
   const [recommendation, setRecommendation] = useState<HomeRecommendation>(
     () => initialRecommendation || DEFAULT_RECOMMENDATION,
   );
-
-  const [locations, setLocations] = useState<HomeLocationOption[]>(
-    () => toLocationOptions(initialLocations),
+  const [locations, setLocations] = useState<HomeLocationOption[]>(() =>
+    parseHomeLocations(initialLocations),
   );
-
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchLocationData = useCallback(
@@ -99,6 +92,7 @@ export function useHomeData({
 
   const selectLocation = useCallback(
     async (loc: HomeLocationOption) => {
+      setSelectedLocation(loc);
       if (loc.id) {
         patchLocationsApi(clientKy, loc.id, { isDefault: true }).catch(() => {});
       }
@@ -107,32 +101,31 @@ export function useHomeData({
     [fetchLocationData],
   );
 
-  const updateDisplayedLocationAlias = useCallback(
-    (prevAlias: string, nextAlias: string) => {
-      setWeather((prev) => {
-        if (prev.location !== prevAlias) return prev;
-        return { ...prev, location: nextAlias };
-      });
-    },
-    [],
-  );
+  const updateDisplayedLocationAlias = useCallback((prevAlias: string, nextAlias: string) => {
+    setWeather((prev) => {
+      if (prev.location !== prevAlias) return prev;
+      return { ...prev, location: nextAlias };
+    });
+  }, []);
 
-  // 서버에서 날씨를 못 가져온 경우 클라이언트에서 재시도
+  // 선택된 지역 변경 시 날씨/추천 데이터 갱신 (초기 서버 데이터 없을 때 포함)
   useEffect(() => {
-    if (!defaultLocation || initialWeather) return;
+    if (!selectedLocation || initialWeather) return;
     fetchLocationData(
-      defaultLocation.location.id,
-      defaultLocation.alias,
-      defaultLocation.location.lat,
-      defaultLocation.location.lon,
+      selectedLocation.locationId,
+      selectedLocation.alias,
+      selectedLocation.lat,
+      selectedLocation.lon,
     );
-  }, [defaultLocation, fetchLocationData, initialWeather]);
+  }, [selectedLocation, fetchLocationData, initialWeather]);
 
   return {
     weather,
     recommendation,
     locations,
     isLoading,
+    selectedLocation,
+    setSelectedLocation,
     selectLocation,
     updateDisplayedLocationAlias,
     setLocations,

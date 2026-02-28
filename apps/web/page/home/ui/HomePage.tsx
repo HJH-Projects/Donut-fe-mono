@@ -1,18 +1,18 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 import type { WeatherResponseDto } from '@/shared/model/orvalSchemas';
-import type { HomeLocation } from "@/app/(메인기능)/(home)/fetchHomeData";
-import type { HomeRecommendation } from "./home.types";
-import LocationWeather from "./locationWeather";
-import RecommendBasicLook from "./recommendBasicLook";
-import { useHomeData } from "../model/useHomeData";
+import type { HomeLocation } from '@/app/(메인기능)/(home)/fetchHomeData';
+import type { HomeRecommendation } from './home.types';
+import LocationWeather from './locationWeather';
+import RecommendBasicLook from './recommendBasicLook';
+import { useHomeData } from '../model/useHomeData';
 
 interface HomePageProps {
   isLoggedIn: boolean;
   initialWeather?: WeatherResponseDto | null;
   initialRecommendation?: HomeRecommendation | null;
-  initialLocations?: HomeLocation[];
+  initialLocations: HomeLocation[];
 }
 
 const HomePage = ({
@@ -26,6 +26,8 @@ const HomePage = ({
     recommendation,
     locations,
     isLoading,
+    selectedLocation,
+    setSelectedLocation,
     selectLocation,
     updateDisplayedLocationAlias,
     setLocations,
@@ -55,6 +57,8 @@ const HomePage = ({
         showWeatherDetail={showWeatherDetail}
         onToggleWeatherDetail={() => setShowWeatherDetail((prev) => !prev)}
         locations={locations}
+        selectedLocation={selectedLocation}
+        setSelectedLocation={setSelectedLocation}
         onSelectLocation={selectLocation}
         onLocationAliasUpdated={updateDisplayedLocationAlias}
         setLocations={setLocations}
@@ -67,5 +71,5 @@ const HomePage = ({
       />
     </div>
   );
-}
+};
 export default HomePage;

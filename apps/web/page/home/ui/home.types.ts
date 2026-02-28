@@ -21,4 +21,5 @@ export type HomeLocationOption = {
   alias: string;
   lat: number;
   lon: number;
+  isDefault: boolean;
 };

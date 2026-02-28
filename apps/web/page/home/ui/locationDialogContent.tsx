@@ -176,7 +176,7 @@ export const AddLocationContent = ({
 interface LocationListContentProps {
   mode: 'select' | 'edit';
   locations: HomeLocationOption[];
-  selectedLocation: string;
+  selectedLocation: HomeLocationOption | null;
   editingId: string | null;
   editAlias: string;
   isUpdatingAlias: boolean;
@@ -267,7 +267,7 @@ interface LocationItemProps {
   editingId: string | null;
   editAlias: string;
   isUpdatingAlias: boolean;
-  selectedLocation: string;
+  selectedLocation: HomeLocationOption | null;
   onEditAliasChange: (value: string) => void;
   onSelect: (loc: HomeLocationOption) => void;
   onEdit: (loc: HomeLocationOption) => void;
@@ -367,7 +367,7 @@ const LocationItem = ({
       className="w-full flex items-center gap-2 px-4 py-3 transition-colors hover:bg-gray-50"
       style={{
         borderRadius: '16px',
-        border: selectedLocation === loc.alias ? '1.5px solid #000' : '1.5px solid #E5E5E5',
+        border: selectedLocation?.alias === loc.alias ? '1.5px solid #000' : '1.5px solid #E5E5E5',
       }}
       onClick={() => onSelect(loc)}
     >
