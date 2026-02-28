@@ -93,7 +93,7 @@ export function useHomeData({
   );
 
   const selectLocation = useCallback(async (loc: HomeLocationOption) => {
-    if (loc.locationId === selectedLocation?.locationId) return;
+    if (loc.alias === selectedLocation?.alias) return;
     setSelectedLocation(loc);
     if (loc.id) {
       await patchLocationsApi(clientKy, loc.id, { isDefault: true }).catch(() => {});
