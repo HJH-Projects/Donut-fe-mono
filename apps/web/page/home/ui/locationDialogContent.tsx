@@ -300,7 +300,7 @@ const LocationItem = ({
   onRequestDelete,
 }: LocationItemProps) => {
   if (mode === 'edit') {
-    if (!loc.id) {
+    if (loc.alias === '서울(기본)') {
       return (
         <button
           className="w-full flex items-center gap-2 px-4 py-3 pointer-events-none"

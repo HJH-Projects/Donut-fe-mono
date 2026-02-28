@@ -193,7 +193,16 @@ const LocationDialog = ({
     setIsMutating(true);
     try {
       await deleteLocationsApi(clientKy, deletingId);
-      setLocations((prev) => prev.filter((loc) => loc.id !== deletingId));
+      const remaining = locations.filter((loc) => loc.id !== deletingId);
+      setLocations(remaining);
+      if (selectedLocation?.id === deletingId) {
+        const systemDefault = remaining.find((loc) => loc.alias === '서울(기본)') ?? remaining[0] ?? null;
+        if (systemDefault) {
+          onSelectLocation(systemDefault);
+        } else {
+          setSelectedLocation(null);
+        }
+      }
       await invalidateHomeLocations();
       router.refresh();
       clearEditing();
