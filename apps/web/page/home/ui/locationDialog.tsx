@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { Dialog } from '@base-ui/react/dialog';
 import { Settings } from 'lucide-react';
@@ -11,6 +12,7 @@ import {
 } from '@/shared/api/endpointTags/locations';
 import { clientKy } from '@/features/api/clientKy';
 import { useAuthGuard } from '@/features/auth/useAuthGuard';
+import { invalidateHomeLocations } from '@/shared/api/invalidations/homeLocations';
 import type { HomeLocationOption } from './home.types';
 import {
   ConfirmDeleteContent,
@@ -56,6 +58,7 @@ const LocationDialog = ({
   setLocations,
 }: LocationDialogProps) => {
   const { t } = useTranslation();
+  const router = useRouter();
   const checkAuth = useAuthGuard();
   const [mode, setMode] = useState<DialogMode>('select');
   const [alias, setAlias] = useState('');
@@ -131,6 +134,8 @@ const LocationDialog = ({
       });
       const newLoc = dtoToLocationOption(created);
       setLocations((prev) => [newLoc, ...prev]);
+      await invalidateHomeLocations();
+      router.refresh();
       setAlias('');
       setMode('select');
     } catch {
@@ -160,6 +165,8 @@ const LocationDialog = ({
       setLocations((prev) => prev.map((loc) => (loc.id === editingId ? updatedLoc : loc)));
       if (selectedLocation?.id === editingId) setSelectedLocation(updatedLoc);
       onLocationAliasUpdated(current.alias, updatedLoc.alias);
+      await invalidateHomeLocations();
+      router.refresh();
       clearEditing();
     } catch {
       /* API 에러 시 무시 */
@@ -178,6 +185,8 @@ const LocationDialog = ({
     try {
       await deleteLocationsApi(clientKy, deletingId);
       setLocations((prev) => prev.filter((loc) => loc.id !== deletingId));
+      await invalidateHomeLocations();
+      router.refresh();
       clearEditing();
     } catch {
       /* API 에러 시 무시 */

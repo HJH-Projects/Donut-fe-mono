@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, type Dispatch, type SetStateAction } from 'react';
+import { useRouter } from 'next/navigation';
 import type { WeatherResponseDto } from '@/shared/model/orvalSchemas';
 import type { HomeLocation } from '@/app/(메인기능)/(home)/fetchHomeData';
 import { getLocationWeatherApi, patchLocationsApi } from '@/shared/api/endpointTags/locations';
 import { getRecommendationsLookApi } from '@/shared/api/endpointTags/recommendations';
 import { clientKy } from '@/features/api/clientKy';
+import { invalidateHomeLocations } from '@/shared/api/invalidations/homeLocations';
 import type { HomeWeatherState, HomeRecommendation, HomeLocationOption } from '../ui/home.types';
 import { toWeatherState } from './toWeatherData';
 
@@ -49,6 +51,7 @@ export function useHomeData({
   initialRecommendation = null,
   initialLocations = [],
 }: UseHomeDataOptions) {
+  const router = useRouter();
   const defaultLocation = parseHomeLocations(initialLocations).find((loc) => loc.isDefault) ?? null;
   const [selectedLocation, setSelectedLocation] = useState<HomeLocationOption | null>(
     defaultLocation,
@@ -92,9 +95,11 @@ export function useHomeData({
   const selectLocation = useCallback(async (loc: HomeLocationOption) => {
     setSelectedLocation(loc);
     if (loc.id) {
-      patchLocationsApi(clientKy, loc.id, { isDefault: true }).catch(() => {});
+      await patchLocationsApi(clientKy, loc.id, { isDefault: true }).catch(() => {});
+      await invalidateHomeLocations();
+      router.refresh();
     }
-  }, []);
+  }, [router]);
 
   const updateDisplayedLocationAlias = useCallback((prevAlias: string, nextAlias: string) => {
     setWeather((prev) => {

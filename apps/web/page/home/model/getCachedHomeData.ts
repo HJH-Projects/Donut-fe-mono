@@ -31,7 +31,8 @@ export async function getCachedHomeLocations() {
 export async function getCachedHomeWeather(locationId: string) {
   const { token, userId } = await getTokenAndUserId();
   return unstable_cache(
-    () => getLocationWeatherApi(createKyWithCookie(token ? `accessToken=${token}` : ''), locationId),
+    () =>
+      getLocationWeatherApi(createKyWithCookie(token ? `accessToken=${token}` : ''), locationId),
     [HOME_WEATHER_CACHE_TAG, locationId, userId ?? token],
     { tags: [HOME_WEATHER_CACHE_TAG], revalidate: 1800 },
   )();
@@ -45,8 +46,15 @@ export async function getCachedHomeRecommendation(params: {
   const { token, userId } = await getTokenAndUserId();
   const { latitude, longitude, gender } = params;
   return unstable_cache(
-    () => getRecommendationsLookApi(createKyWithCookie(token ? `accessToken=${token}` : ''), params),
-    [HOME_RECOMMENDATION_CACHE_TAG, String(latitude ?? ''), String(longitude ?? ''), gender, userId ?? token],
+    () =>
+      getRecommendationsLookApi(createKyWithCookie(token ? `accessToken=${token}` : ''), params),
+    [
+      HOME_RECOMMENDATION_CACHE_TAG,
+      String(latitude ?? ''),
+      String(longitude ?? ''),
+      gender,
+      userId ?? token,
+    ],
     { tags: [HOME_RECOMMENDATION_CACHE_TAG], revalidate: 3600 },
   )();
 }
