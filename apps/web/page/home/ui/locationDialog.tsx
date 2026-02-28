@@ -66,6 +66,7 @@ const LocationDialog = ({
   const [editAlias, setEditAlias] = useState('');
   const [isUpdatingAlias, setIsUpdatingAlias] = useState(false);
   const [isAddingLocation, setIsAddingLocation] = useState(false);
+  const [isMutating, setIsMutating] = useState(false);
   const [isEnteringEdit, setIsEnteringEdit] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const enterEditTimerRef = useRef<number | null>(null);
@@ -81,6 +82,7 @@ const LocationDialog = ({
     setEditAlias('');
     setIsUpdatingAlias(false);
     setIsAddingLocation(false);
+    setIsMutating(false);
     setIsEnteringEdit(false);
     setDeletingId(null);
   };
@@ -98,12 +100,14 @@ const LocationDialog = ({
   };
 
   const handleEnterAdd = async () => {
+    if (isMutating) return;
     const ok = await checkAuth();
     if (!ok) return;
     setMode('add');
   };
 
   const handleEnterEdit = async () => {
+    if (isMutating) return;
     const ok = await checkAuth();
     if (!ok) return;
     setIsEnteringEdit(true);
@@ -123,6 +127,7 @@ const LocationDialog = ({
     if (!alias.trim() || isAddingLocation) return;
     const userAlias = alias.trim();
     setIsAddingLocation(true);
+    setIsMutating(true);
     try {
       const created = await postLocationsApi(clientKy, {
         name: coords.name,
@@ -142,6 +147,7 @@ const LocationDialog = ({
       /* 오프라인 또는 API 에러 시 무시 */
     } finally {
       setIsAddingLocation(false);
+      setIsMutating(false);
     }
   };
 
@@ -157,6 +163,7 @@ const LocationDialog = ({
     if (!current || current.alias === nextAlias) return;
 
     setIsUpdatingAlias(true);
+    setIsMutating(true);
     try {
       const updated = await patchLocationsApi(clientKy, editingId, {
         alias: nextAlias,
@@ -172,6 +179,7 @@ const LocationDialog = ({
       /* API 에러 시 무시 */
     } finally {
       setIsUpdatingAlias(false);
+      setIsMutating(false);
     }
   };
 
@@ -182,6 +190,7 @@ const LocationDialog = ({
 
   const handleConfirmDelete = async () => {
     if (!deletingId) return;
+    setIsMutating(true);
     try {
       await deleteLocationsApi(clientKy, deletingId);
       setLocations((prev) => prev.filter((loc) => loc.id !== deletingId));
@@ -190,6 +199,8 @@ const LocationDialog = ({
       clearEditing();
     } catch {
       /* API 에러 시 무시 */
+    } finally {
+      setIsMutating(false);
     }
     setDeletingId(null);
     setMode('edit');
@@ -212,6 +223,7 @@ const LocationDialog = ({
       return (
         <ConfirmDeleteContent
           deletingAlias={locations.find((l) => l.id === deletingId)?.alias ?? ''}
+          isMutating={isMutating}
           onCancel={handleCancelDelete}
           onConfirm={handleConfirmDelete}
         />
@@ -238,6 +250,7 @@ const LocationDialog = ({
         editingId={editingId}
         editAlias={editAlias}
         isUpdatingAlias={isUpdatingAlias}
+        isMutating={isMutating}
         headerAction={headerAction()}
         onEditAliasChange={setEditAlias}
         onSelectLocation={onSelectLocation}

@@ -11,12 +11,14 @@ const FONT = "var(--font-inter), 'Inter', sans-serif";
 // --- 삭제 확인 ---
 interface ConfirmDeleteContentProps {
   deletingAlias: string;
+  isMutating: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 }
 
 export const ConfirmDeleteContent = ({
   deletingAlias,
+  isMutating,
   onCancel,
   onConfirm,
 }: ConfirmDeleteContentProps) => {
@@ -37,7 +39,7 @@ export const ConfirmDeleteContent = ({
       </p>
       <div className="flex gap-2">
         <button
-          className="flex-1 px-4 py-3 hover:bg-gray-50 transition-colors"
+          className="flex-1 px-4 py-3 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           style={{
             borderRadius: '24px',
             border: '1.5px solid #E5E5E5',
@@ -45,13 +47,15 @@ export const ConfirmDeleteContent = ({
             fontSize: '14px',
             fontWeight: 600,
           }}
+          disabled={isMutating}
           onClick={onCancel}
         >
           {t('common.cancel')}
         </button>
         <button
-          className="flex-1 bg-red-500 text-white px-4 py-3 hover:opacity-90 transition-opacity"
+          className="flex-1 bg-red-500 text-white px-4 py-3 hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
           style={{ borderRadius: '24px', fontFamily: FONT, fontSize: '14px', fontWeight: 600 }}
+          disabled={isMutating}
           onClick={onConfirm}
         >
           {t('common.delete')}
@@ -180,6 +184,7 @@ interface LocationListContentProps {
   editingId: string | null;
   editAlias: string;
   isUpdatingAlias: boolean;
+  isMutating: boolean;
   headerAction: { label: string; onClick: () => void };
   onEditAliasChange: (value: string) => void;
   onSelectLocation: (loc: HomeLocationOption) => void;
@@ -196,6 +201,7 @@ export const LocationListContent = ({
   editingId,
   editAlias,
   isUpdatingAlias,
+  isMutating,
   headerAction,
   onEditAliasChange,
   onSelectLocation,
@@ -221,16 +227,20 @@ export const LocationListContent = ({
           {mode === 'edit' ? t('home.selectLocationToEdit') : t('home.selectLocation')}
         </p>
         <button
-          className="text-[#555555] hover:opacity-70 transition-opacity"
+          className="text-[#555555] hover:opacity-70 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
           style={{ fontFamily: FONT, fontSize: '13px', fontWeight: 500 }}
+          disabled={isMutating}
           onClick={headerAction.onClick}
         >
           {headerAction.label}
         </button>
       </div>
-      <div className="space-y-2 mb-6" onClick={(e) => e.stopPropagation()}>
+      <div
+        className={`space-y-2 mb-6 ${isMutating ? 'pointer-events-none opacity-50' : ''}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         {locations.map((loc) => (
-          <div key={loc.locationId}>
+          <div key={loc.alias}>
             <LocationItem
               loc={loc}
               mode={mode}
@@ -249,8 +259,9 @@ export const LocationListContent = ({
       </div>
       {mode === 'select' && (
         <button
-          className="w-full bg-black text-white px-4 py-3 hover:opacity-90 transition-opacity"
+          className="w-full bg-black text-white px-4 py-3 hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
           style={{ borderRadius: '24px', fontFamily: FONT, fontSize: '14px', fontWeight: 600 }}
+          disabled={isMutating}
           onClick={onAddNewLocation}
         >
           {t('home.addNewLocation')}
