@@ -93,13 +93,14 @@ export function useHomeData({
   );
 
   const selectLocation = useCallback(async (loc: HomeLocationOption) => {
+    if (loc.locationId === selectedLocation?.locationId) return;
     setSelectedLocation(loc);
     if (loc.id) {
       await patchLocationsApi(clientKy, loc.id, { isDefault: true }).catch(() => {});
       await invalidateHomeLocations();
       router.refresh();
     }
-  }, [router]);
+  }, [router, selectedLocation]);
 
   const updateDisplayedLocationAlias = useCallback((prevAlias: string, nextAlias: string) => {
     setWeather((prev) => {
