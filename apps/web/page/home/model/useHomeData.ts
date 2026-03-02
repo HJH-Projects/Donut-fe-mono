@@ -1,6 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, type Dispatch, type SetStateAction } from 'react';
+import {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 import { useRouter } from 'next/navigation';
 import type { WeatherResponseDto } from '@/shared/model/orvalSchemas';
 import type { HomeLocation } from '@/app/(메인기능)/(home)/fetchHomeData';
@@ -92,15 +99,18 @@ export function useHomeData({
     [],
   );
 
-  const selectLocation = useCallback(async (loc: HomeLocationOption) => {
-    if (loc.alias === selectedLocation?.alias) return;
-    setSelectedLocation(loc);
-    if (loc.id) {
-      await patchLocationsApi(clientKy, loc.id, { isDefault: true }).catch(() => {});
-      await invalidateHomeLocations();
-      router.refresh();
-    }
-  }, [router, selectedLocation]);
+  const selectLocation = useCallback(
+    async (loc: HomeLocationOption) => {
+      if (loc.alias === selectedLocation?.alias) return;
+      setSelectedLocation(loc);
+      if (loc.id) {
+        await patchLocationsApi(clientKy, loc.id, { isDefault: true }).catch(() => {});
+        await invalidateHomeLocations();
+        router.refresh();
+      }
+    },
+    [router, selectedLocation],
+  );
 
   const updateDisplayedLocationAlias = useCallback((prevAlias: string, nextAlias: string) => {
     setWeather((prev) => {
@@ -109,13 +119,15 @@ export function useHomeData({
     });
   }, []);
 
-  const isInitialMountRef = useRef(true);
+  const getLocationKey = (loc: HomeLocationOption) => loc.id ?? loc.alias;
+  const lastFetchedKeyRef = useRef<string | null>(
+    initialWeather && selectedLocation ? getLocationKey(selectedLocation) : null,
+  );
   useEffect(() => {
     if (!selectedLocation) return;
-    if (isInitialMountRef.current) {
-      isInitialMountRef.current = false;
-      if (initialWeather) return;
-    }
+    const key = getLocationKey(selectedLocation);
+    if (key === lastFetchedKeyRef.current) return;
+    lastFetchedKeyRef.current = key;
     fetchLocationData(
       selectedLocation.locationId,
       selectedLocation.alias,
