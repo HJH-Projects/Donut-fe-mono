@@ -1,3 +1,4 @@
+'use client';
 import { useLoginPopup } from '../model/useLoginPopup';
 
 export const SocialLoginList = () => {
