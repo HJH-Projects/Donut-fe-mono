@@ -2,13 +2,27 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import type { ClothesResponseDto } from '@/shared/model/orvalSchemas';
+import type {
+  ClothesListItemResponseDto,
+  CreateClothesDtoColorItem,
+  CreateClothesDtoSeasonItem,
+  CreateClothesDtoSize,
+  CreateClothesDtoMaterialItem,
+  CreateClothesDtoSubCategory,
+  UpdateClothesDtoColorItem,
+  UpdateClothesDtoSeasonItem,
+  UpdateClothesDtoSize,
+  UpdateClothesDtoMaterialItem,
+  UpdateClothesDtoSubCategory,
+} from '@/shared/model/orvalSchemas';
 import { useToast } from '@/shared/model/useToast';
 import {
   postClothesApi,
   getClothesApi,
   patchClothesApi,
   deleteClothesApi,
+  postClothesFavoriteApi,
+  deleteClothesFavoriteApi,
 } from '@/shared/api/endpointTags/clothes';
 import { clientKy } from '@/features/api/clientKy';
 import { toApiError, type ApiError } from '@/shared/api/error';
@@ -33,37 +47,39 @@ const CATEGORY_GROUP_MAP: Record<string, string> = {
   TOP: '상의',
   BOTTOM: '하의',
   OUTER: '아우터',
+  DRESS_SKIRT: '드레스/스커트',
   SHOES: '신발',
   ACCESSORY: '악세사리',
 };
 
-const CATEGORY_REVERSE_MAP: Record<string, ClothesResponseDto['category']> = {
+const CATEGORY_REVERSE_MAP: Record<string, ClothesListItemResponseDto['category']> = {
   '상의': 'TOP',
   '하의': 'BOTTOM',
   '아우터': 'OUTER',
+  '드레스/스커트': 'DRESS_SKIRT',
   '신발': 'SHOES',
   '악세사리': 'ACCESSORY',
 };
 
-function dtoToClothingItem(item: ClothesResponseDto): ClothingItem {
+function dtoToClothingItem(item: ClothesListItemResponseDto): ClothingItem {
   return {
     id: item.id,
-    name: item.title,
+    name: item.alias,
     category1: CATEGORY_GROUP_MAP[item.category] || '전체',
     category2: '',
     season: [],
-    color: [item.color],
+    color: [],
     brand: '',
     material: '',
     size: '',
     memo: '',
-    imageUrl: item.imageUrl,
-    isFavorite: false,
+    imageUrl: item.cardImage?.webpUrl ?? '',
+    isFavorite: item.isLiked,
   };
 }
 
 interface UseClothesOptions {
-  initialClothes?: ClothesResponseDto[];
+  initialClothes?: ClothesListItemResponseDto[];
 }
 
 export function useClothes({ initialClothes = [] }: UseClothesOptions = {}) {
@@ -90,60 +106,86 @@ export function useClothes({ initialClothes = [] }: UseClothesOptions = {}) {
       .finally(() => setIsBootstrapped(true));
   }, [isBootstrapped]);
 
-  const addClothing = async (item: ClothingItem, imageUrl: string) => {
-    setClothes((prev) => [...prev, item]);
+  useEffect(() => {
+    setClothes(initialClothes.map(dtoToClothingItem));
+    setIsBootstrapped(initialClothes.length > 0);
+  }, [initialClothes]);
 
+  const addClothing = async (item: ClothingItem, draftId: string) => {
     try {
       await postClothesApi(clientKy, {
         title: item.name,
         category: CATEGORY_REVERSE_MAP[item.category1] || 'TOP',
-        color: item.color[0] || '',
-        imageUrl,
+        color: item.color.length ? (item.color as CreateClothesDtoColorItem[]) : undefined,
+        draftId,
+        subCategory: (item.category2 as CreateClothesDtoSubCategory) || undefined,
+        season: item.season.length ? (item.season as CreateClothesDtoSeasonItem[]) : undefined,
+        brand: item.brand || undefined,
+        size: (item.size as CreateClothesDtoSize) || undefined,
+        material: item.material ? [item.material as CreateClothesDtoMaterialItem] : undefined,
+        memo: item.memo || undefined,
       });
       await invalidateClothes();
       router.refresh();
     } catch (e) {
       toast.apiError(await toApiError(e), '옷을 추가하는 데 실패했습니다.');
+      throw e;
     }
   };
 
   const updateClothing = async (item: ClothingItem) => {
-    setClothes((prev) =>
-      prev.map((c) => (c.id === item.id ? item : c)),
-    );
-
     try {
       await patchClothesApi(clientKy, item.id, {
         title: item.name,
         category: CATEGORY_REVERSE_MAP[item.category1] || 'TOP',
-        color: item.color[0] || '',
-        imageUrl: item.imageUrl,
+        color: item.color.length ? (item.color as UpdateClothesDtoColorItem[]) : undefined,
+        subCategory: (item.category2 as UpdateClothesDtoSubCategory) || undefined,
+        season: item.season.length ? (item.season as UpdateClothesDtoSeasonItem[]) : undefined,
+        brand: item.brand || undefined,
+        size: (item.size as UpdateClothesDtoSize) || undefined,
+        material: item.material ? [item.material as UpdateClothesDtoMaterialItem] : undefined,
+        memo: item.memo || undefined,
       });
       await invalidateClothes();
       router.refresh();
     } catch (e) {
       toast.apiError(await toApiError(e), '옷 정보를 수정하는 데 실패했습니다.');
+      throw e;
     }
   };
 
   const removeClothing = async (id: string) => {
-    setClothes((prev) => prev.filter((c) => c.id !== id));
-
     try {
       await deleteClothesApi(clientKy, id);
       await invalidateClothes();
       router.refresh();
     } catch (e) {
       toast.apiError(await toApiError(e), '옷을 삭제하는 데 실패했습니다.');
+      throw e;
     }
   };
 
-  const toggleFavorite = (id: string) => {
+  const toggleFavorite = async (id: string) => {
+    const item = clothes.find((c) => c.id === id);
+    if (!item) return;
+
     setClothes((prev) =>
-      prev.map((c) =>
-        c.id === id ? { ...c, isFavorite: !c.isFavorite } : c,
-      ),
+      prev.map((c) => (c.id === id ? { ...c, isFavorite: !c.isFavorite } : c)),
     );
+
+    try {
+      if (item.isFavorite) {
+        await deleteClothesFavoriteApi(clientKy, id);
+      } else {
+        await postClothesFavoriteApi(clientKy, id);
+      }
+      await invalidateClothes();
+    } catch (e) {
+      setClothes((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, isFavorite: item.isFavorite } : c)),
+      );
+      toast.apiError(await toApiError(e), '즐겨찾기 처리에 실패했습니다.');
+    }
   };
 
   return {

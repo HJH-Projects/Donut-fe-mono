@@ -1,71 +1,196 @@
 'use client';
 
-import { Heart, Plus, Camera, Upload, X, Edit2, Trash2 } from 'lucide-react';
-import { useState, useRef, type ReactNode } from 'react';
+import { Heart, Plus, Camera, Upload, Edit2, Trash2, RefreshCw } from 'lucide-react';
+import { useState, useRef, use, Suspense, type ReactNode } from 'react';
 import { Dialog } from '@base-ui/react/dialog';
 import { ImageWithFallback } from '@/shared/ui/ImageWithFallback';
 import { PlusAction } from '@/shared/ui/PlusAction';
 import { useTranslation } from 'react-i18next';
-import type { ClothesResponseDto } from '@/shared/model/orvalSchemas';
-import { uploadToS3 } from '@/shared/model/utils/uploadToS3';
+import type {
+  ClothesListItemResponseDto,
+  ClothesResponseDto,
+  EnrichClothesResponseDtoData,
+} from '@/shared/model/orvalSchemas';
+import {
+  getClothesDetailApi,
+  postClothesEnrichApi,
+  postClothesImagePreviewApi,
+} from '@/shared/api/endpointTags/clothes';
+import { clientKy } from '@/features/api/clientKy';
+import { toApiError } from '@/shared/api/error';
+import { useToast } from '@/shared/model/useToast';
+import Spinner from '@/shared/ui/Spinner';
 import { useClothes, type ClothingItem } from '../model/useClothes';
+import { ClosetGridSkeleton } from './ClosetGridSkeleton';
 
 // 카테고리 정의
 const CATEGORIES = {
   전체: [],
-  상의: ['반소매 티셔츠', '긴소매 티셔츠', '셔츠/블라우스', '니트/스웨터', '후드티/맨투맨'],
-  하의: ['청바지', '슬랙스', '반바지', '치마', '레깅스'],
-  아우터: ['코트', '자켓', '패딩', '가디건', '점퍼'],
-  신발: ['스니커즈', '구두', '부츠', '샌들', '슬리퍼'],
-  악세사리: ['가방', '모자', '벨트', '스카프', '주얼리'],
+  상의: ['반소매 티셔츠', '긴소매 티셔츠', '셔츠/블라우스', '니트/스웨터',
+         '후드 티셔츠', '맨투맨/스웨트', '민소매 티셔츠', '피케/카라 티셔츠', '기타 상의'],
+  하의: ['데님 팬츠', '코튼 팬츠', '슈트 팬츠/슬랙스', '숏 팬츠', '레깅스',
+         '트레이닝/조거팬츠', '점프 슈트/오버올', '기타 하의'],
+  아우터: ['싱글 코트', '더블 코트', '환절기 코트', '기타 코트', '카디건',
+           '슈트/블레이저 재킷', '레더/라이더스 재킷', '블루종/MA-1', '트러커 재킷',
+           '스타디움 재킷', '나일론/코치 재킷', '아노락 재킷', '트레이닝 재킷',
+           '후드 집업', '숏 패딩', '롱 패딩', '경량 패딩', '플리스', '무스탕/퍼', '기타 아우터'],
+  '드레스/스커트': ['미니 원피스', '미디 원피스', '맥시 원피스',
+                    '미니 스커트', '미디 스커트', '롱 스커트'],
+  신발: ['스니커즈', '구두', '부츠/워커', '샌들/슬리퍼', '스포츠화', '패딩/퍼 신발'],
+  악세사리: ['가방', '모자', '벨트', '주얼리', '머플러', '시계',
+             '선글라스/안경테', '양말/레그웨어', '프롭스(Props)'],
 };
 
 const SEASONS = ['봄', '여름', '가을', '겨울', '사계절'];
 const COLORS = [
-  { kr: '블랙', en: 'Black', hex: '#000000' },
-  { kr: '화이트', en: 'White', hex: '#FFFFFF' },
-  { kr: '그레이', en: 'Gray', hex: '#9CA3AF' },
-  { kr: '베이지', en: 'Beige', hex: '#F5E6D3' },
-  { kr: '브라운', en: 'Brown', hex: '#8B4513' },
-  { kr: '네이비', en: 'Navy', hex: '#001F3F' },
-  { kr: '블루', en: 'Blue', hex: '#3B82F6' },
-  { kr: '레드', en: 'Red', hex: '#EF4444' },
-  { kr: '핑크', en: 'Pink', hex: '#EC4899' },
-  { kr: '옐로우', en: 'Yellow', hex: '#FCD34D' },
-  { kr: '그린', en: 'Green', hex: '#10B981' },
-  { kr: '퍼플', en: 'Purple', hex: '#8B5CF6' },
-];
+  { name: '흰색',      hex: '#FFFFFF' },
+  { name: '아이보리',  hex: '#FFFFF0' },
+  { name: '베이지',    hex: '#F5DEB3' },
+  { name: '연회색',    hex: '#D1D5DB' },
+  { name: '진회색',    hex: '#6B7280' },
+  { name: '검정',      hex: '#000000' },
+  { name: '연노랑',    hex: '#FEF9C3' },
+  { name: '노랑',      hex: '#FACC15' },
+  { name: '황색',      hex: '#EAB308' },
+  { name: '주황',      hex: '#F97316' },
+  { name: '코랄',      hex: '#F87171' },
+  { name: '빨강',      hex: '#EF4444' },
+  { name: '분홍',      hex: '#FCA5A5' },
+  { name: '진분홍',    hex: '#EC4899' },
+  { name: '연두',      hex: '#86EFAC' },
+  { name: '초록',      hex: '#22C55E' },
+  { name: '올리브',    hex: '#808000' },
+  { name: '다크올리브',hex: '#556B2F' },
+  { name: '청록',      hex: '#14B8A6' },
+  { name: '카키',      hex: '#6B7040' },
+  { name: '시안',      hex: '#06B6D4' },
+  { name: '하늘색',    hex: '#93C5FD' },
+  { name: '파랑',      hex: '#3B82F6' },
+  { name: '네이비',    hex: '#1E3A5F' },
+  { name: '라벤더',    hex: '#C4B5FD' },
+  { name: '보라',      hex: '#8B5CF6' },
+  { name: '버건디',    hex: '#7B1F2A' },
+  { name: '카멜',      hex: '#C19A6B' },
+  { name: '갈색',      hex: '#92400E' },
+  { name: '다크브라운',hex: '#451A03' },
+  { name: '마젠타',    hex: '#D946EF' },
+  { name: '골드',      hex: '#F59E0B' },
+  { name: '실버',      hex: '#9CA3AF' },
+  { name: '다채색',    hex: null },
+] as const;
 
 const MATERIALS = [
-  '면',
-  '폴리에스터',
-  '울',
-  '데님',
-  '나일론',
-  '가죽',
-  '스웨이드',
-  '실크',
-  '린넨',
-  '혼방',
+  '면', '폴리에스터', '나일론', '울', '캐시미어', '모헤어', '알파카', '앙고라',
+  '데님', '레더', '스웨이드', '실크', '린넨', '라이오셀', '레이온', '비스코스',
+  '큐프라', '쉬폰', '레이스', '벨벳', '코듀로이', '트위드', '스판덱스',
+  '다운 페더', '퍼', '메탈', '아크릴', '기타',
 ];
 
-interface ClosetPageProps {
-  initialClothes?: ClothesResponseDto[];
-  header?: ReactNode;
+const SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', 'FREE'];
+const CATEGORY_FROM_API: Record<string, string> = {
+  TOP: '상의',
+  BOTTOM: '하의',
+  OUTER: '아우터',
+  DRESS_SKIRT: '드레스/스커트',
+  SHOES: '신발',
+  ACCESSORY: '악세사리',
+};
+
+const CATEGORY_ALIASES: Record<string, string> = {
+  TOP: '상의',
+  BOTTOM: '하의',
+  OUTER: '아우터',
+  DRESS_SKIRT: '드레스/스커트',
+  SHOES: '신발',
+  ACCESSORY: '악세사리',
+  상의: '상의',
+  하의: '하의',
+  아우터: '아우터',
+  드레스: '드레스/스커트',
+  스커트: '드레스/스커트',
+  '드레스/스커트': '드레스/스커트',
+  신발: '신발',
+  악세사리: '악세사리',
+  액세서리: '악세사리',
+};
+
+function toArray(value?: string[] | string): string[] {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
 }
 
-export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
+function mapEnrichToForm(enrich: EnrichClothesResponseDtoData, prev: Partial<ClothingItem>) {
+  const mappedCategory = CATEGORY_ALIASES[enrich.mainCategory] ?? prev.category1 ?? '상의';
+  const allowedSubCategories = (CATEGORIES[mappedCategory as keyof typeof CATEGORIES] ?? []) as string[];
+  const mappedSubCategory = toArray(enrich.subCategory).find((sub) =>
+    allowedSubCategories.includes(sub),
+  );
+  const mappedColors = toArray(enrich.color).filter((color) =>
+    COLORS.some((option) => option.name === color),
+  );
+  const mappedSeasons = toArray(enrich.season).filter((season) => SEASONS.includes(season));
+  const mappedMaterial = toArray(enrich.material).find((material) => MATERIALS.includes(material));
+
+  return {
+    ...prev,
+    category1: mappedCategory,
+    category2: mappedSubCategory ?? '',
+    color: mappedColors,
+    season: mappedSeasons,
+    material: mappedMaterial ?? '',
+  };
+}
+
+function mapDetailToClothingItem(detail: ClothesResponseDto, fallback: ClothingItem): ClothingItem {
+  return {
+    ...fallback,
+    name: detail.title,
+    category1: CATEGORY_FROM_API[detail.category] ?? fallback.category1,
+    category2: detail.subCategory ?? '',
+    season: (detail.season ?? []) as string[],
+    color: (detail.color ?? []) as string[],
+    brand: detail.brand ?? '',
+    material: (detail.material?.[0] ?? '') as string,
+    size: (detail.size ?? '') as string,
+    memo: detail.memo ?? '',
+    imageUrl:
+      detail.imageVariants?.detail?.webpUrl ??
+      detail.imageVariants?.detail?.jpegUrl ??
+      detail.imageVariants?.card?.webpUrl ??
+      detail.imageVariants?.card?.jpegUrl ??
+      fallback.imageUrl,
+  };
+}
+
+interface ClosetContentProps {
+  clothesPromise: Promise<ClothesListItemResponseDto[]>;
+  selectedCategory: string;
+  showFavoriteOnly: boolean;
+  showAddDialog: boolean;
+  onShowAddDialogChange: (open: boolean) => void;
+}
+
+function ClosetContent({
+  clothesPromise,
+  selectedCategory,
+  showFavoriteOnly,
+  showAddDialog,
+  onShowAddDialogChange,
+}: ClosetContentProps) {
+  const initialClothes = use(clothesPromise);
   const { t } = useTranslation();
-  const [selectedCategory, setSelectedCategory] = useState('전체');
-  const [showFavoriteOnly, setShowFavoriteOnly] = useState(false);
-  const [showAddDialog, setShowAddDialog] = useState(false);
+  const toast = useToast();
 
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ClothingItem | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [addStep, setAddStep] = useState<'method' | 'form'>('method');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [isEditingImage, setIsEditingImage] = useState(false);
+  const [isSavingClothing, setIsSavingClothing] = useState(false);
+  const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = useState(false);
+  const [isDeletingClothing, setIsDeletingClothing] = useState(false);
   const { clothes, addClothing, updateClothing, removeClothing, toggleFavorite } = useClothes({
     initialClothes,
   });
@@ -86,49 +211,60 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const categoryScrollRef = useRef<HTMLDivElement>(null);
   const pendingUploadFileRef = useRef<File | null>(null);
-  const [uploadedPublicUrl, setUploadedPublicUrl] = useState<string | null>(null);
+  const [hasPendingFile, setHasPendingFile] = useState(false);
+  const [draftId, setDraftId] = useState<string | null>(null);
+  const [bgPreviewUrl, setBgPreviewUrl] = useState<string | null>(null);
 
   const handleToggleFavorite = (id: string) => {
     toggleFavorite(id);
   };
 
-  const handleItemClick = (item: ClothingItem) => {
+  const handleItemClick = async (item: ClothingItem) => {
     setSelectedItem(item);
     setShowDetailDialog(true);
     setEditMode(false);
     setIsEditingImage(false);
+    setIsDetailLoading(true);
+    try {
+      const detail = await getClothesDetailApi(clientKy, item.id);
+      setSelectedItem((prev) => {
+        if (!prev || prev.id !== item.id) return prev;
+        return mapDetailToClothingItem(detail, prev);
+      });
+    } catch {
+      // 상세 조회 실패 시 목록 카드 데이터 유지
+    } finally {
+      setIsDetailLoading(false);
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      pendingUploadFileRef.current = file;
-      setUploadedPublicUrl(null);
+    if (!file) return;
 
-      // Background S3 upload
-      uploadToS3(file, 'clothes')
-        .then(({ publicUrl }) => {
-          setUploadedPublicUrl(publicUrl);
-          URL.revokeObjectURL(imageUrl);
+    const blobUrl = URL.createObjectURL(file);
+    pendingUploadFileRef.current = file;
+    setHasPendingFile(true);
+    setDraftId(null);
+    setBgPreviewUrl(null);
+
+    if (isEditingImage && selectedItem) {
+      // 수정 모드: preview API 호출 후 selectedItem 이미지 갱신 (UI only)
+      setIsProcessing(true);
+      setSelectedItem((prev) => (prev ? { ...prev, imageUrl: blobUrl } : prev));
+
+      postClothesImagePreviewApi(clientKy, file)
+        .then(({ previewUrl }) => {
+          URL.revokeObjectURL(blobUrl);
+          setSelectedItem((prev) => (prev ? { ...prev, imageUrl: previewUrl } : prev));
         })
         .catch(() => {
-          // S3 업로드 실패 시 blob URL 유지 (graceful degradation)
-        });
-
-      if (isEditingImage && selectedItem) {
-        // 수정 모드에서 이미지 변경할 때
-        setNewClothing({ ...newClothing, imageUrl });
-        setIsProcessing(true);
-        setAddStep('form');
-
-        // Mock AI 처리: 2초 후 배경 제거 완료
-        setTimeout(() => {
-          setSelectedItem({ ...selectedItem, imageUrl });
+          // blob URL 유지
+        })
+        .finally(() => {
           setIsProcessing(false);
-          setShowAddDialog(false);
+          onShowAddDialogChange(false);
           setAddStep('method');
           setIsEditingImage(false);
           setNewClothing({
@@ -144,33 +280,64 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
             imageUrl: '',
             isFavorite: false,
           });
-        }, 2000);
-      } else {
-        // 추가 모드일 때
-        setNewClothing({ ...newClothing, imageUrl });
-        setAddStep('form');
-        setIsProcessing(true);
+        });
+    } else {
+      // 추가 모드: blob 즉시 미리보기 → preview API 호출
+      setNewClothing((prev) => ({ ...prev, imageUrl: blobUrl }));
+      setAddStep('form');
+      setIsProcessing(true);
 
-        // Mock AI 처리: 2초 후 배경 제거 및 AI 분석 완료
-        setTimeout(() => {
-          // AI가 추천한 값들 설정
-          setNewClothing((prev) => ({
-            ...prev,
-            category1: '상의',
-            category2: '반소매 티셔츠',
-            color: ['화이트'],
-          }));
+      postClothesImagePreviewApi(clientKy, file)
+        .then(({ draftId: newDraftId, previewUrl }) => {
+          URL.revokeObjectURL(blobUrl);
+          setDraftId(newDraftId);
+          setBgPreviewUrl(previewUrl);
+          setNewClothing((prev) => ({ ...prev, imageUrl: previewUrl }));
+          postClothesEnrichApi(clientKy, { imageUrl: previewUrl })
+            .then((result) => {
+              if (!result.success || !result.data) return;
+              setNewClothing((prev) => mapEnrichToForm(result.data, prev));
+            })
+            .catch(() => {});
+        })
+        .catch(async (e) => {
+          toast.apiError(await toApiError(e), '배경 제거에 실패했습니다. 다시 시도해주세요.');
+        })
+        .finally(() => {
           setIsProcessing(false);
-        }, 2000);
-      }
+        });
     }
   };
 
-  const handleAddClothing = async () => {
-    if (!newClothing.name || !newClothing.category1) return;
+  const handleRefreshBgRemoval = () => {
+    const file = pendingUploadFileRef.current;
+    if (!file) return;
 
-    // S3 업로드가 완료되었으면 publicUrl 사용, 아니면 blob URL 유지
-    const finalImageUrl = uploadedPublicUrl || newClothing.imageUrl || '';
+    setIsProcessing(true);
+    setDraftId(null);
+
+    postClothesImagePreviewApi(clientKy, file)
+      .then(({ draftId: newDraftId, previewUrl }) => {
+        setDraftId(newDraftId);
+        setBgPreviewUrl(previewUrl);
+        setNewClothing((prev) => ({ ...prev, imageUrl: previewUrl }));
+        postClothesEnrichApi(clientKy, { imageUrl: previewUrl })
+          .then((result) => {
+            if (!result.success || !result.data) return;
+            setNewClothing((prev) => mapEnrichToForm(result.data, prev));
+          })
+          .catch(() => {});
+      })
+      .catch(async (e) => {
+        toast.apiError(await toApiError(e), '배경 제거에 실패했습니다. 다시 시도해주세요.');
+      })
+      .finally(() => {
+        setIsProcessing(false);
+      });
+  };
+
+  const handleAddClothing = async () => {
+    if (!newClothing.name || !newClothing.category1 || !draftId) return;
 
     const newItem: ClothingItem = {
       id: Date.now().toString(),
@@ -183,58 +350,82 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
       material: newClothing.material || '',
       size: newClothing.size || '',
       memo: newClothing.memo || '',
-      imageUrl: finalImageUrl,
+      imageUrl: bgPreviewUrl || newClothing.imageUrl || '',
       isFavorite: false,
     };
 
-    setShowAddDialog(false);
-    setAddStep('method');
-    setNewClothing({
-      name: '',
-      category1: '상의',
-      category2: '',
-      season: [],
-      color: [],
-      brand: '',
-      material: '',
-      size: '',
-      memo: '',
-      imageUrl: '',
-      isFavorite: false,
-    });
-    pendingUploadFileRef.current = null;
-    setUploadedPublicUrl(null);
-
-    await addClothing(newItem, finalImageUrl);
+    setIsSavingClothing(true);
+    try {
+      await addClothing(newItem, draftId);
+      onShowAddDialogChange(false);
+      setAddStep('method');
+      setNewClothing({
+        name: '',
+        category1: '상의',
+        category2: '',
+        season: [],
+        color: [],
+        brand: '',
+        material: '',
+        size: '',
+        memo: '',
+        imageUrl: '',
+        isFavorite: false,
+      });
+      pendingUploadFileRef.current = null;
+      setHasPendingFile(false);
+      setDraftId(null);
+      setBgPreviewUrl(null);
+    } catch {
+      // useClothes에서 이미 toast 처리
+    } finally {
+      setIsSavingClothing(false);
+    }
   };
 
   const handleUpdateClothing = async () => {
     if (!selectedItem) return;
 
-    setShowDetailDialog(false);
-    setSelectedItem(null);
-    setEditMode(false);
-
-    await updateClothing(selectedItem);
+    setIsSavingClothing(true);
+    try {
+      await updateClothing(selectedItem);
+      setShowDetailDialog(false);
+      setSelectedItem(null);
+      setEditMode(false);
+    } catch {
+      // useClothes에서 이미 toast 처리
+    } finally {
+      setIsSavingClothing(false);
+    }
   };
 
-  const handleDeleteClothing = async () => {
+  const handleDeleteClick = () => setShowDeleteConfirmDialog(true);
+
+  const handleDeleteConfirm = async () => {
     if (!selectedItem) return;
-
     const deletedId = selectedItem.id;
-    setShowDetailDialog(false);
-    setSelectedItem(null);
-
-    await removeClothing(deletedId);
+    setIsDeletingClothing(true);
+    try {
+      await removeClothing(deletedId);
+      setShowDeleteConfirmDialog(false);
+      setShowDetailDialog(false);
+      setSelectedItem(null);
+    } catch {
+      // useClothes에서 이미 toast 처리
+    } finally {
+      setIsDeletingClothing(false);
+    }
   };
 
   const handleCancelAdd = () => {
-    setShowAddDialog(false);
+    onShowAddDialogChange(false);
     setAddStep('method');
     setIsProcessing(false);
     setIsEditingImage(false);
     pendingUploadFileRef.current = null;
-    setUploadedPublicUrl(null);
+    setHasPendingFile(false);
+    setDraftId(null);
+    setBgPreviewUrl(null);
     setNewClothing({
       name: '',
       category1: '상의',
@@ -255,6 +446,7 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
     setSelectedItem(null);
     setEditMode(false);
     setIsEditingImage(false);
+    setIsDetailLoading(false);
   };
 
   const toggleArrayValue = (array: string[], value: string) => {
@@ -276,77 +468,7 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
     : filteredClothes;
 
   return (
-    <div className="flex-1 min-h-0 w-full bg-white flex flex-col overflow-hidden">
-      <div className="flex-shrink-0 relative">
-        {header}
-        <div className="absolute right-6 top-1/2 -translate-y-1/2">
-          <PlusAction onClick={() => setShowAddDialog(true)} />
-        </div>
-      </div>
-
-      {/* 카테고리 슬라이드 */}
-      <div className="flex-shrink-0 px-6 pb-3">
-        <div
-          ref={categoryScrollRef}
-          className="flex gap-2 overflow-x-auto scrollbar-hide items-center"
-        >
-          {/* 찜 아이콘 토글 */}
-          <button
-            onClick={() => {
-              setShowFavoriteOnly(!showFavoriteOnly);
-              if (!showFavoriteOnly) {
-                setSelectedCategory('전체');
-              }
-            }}
-            className="flex-shrink-0 p-2 transition-all flex items-center justify-center"
-            style={{
-              borderRadius: '50%',
-              backgroundColor: showFavoriteOnly ? '#000' : 'transparent',
-            }}
-          >
-            <Heart
-              size={18}
-              color={showFavoriteOnly ? '#fff' : '#000'}
-              fill={showFavoriteOnly ? '#fff' : 'none'}
-              strokeWidth={2}
-            />
-          </button>
-
-          {/* 구분선 */}
-          <div
-            style={{
-              width: '1px',
-              height: '20px',
-              backgroundColor: '#D9D9D9',
-              flexShrink: 0,
-            }}
-          />
-
-          {Object.keys(CATEGORIES).map((category) => (
-            <button
-              key={category}
-              onClick={() => {
-                setSelectedCategory(category);
-                setShowFavoriteOnly(false);
-              }}
-              className="flex-shrink-0 px-5 py-1.5 transition-all"
-              style={{
-                borderRadius: '999px',
-                backgroundColor:
-                  selectedCategory === category && !showFavoriteOnly ? '#000' : '#fff',
-                border: '2px solid #000',
-                fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                fontSize: '14px',
-                fontWeight: 600,
-                color: selectedCategory === category && !showFavoriteOnly ? '#fff' : '#000',
-              }}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-      </div>
-
+    <>
       {/* 아이템 개수 표시 */}
       <div className="flex-shrink-0 px-6 pb-4">
         <p
@@ -365,10 +487,15 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
       {/* 옷 목록 그리드 */}
       <div className="flex-1 overflow-y-auto px-6 pb-24">
         {displayedClothes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full">
-            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+          <div className="fixed left-1/2 top-[52%] -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-48px)] max-w-[320px] flex flex-col items-center justify-center">
+            <button
+              type="button"
+              onClick={() => onShowAddDialogChange(true)}
+              aria-label={t('closet.addFirst')}
+              className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4 hover:bg-gray-200 transition-colors"
+            >
               <Plus size={28} color="#999" strokeWidth={1.5} />
-            </div>
+            </button>
             <p
               className="text-black mb-1"
               style={{
@@ -393,7 +520,7 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
             </p>
             {clothes.length === 0 && (
               <button
-                onClick={() => setShowAddDialog(true)}
+                onClick={() => onShowAddDialogChange(true)}
                 className="px-6 py-3 text-white hover:opacity-90 transition-opacity flex items-center gap-2"
                 style={{
                   borderRadius: '12px',
@@ -486,7 +613,7 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
       </div>
 
       {/* 옷 추가 다이얼로그 */}
-      <Dialog.Root open={showAddDialog} onOpenChange={setShowAddDialog}>
+      <Dialog.Root open={showAddDialog} onOpenChange={onShowAddDialogChange}>
         <Dialog.Portal>
           <Dialog.Backdrop className="fixed inset-0 bg-black/30 z-50" />
           <Dialog.Popup
@@ -562,6 +689,7 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                       {t('closet.takePhoto')}
                     </span>
                   </button>
+
                 </div>
 
                 <input
@@ -604,42 +732,61 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                   <div className="space-y-4">
                     {/* 이미지 미리보기 */}
                     {newClothing.imageUrl && (
-                      <div
-                        className="w-full aspect-square bg-gray-100 overflow-hidden relative"
-                        style={{ borderRadius: '16px' }}
-                      >
-                        <img
-                          src={newClothing.imageUrl}
-                          alt="preview"
-                          className="w-full h-full object-cover"
-                        />
-                        {isProcessing && (
-                          // 배경 제거중 반투명 오버레이
-                          <div
-                            className="absolute inset-0 flex flex-col items-center justify-center"
-                            style={{
-                              backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                              zIndex: 10,
-                              backdropFilter: 'blur(2px)',
-                            }}
-                          >
+                      <div>
+                        <div
+                          className="w-full aspect-square bg-gray-100 overflow-hidden relative"
+                          style={{ borderRadius: '16px' }}
+                        >
+                          <img
+                            src={newClothing.imageUrl}
+                            alt="preview"
+                            className="w-full h-full object-cover"
+                          />
+                          {isProcessing && (
+                            // 배경 제거중 반투명 오버레이
                             <div
-                              className="w-20 h-20 rounded-full mb-3 skeleton-shimmer"
+                              className="absolute inset-0 flex flex-col items-center justify-center"
                               style={{
-                                backgroundColor: '#F0F0F0',
-                              }}
-                            />
-                            <p
-                              style={{
-                                fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                                fontSize: '14px',
-                                fontWeight: 600,
-                                color: '#000000',
+                                backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                                zIndex: 10,
+                                backdropFilter: 'blur(2px)',
                               }}
                             >
-                              {t('closet.removingBackground')}
-                            </p>
-                          </div>
+                              <div
+                                className="w-20 h-20 rounded-full mb-3 skeleton-shimmer"
+                                style={{
+                                  backgroundColor: '#F0F0F0',
+                                }}
+                              />
+                              <p
+                                style={{
+                                  fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                                  fontSize: '14px',
+                                  fontWeight: 600,
+                                  color: '#000000',
+                                }}
+                              >
+                                {t('closet.removingBackground')}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        {!isProcessing && hasPendingFile && (
+                          <button
+                            type="button"
+                            onClick={handleRefreshBgRemoval}
+                            className="mt-2 flex items-center gap-1.5 px-3 py-1.5 hover:bg-gray-50 transition-colors"
+                            style={{
+                              borderRadius: '12px',
+                              border: '1.5px solid #E5E5E5',
+                              fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                              fontSize: '12px',
+                              fontWeight: 500,
+                            }}
+                          >
+                            <RefreshCw size={14} strokeWidth={1.5} />
+                            배경 제거 갱신
+                          </button>
                         )}
                       </div>
                     )}
@@ -814,34 +961,51 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                       >
                         {t('closet.season')}
                       </label>
-                      <div className="flex flex-wrap gap-2">
-                        {SEASONS.map((season) => (
-                          <button
-                            key={season}
-                            type="button"
-                            onClick={() =>
-                              setNewClothing({
-                                ...newClothing,
-                                season: toggleArrayValue(newClothing.season || [], season),
-                              })
-                            }
-                            className="px-3 py-1.5 transition-all"
-                            style={{
-                              borderRadius: '16px',
-                              backgroundColor: newClothing.season?.includes(season)
-                                ? '#000'
-                                : '#fff',
-                              border: '1.5px solid #E5E5E5',
-                              fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                              fontSize: '12px',
-                              fontWeight: 500,
-                              color: newClothing.season?.includes(season) ? '#fff' : '#000',
-                            }}
-                          >
-                            {season}
-                          </button>
-                        ))}
-                      </div>
+                      {isProcessing ? (
+                        <div className="flex flex-wrap gap-2">
+                          {[1, 2, 3, 4, 5].map((i) => (
+                            <div
+                              key={i}
+                              className="skeleton-shimmer"
+                              style={{
+                                width: `${60 + i * 10}px`,
+                                height: '32px',
+                                borderRadius: '16px',
+                                backgroundColor: '#F5F5F5',
+                              }}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {SEASONS.map((season) => (
+                            <button
+                              key={season}
+                              type="button"
+                              onClick={() =>
+                                setNewClothing({
+                                  ...newClothing,
+                                  season: toggleArrayValue(newClothing.season || [], season),
+                                })
+                              }
+                              className="px-3 py-1.5 transition-all"
+                              style={{
+                                borderRadius: '16px',
+                                backgroundColor: newClothing.season?.includes(season)
+                                  ? '#000'
+                                  : '#fff',
+                                border: '1.5px solid #E5E5E5',
+                                fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                                fontSize: '12px',
+                                fontWeight: 500,
+                                color: newClothing.season?.includes(season) ? '#fff' : '#000',
+                              }}
+                            >
+                              {season}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* 색상 */}
@@ -876,18 +1040,18 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                         <div className="flex flex-wrap gap-2">
                           {COLORS.map((color) => (
                             <button
-                              key={color.kr}
+                              key={color.name}
                               type="button"
                               onClick={() =>
                                 setNewClothing({
                                   ...newClothing,
-                                  color: toggleArrayValue(newClothing.color || [], color.kr),
+                                  color: toggleArrayValue(newClothing.color || [], color.name),
                                 })
                               }
                               className="flex items-center gap-1.5 px-2.5 py-1.5 transition-all"
                               style={{
                                 borderRadius: '16px',
-                                backgroundColor: newClothing.color?.includes(color.kr)
+                                backgroundColor: newClothing.color?.includes(color.name)
                                   ? '#000'
                                   : '#fff',
                                 border: '1.5px solid #E5E5E5',
@@ -899,8 +1063,12 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                                   width: '14px',
                                   height: '14px',
                                   borderRadius: '3px',
-                                  backgroundColor: color.hex,
-                                  border: color.hex === '#FFFFFF' ? '1px solid #E5E5E5' : 'none',
+                                  ...(color.hex === null
+                                    ? { background: 'linear-gradient(135deg, #f87171, #facc15, #4ade80, #60a5fa, #c084fc)' }
+                                    : {
+                                        backgroundColor: color.hex,
+                                        border: color.hex === '#FFFFFF' ? '1px solid #E5E5E5' : 'none',
+                                      }),
                                 }}
                               />
                               <span
@@ -908,10 +1076,10 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                                   fontFamily: "var(--font-inter), 'Inter', sans-serif",
                                   fontSize: '11px',
                                   fontWeight: 500,
-                                  color: newClothing.color?.includes(color.kr) ? '#fff' : '#000',
+                                  color: newClothing.color?.includes(color.name) ? '#fff' : '#000',
                                 }}
                               >
-                                {color.en}
+                                {color.name}
                               </span>
                             </button>
                           ))}
@@ -931,32 +1099,49 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                       >
                         {t('closet.material')}
                       </label>
-                      <div className="flex flex-wrap gap-2">
-                        {MATERIALS.map((material) => (
-                          <button
-                            key={material}
-                            type="button"
-                            onClick={() =>
-                              setNewClothing({
-                                ...newClothing,
-                                material: newClothing.material === material ? '' : material,
-                              })
-                            }
-                            className="px-3 py-1.5 transition-all"
-                            style={{
-                              borderRadius: '16px',
-                              backgroundColor: newClothing.material === material ? '#000' : '#fff',
-                              border: '1.5px solid #E5E5E5',
-                              fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                              fontSize: '12px',
-                              fontWeight: 500,
-                              color: newClothing.material === material ? '#fff' : '#000',
-                            }}
-                          >
-                            {material}
-                          </button>
-                        ))}
-                      </div>
+                      {isProcessing ? (
+                        <div className="flex flex-wrap gap-2">
+                          {[1, 2, 3, 4, 5, 6].map((i) => (
+                            <div
+                              key={i}
+                              className="skeleton-shimmer"
+                              style={{
+                                width: `${58 + i * 8}px`,
+                                height: '32px',
+                                borderRadius: '16px',
+                                backgroundColor: '#F5F5F5',
+                              }}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {MATERIALS.map((material) => (
+                            <button
+                              key={material}
+                              type="button"
+                              onClick={() =>
+                                setNewClothing({
+                                  ...newClothing,
+                                  material: newClothing.material === material ? '' : material,
+                                })
+                              }
+                              className="px-3 py-1.5 transition-all"
+                              style={{
+                                borderRadius: '16px',
+                                backgroundColor: newClothing.material === material ? '#000' : '#fff',
+                                border: '1.5px solid #E5E5E5',
+                                fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                                fontSize: '12px',
+                                fontWeight: 500,
+                                color: newClothing.material === material ? '#fff' : '#000',
+                              }}
+                            >
+                              {material}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* 브랜드 */}
@@ -1004,25 +1189,32 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                       >
                         {t('closet.size')}
                       </label>
-                      <input
-                        type="text"
-                        value={newClothing.size}
-                        onChange={(e) =>
-                          setNewClothing({
-                            ...newClothing,
-                            size: e.target.value,
-                          })
-                        }
-                        placeholder={t('closet.enterSize')}
-                        className="w-full px-4 py-2.5 outline-none"
-                        style={{
-                          borderRadius: '12px',
-                          border: '1.5px solid #E5E5E5',
-                          fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                          fontSize: '13px',
-                          fontWeight: 400,
-                        }}
-                      />
+                      <div className="flex flex-wrap gap-2">
+                        {SIZES.map((size) => (
+                          <button
+                            key={size}
+                            type="button"
+                            onClick={() =>
+                              setNewClothing({
+                                ...newClothing,
+                                size: newClothing.size === size ? '' : size,
+                              })
+                            }
+                            className="px-3 py-1.5 transition-all"
+                            style={{
+                              borderRadius: '16px',
+                              backgroundColor: newClothing.size === size ? '#000' : '#fff',
+                              border: '1.5px solid #E5E5E5',
+                              fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                              fontSize: '12px',
+                              fontWeight: 500,
+                              color: newClothing.size === size ? '#fff' : '#000',
+                            }}
+                          >
+                            {size}
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
                     {/* 메모 */}
@@ -1081,8 +1273,8 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                   </button>
                   <button
                     onClick={handleAddClothing}
-                    disabled={!newClothing.name || !newClothing.category1}
-                    className="flex-1 text-white px-4 py-3 hover:opacity-90 transition-opacity disabled:opacity-50"
+                    disabled={isSavingClothing || isProcessing || !draftId || !newClothing.name || !newClothing.category1}
+                    className="flex-1 text-white px-4 py-3 hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center justify-center gap-2"
                     style={{
                       borderRadius: '24px',
                       backgroundColor: '#000',
@@ -1091,7 +1283,7 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                       fontWeight: 600,
                     }}
                   >
-                    {t('closet.register')}
+                    {isSavingClothing ? <><Spinner size="sm" className="text-white" />{t('closet.register')}</> : t('closet.register')}
                   </button>
                 </div>
               </>
@@ -1171,6 +1363,24 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                           </div>
                         )}
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleToggleFavorite(selectedItem.id);
+                          setSelectedItem((prev) =>
+                            prev ? { ...prev, isFavorite: !prev.isFavorite } : prev,
+                          );
+                        }}
+                        className="absolute top-2 right-2 p-1.5 bg-white/90 backdrop-blur-sm hover:bg-white transition-all"
+                        style={{ borderRadius: '12px' }}
+                      >
+                        <Heart
+                          size={18}
+                          color={selectedItem.isFavorite ? '#000' : '#999'}
+                          fill={selectedItem.isFavorite ? '#000' : 'none'}
+                          strokeWidth={1.5}
+                        />
+                      </button>
                       {editMode && (
                         <div className="mt-3 flex gap-2">
                           <button
@@ -1190,7 +1400,7 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                                 imageUrl: '',
                                 isFavorite: selectedItem.isFavorite,
                               });
-                              setShowAddDialog(true);
+                              onShowAddDialogChange(true);
                               setAddStep('method');
                             }}
                             className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 hover:bg-gray-50 transition-colors"
@@ -1346,16 +1556,39 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                             )}
                         </>
                       ) : (
-                        <p
-                          style={{
-                            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                            fontSize: '14px',
-                            fontWeight: 400,
-                          }}
-                        >
-                          {selectedItem.category1}
-                          {selectedItem.category2 && ` > ${selectedItem.category2}`}
-                        </p>
+                        <>
+                          <p
+                            style={{
+                              fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                              fontSize: '14px',
+                              fontWeight: 400,
+                            }}
+                          >
+                            {selectedItem.category1}
+                          </p>
+                          {isDetailLoading ? (
+                            <div
+                              className="skeleton-shimmer mt-1"
+                              style={{
+                                width: '120px',
+                                height: '18px',
+                                borderRadius: '8px',
+                                backgroundColor: '#F5F5F5',
+                              }}
+                            />
+                          ) : selectedItem.category2 ? (
+                            <p
+                              className="text-[#666] mt-1"
+                              style={{
+                                fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                                fontSize: '13px',
+                                fontWeight: 400,
+                              }}
+                            >
+                              {selectedItem.category2}
+                            </p>
+                          ) : null}
+                        </>
                       )}
                     </div>
 
@@ -1398,6 +1631,21 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                             >
                               {season}
                             </button>
+                          ))}
+                        </div>
+                      ) : isDetailLoading ? (
+                        <div className="flex flex-wrap gap-2">
+                          {[1, 2, 3].map((i) => (
+                            <div
+                              key={i}
+                              className="skeleton-shimmer"
+                              style={{
+                                width: `${52 + i * 14}px`,
+                                height: '30px',
+                                borderRadius: '16px',
+                                backgroundColor: '#F5F5F5',
+                              }}
+                            />
                           ))}
                         </div>
                       ) : selectedItem.season.length > 0 ? (
@@ -1448,18 +1696,18 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                         <div className="flex flex-wrap gap-2">
                           {COLORS.map((color) => (
                             <button
-                              key={color.kr}
+                              key={color.name}
                               type="button"
                               onClick={() =>
                                 setSelectedItem({
                                   ...selectedItem,
-                                  color: toggleArrayValue(selectedItem.color || [], color.kr),
+                                  color: toggleArrayValue(selectedItem.color || [], color.name),
                                 })
                               }
                               className="flex items-center gap-1.5 px-2.5 py-1.5 transition-all"
                               style={{
                                 borderRadius: '16px',
-                                backgroundColor: selectedItem.color?.includes(color.kr)
+                                backgroundColor: selectedItem.color?.includes(color.name)
                                   ? '#000'
                                   : '#fff',
                                 border: '1.5px solid #E5E5E5',
@@ -1471,8 +1719,12 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                                   width: '14px',
                                   height: '14px',
                                   borderRadius: '3px',
-                                  backgroundColor: color.hex,
-                                  border: color.hex === '#FFFFFF' ? '1px solid #E5E5E5' : 'none',
+                                  ...(color.hex === null
+                                    ? { background: 'linear-gradient(135deg, #f87171, #facc15, #4ade80, #60a5fa, #c084fc)' }
+                                    : {
+                                        backgroundColor: color.hex,
+                                        border: color.hex === '#FFFFFF' ? '1px solid #E5E5E5' : 'none',
+                                      }),
                                 }}
                               />
                               <span
@@ -1480,18 +1732,33 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                                   fontFamily: "var(--font-inter), 'Inter', sans-serif",
                                   fontSize: '11px',
                                   fontWeight: 500,
-                                  color: selectedItem.color?.includes(color.kr) ? '#fff' : '#000',
+                                  color: selectedItem.color?.includes(color.name) ? '#fff' : '#000',
                                 }}
                               >
-                                {color.en}
+                                {color.name}
                               </span>
                             </button>
+                          ))}
+                        </div>
+                      ) : isDetailLoading ? (
+                        <div className="flex flex-wrap gap-2">
+                          {[1, 2, 3, 4].map((i) => (
+                            <div
+                              key={i}
+                              className="skeleton-shimmer"
+                              style={{
+                                width: `${58 + i * 10}px`,
+                                height: '30px',
+                                borderRadius: '16px',
+                                backgroundColor: '#F5F5F5',
+                              }}
+                            />
                           ))}
                         </div>
                       ) : selectedItem.color.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                           {selectedItem.color.map((c) => {
-                            const colorData = COLORS.find((col) => col.kr === c);
+                            const colorData = COLORS.find((col) => col.name === c);
                             return (
                               <div
                                 key={c}
@@ -1507,9 +1774,12 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                                       width: '14px',
                                       height: '14px',
                                       borderRadius: '3px',
-                                      backgroundColor: colorData.hex,
-                                      border:
-                                        colorData.hex === '#FFFFFF' ? '1px solid #E5E5E5' : 'none',
+                                      ...(colorData.hex === null
+                                        ? { background: 'linear-gradient(135deg, #f87171, #facc15, #4ade80, #60a5fa, #c084fc)' }
+                                        : {
+                                            backgroundColor: colorData.hex,
+                                            border: colorData.hex === '#FFFFFF' ? '1px solid #E5E5E5' : 'none',
+                                          }),
                                     }}
                                   />
                                 )}
@@ -1520,7 +1790,7 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                                     fontWeight: 500,
                                   }}
                                 >
-                                  {colorData?.en || c}
+                                  {c}
                                 </span>
                               </div>
                             );
@@ -1580,6 +1850,16 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                             </button>
                           ))}
                         </div>
+                      ) : isDetailLoading ? (
+                        <div
+                          className="skeleton-shimmer"
+                          style={{
+                            width: '100px',
+                            height: '20px',
+                            borderRadius: '8px',
+                            backgroundColor: '#F5F5F5',
+                          }}
+                        />
                       ) : selectedItem.material ? (
                         <p
                           style={{
@@ -1636,6 +1916,16 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                             fontWeight: 400,
                           }}
                         />
+                      ) : isDetailLoading ? (
+                        <div
+                          className="skeleton-shimmer"
+                          style={{
+                            width: '120px',
+                            height: '20px',
+                            borderRadius: '8px',
+                            backgroundColor: '#F5F5F5',
+                          }}
+                        />
                       ) : selectedItem.brand ? (
                         <p
                           style={{
@@ -1673,23 +1963,40 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                         {t('closet.size')}
                       </label>
                       {editMode ? (
-                        <input
-                          type="text"
-                          value={selectedItem.size}
-                          onChange={(e) =>
-                            setSelectedItem({
-                              ...selectedItem,
-                              size: e.target.value,
-                            })
-                          }
-                          placeholder="예: M, 95"
-                          className="w-full px-4 py-2.5 outline-none"
+                        <div className="flex flex-wrap gap-2">
+                          {SIZES.map((size) => (
+                            <button
+                              key={size}
+                              type="button"
+                              onClick={() =>
+                                setSelectedItem({
+                                  ...selectedItem,
+                                  size: selectedItem.size === size ? '' : size,
+                                })
+                              }
+                              className="px-3 py-1.5 transition-all"
+                              style={{
+                                borderRadius: '16px',
+                                backgroundColor: selectedItem.size === size ? '#000' : '#fff',
+                                border: '1.5px solid #E5E5E5',
+                                fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                                fontSize: '12px',
+                                fontWeight: 500,
+                                color: selectedItem.size === size ? '#fff' : '#000',
+                              }}
+                            >
+                              {size}
+                            </button>
+                          ))}
+                        </div>
+                      ) : isDetailLoading ? (
+                        <div
+                          className="skeleton-shimmer"
                           style={{
-                            borderRadius: '12px',
-                            border: '1.5px solid #E5E5E5',
-                            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                            fontSize: '13px',
-                            fontWeight: 400,
+                            width: '64px',
+                            height: '20px',
+                            borderRadius: '8px',
+                            backgroundColor: '#F5F5F5',
                           }}
                         />
                       ) : selectedItem.size ? (
@@ -1748,6 +2055,27 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                             fontWeight: 400,
                           }}
                         />
+                      ) : isDetailLoading ? (
+                        <div className="space-y-2">
+                          <div
+                            className="skeleton-shimmer"
+                            style={{
+                              width: '100%',
+                              height: '14px',
+                              borderRadius: '8px',
+                              backgroundColor: '#F5F5F5',
+                            }}
+                          />
+                          <div
+                            className="skeleton-shimmer"
+                            style={{
+                              width: '72%',
+                              height: '14px',
+                              borderRadius: '8px',
+                              backgroundColor: '#F5F5F5',
+                            }}
+                          />
+                        </div>
                       ) : selectedItem.memo ? (
                         <p
                           style={{
@@ -1798,7 +2126,7 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                         {t('common.edit')}
                       </button>
                       <button
-                        onClick={handleDeleteClothing}
+                        onClick={handleDeleteClick}
                         className="flex-1 flex items-center justify-center gap-2 text-white px-4 py-3 hover:opacity-90 transition-opacity"
                         style={{
                           borderRadius: '24px',
@@ -1829,8 +2157,8 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                       </button>
                       <button
                         onClick={handleUpdateClothing}
-                        disabled={!selectedItem.name || !selectedItem.category1}
-                        className="flex-1 text-white px-4 py-3 hover:opacity-90 transition-opacity disabled:opacity-50"
+                        disabled={isSavingClothing || !selectedItem.name || !selectedItem.category1}
+                        className="flex-1 text-white px-4 py-3 hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center justify-center gap-2"
                         style={{
                           borderRadius: '24px',
                           backgroundColor: '#000',
@@ -1839,7 +2167,7 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
                           fontWeight: 600,
                         }}
                       >
-                        {t('closet.save')}
+                        {isSavingClothing ? <><Spinner size="sm" className="text-white" />{t('closet.save')}</> : t('closet.save')}
                       </button>
                     </>
                   )}
@@ -1861,6 +2189,168 @@ export function ClosetPage({ initialClothes = [], header }: ClosetPageProps) {
           </Dialog.Popup>
         </Dialog.Portal>
       </Dialog.Root>
+
+      {/* 옷 삭제 확인 다이얼로그 */}
+      <Dialog.Root open={showDeleteConfirmDialog} onOpenChange={setShowDeleteConfirmDialog}>
+        <Dialog.Portal>
+          <Dialog.Backdrop className="fixed inset-0 bg-black/40 z-[60]" />
+          <Dialog.Popup
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-[60] w-[90%] max-w-[340px] p-8"
+            style={{ borderRadius: 'var(--radius-xl)' }}
+            aria-describedby={undefined}
+          >
+            <h2
+              className="text-black mb-3"
+              style={{
+                fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                fontSize: '20px',
+                fontWeight: 700,
+              }}
+            >
+              옷을 삭제할까요?
+            </h2>
+            <p
+              className="text-gray-500 mb-8"
+              style={{
+                fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                fontSize: '14px',
+                fontWeight: 400,
+              }}
+            >
+              삭제된 옷은 복구할 수 없습니다.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirmDialog(false)}
+                disabled={isDeletingClothing}
+                className="flex-1 py-4 disabled:opacity-60"
+                style={{
+                  border: '1.5px solid #E5E5E5',
+                  borderRadius: 'var(--radius-pill)',
+                  fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                  fontSize: '14px',
+                  fontWeight: 600,
+                }}
+              >
+                취소
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={isDeletingClothing}
+                className="flex-1 py-4 text-white inline-flex items-center justify-center gap-2 disabled:opacity-60"
+                style={{
+                  backgroundColor: '#000',
+                  borderRadius: 'var(--radius-pill)',
+                  fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                  fontSize: '14px',
+                  fontWeight: 600,
+                }}
+              >
+                {isDeletingClothing ? <><Spinner size="sm" className="text-white" />삭제 중...</> : '삭제'}
+              </button>
+            </div>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </>
+  );
+}
+
+interface ClosetPageProps {
+  clothesPromise: Promise<ClothesListItemResponseDto[]>;
+  header?: ReactNode;
+}
+
+export function ClosetPage({ clothesPromise, header }: ClosetPageProps) {
+  const [selectedCategory, setSelectedCategory] = useState('전체');
+  const [showFavoriteOnly, setShowFavoriteOnly] = useState(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const categoryScrollRef = useRef<HTMLDivElement>(null);
+  const handleCategoryWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    const container = categoryScrollRef.current;
+    if (!container) return;
+    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+    e.preventDefault();
+    container.scrollBy({ left: e.deltaY, behavior: 'smooth' });
+  };
+
+  return (
+    <div className="flex-1 min-h-0 w-full bg-white flex flex-col overflow-hidden">
+      <div className="flex-shrink-0 relative">
+        {header}
+        <div className="absolute right-6 top-1/2 -translate-y-1/2">
+          <PlusAction onClick={() => setShowAddDialog(true)} />
+        </div>
+      </div>
+
+      {/* 카테고리 슬라이드 */}
+      <div className="flex-shrink-0 px-6 pb-3">
+        <div
+          ref={categoryScrollRef}
+          onWheel={handleCategoryWheel}
+          className="flex gap-2 overflow-x-auto scrollbar-hide items-center scroll-smooth"
+        >
+          {/* 찜 아이콘 토글 */}
+          <button
+            onClick={() => {
+              setShowFavoriteOnly(!showFavoriteOnly);
+            }}
+            className="flex-shrink-0 p-2 transition-all flex items-center justify-center"
+            style={{
+              borderRadius: '50%',
+              backgroundColor: showFavoriteOnly ? '#000' : 'transparent',
+            }}
+          >
+            <Heart
+              size={18}
+              color={showFavoriteOnly ? '#fff' : '#000'}
+              fill={showFavoriteOnly ? '#fff' : 'none'}
+              strokeWidth={2}
+            />
+          </button>
+
+          {/* 구분선 */}
+          <div
+            style={{
+              width: '1px',
+              height: '20px',
+              backgroundColor: '#D9D9D9',
+              flexShrink: 0,
+            }}
+          />
+
+          {Object.keys(CATEGORIES).map((category) => (
+            <button
+              key={category}
+              onClick={() => {
+                setSelectedCategory(category);
+              }}
+              className="flex-shrink-0 px-5 py-1.5 transition-all"
+              style={{
+                borderRadius: '999px',
+                backgroundColor: selectedCategory === category ? '#000' : '#fff',
+                border: '2px solid #000',
+                fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                fontSize: '14px',
+                fontWeight: 600,
+                color: selectedCategory === category ? '#fff' : '#000',
+              }}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <Suspense fallback={<ClosetGridSkeleton />}>
+        <ClosetContent
+          clothesPromise={clothesPromise}
+          selectedCategory={selectedCategory}
+          showFavoriteOnly={showFavoriteOnly}
+          showAddDialog={showAddDialog}
+          onShowAddDialogChange={setShowAddDialog}
+        />
+      </Suspense>
     </div>
   );
 }
