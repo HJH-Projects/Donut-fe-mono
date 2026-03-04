@@ -24,11 +24,10 @@ function normalizeLanguage(value: string): Language {
 
 interface MyPageProps {
   initialProfile?: UserProfileResponseDto | null;
-  initialStats?: { closetCount: number; lookCount: number } | null;
   initialGender?: Gender;
 }
 
-export function MyPage({ initialProfile = null, initialStats = null, initialGender = 'MALE' }: MyPageProps) {
+export function MyPage({ initialProfile = null, initialGender = 'MALE' }: MyPageProps) {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const toast = useToast();
@@ -40,32 +39,34 @@ export function MyPage({ initialProfile = null, initialStats = null, initialGend
   const [language, setLanguage] = useState<Language>(normalizeLanguage(i18n.language));
   const [gender, setGender] = useState<Gender>(initialGender);
   const [tempNickname, setTempNickname] = useState('');
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isSavingNickname, setIsSavingNickname] = useState(false);
 
-  const { stats, nickname, isResettingNickname, updateNickname, resetNickname } = useProfile({
+  const { profile, stats, nickname, isResettingNickname, updateNickname, resetNickname } = useProfile({
     initialProfile,
-    initialStats,
   });
 
   const userProfile = {
     nickname,
-    email: 'fashion@example.com',
-    closetCount: stats?.closetCount ?? 15,
+    email: profile?.email ?? '',
+    closetCount: stats?.closetCount ?? 0,
     closetFavoriteCount: 0,
-    looksCount: stats?.lookCount ?? 3,
+    looksCount: stats?.lookCount ?? 0,
     looksFavoriteCount: 0,
   };
 
   const handleLogout = async () => {
-    if (confirm(t('profile.logoutConfirm'))) {
-      try {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          credentials: 'include',
-        });
-        router.push('/');
-      } catch {
-        toast.success(t('profile.logoutSuccess'));
-      }
+    if (!confirm(t('profile.logoutConfirm'))) return;
+    setIsLoggingOut(true);
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      router.push('/');
+    } catch {
+      toast.error(t('profile.logoutFailed') || '로그아웃에 실패했습니다.');
+      setIsLoggingOut(false);
     }
   };
 
@@ -80,13 +81,24 @@ export function MyPage({ initialProfile = null, initialStats = null, initialGend
       return;
     }
     const newNickname = tempNickname.trim();
-    setShowNicknameDialog(false);
-    await updateNickname(newNickname);
+    setIsSavingNickname(true);
+    try {
+      await updateNickname(newNickname);
+      setShowNicknameDialog(false);
+    } catch {
+      // useProfile에서 이미 toast 처리
+    } finally {
+      setIsSavingNickname(false);
+    }
   };
 
   const handleResetNickname = async () => {
-    setShowNicknameDialog(false);
-    await resetNickname();
+    try {
+      await resetNickname();
+      setShowNicknameDialog(false);
+    } catch {
+      // useProfile에서 이미 toast 처리
+    }
   };
 
   const handleLanguageChange = (newLang: Language) => {
@@ -112,8 +124,15 @@ export function MyPage({ initialProfile = null, initialStats = null, initialGend
   };
 
   const handleGenderChange = async (newGender: Gender) => {
+    const previous = gender;
     setGender(newGender);
-    await setGenderAction(newGender);
+    try {
+      await setGenderAction(newGender);
+      router.refresh();
+    } catch {
+      setGender(previous);
+      toast.error('성별 설정에 실패했습니다.');
+    }
   };
 
   return (
@@ -174,9 +193,10 @@ export function MyPage({ initialProfile = null, initialStats = null, initialGend
               fontFamily: "var(--font-inter), 'Inter', sans-serif",
               fontSize: '15px',
               fontWeight: 400,
+              minHeight: '22px',
             }}
           >
-            {userProfile.email}
+            {userProfile.email || '\u00A0'}
           </p>
 
           {/* 통계 */}
@@ -405,13 +425,18 @@ export function MyPage({ initialProfile = null, initialStats = null, initialGend
         {/* 로그아웃 버튼 */}
         <button
           onClick={handleLogout}
-          className="w-full px-6 py-5 flex items-center justify-center gap-3 transition-all hover:opacity-80 mt-4"
+          disabled={isLoggingOut}
+          className="w-full px-6 py-5 flex items-center justify-center gap-3 transition-all hover:opacity-80 disabled:opacity-60 mt-4"
           style={{
             backgroundColor: '#000000',
             borderRadius: 'var(--radius-pill)',
           }}
         >
-          <LogOut size={18} color="#FFFFFF" strokeWidth={2} />
+          {isLoggingOut ? (
+            <Spinner size="sm" className="text-white" />
+          ) : (
+            <LogOut size={18} color="#FFFFFF" strokeWidth={2} />
+          )}
           <span
             className="text-white"
             style={{
@@ -477,7 +502,7 @@ export function MyPage({ initialProfile = null, initialStats = null, initialGend
             <div className="flex gap-3">
               <button
                 onClick={handleResetNickname}
-                disabled={isResettingNickname}
+                disabled={isResettingNickname || isSavingNickname}
                 className="flex-1 py-4 transition-all hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
                 style={{
                   backgroundColor: '#FFFFFF',
@@ -500,8 +525,8 @@ export function MyPage({ initialProfile = null, initialStats = null, initialGend
               </button>
               <button
                 onClick={handleSaveNickname}
-                disabled={isResettingNickname}
-                className="flex-1 py-4 text-white transition-all hover:opacity-90"
+                disabled={isSavingNickname || isResettingNickname}
+                className="flex-1 py-4 text-white transition-all hover:opacity-90 disabled:opacity-60 inline-flex items-center justify-center gap-2"
                 style={{
                   backgroundColor: '#000',
                   borderRadius: 'var(--radius-pill)',
@@ -510,7 +535,14 @@ export function MyPage({ initialProfile = null, initialStats = null, initialGend
                   fontWeight: 700,
                 }}
               >
-                {t('profile.apply')}
+                {isSavingNickname ? (
+                  <>
+                    <Spinner size="sm" className="text-white" />
+                    {t('profile.apply')}
+                  </>
+                ) : (
+                  t('profile.apply')
+                )}
               </button>
             </div>
           </Dialog.Popup>

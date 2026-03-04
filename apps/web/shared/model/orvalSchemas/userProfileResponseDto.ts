@@ -8,8 +8,13 @@
 
 export interface UserProfileResponseDto {
   id: string;
+  email: string;
   nickname: string;
   profileImg: string;
   isNewUser: boolean;
   createdAt: string;
+  /** 삭제되지 않은 의류 개수 */
+  clothesCount: number;
+  /** 삭제되지 않은 룩 개수 */
+  looksCount: number;
 }

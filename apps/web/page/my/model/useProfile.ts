@@ -8,46 +8,36 @@ import {
   patchUsersProfileApi,
   postUsersResetNicknameApi,
 } from '@/shared/api/endpointTags/users';
-import { getClothesApi } from '@/shared/api/endpointTags/clothes';
-import { getLooksApi } from '@/shared/api/endpointTags/looks';
 import { clientKy } from '@/features/api/clientKy';
 import { toApiError, type ApiError } from '@/shared/api/error';
 import { invalidateProfile } from '@/shared/api/invalidations/profile';
+import { useToast } from '@/shared/model/useToast';
 
 interface UseProfileOptions {
   initialProfile?: UserProfileResponseDto | null;
-  initialStats?: { closetCount: number; lookCount: number } | null;
 }
 
-export function useProfile({ initialProfile = null, initialStats = null }: UseProfileOptions = {}) {
+export function useProfile({ initialProfile = null }: UseProfileOptions = {}) {
   const router = useRouter();
+  const toast = useToast();
 
   const [profile, setProfile] = useState<UserProfileResponseDto | null>(initialProfile);
-  const [stats, setStats] = useState<{ closetCount: number; lookCount: number } | null>(
-    initialStats,
-  );
   const [nickname, setNickname] = useState(initialProfile?.nickname || '패션러버');
-  const [isBootstrapped, setIsBootstrapped] = useState(!!(initialProfile && initialStats));
+  const [isBootstrapped, setIsBootstrapped] = useState(!!initialProfile);
   const [isResettingNickname, setIsResettingNickname] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
+
+  const stats = profile
+    ? { closetCount: profile.clothesCount, lookCount: profile.looksCount }
+    : null;
 
   useEffect(() => {
     if (isBootstrapped) return;
 
-    Promise.all([
-      getUsersMeApi(clientKy).catch(() => null),
-      getClothesApi(clientKy).catch(() => []),
-      getLooksApi(clientKy).catch(() => []),
-    ])
-      .then(([me, clothes, looks]) => {
-        if (me) {
-          setProfile(me);
-          setNickname(me.nickname);
-        }
-        setStats({
-          closetCount: clothes.length,
-          lookCount: looks.length,
-        });
+    getUsersMeApi(clientKy)
+      .then((me) => {
+        setProfile(me);
+        setNickname(me.nickname);
       })
       .catch(async (e) => {
         const apiError = await toApiError(e);
@@ -57,14 +47,17 @@ export function useProfile({ initialProfile = null, initialStats = null }: UsePr
   }, [isBootstrapped]);
 
   const updateNickname = async (newNickname: string) => {
+    const previous = nickname;
     setNickname(newNickname);
 
     try {
       await patchUsersProfileApi(clientKy, { nickname: newNickname });
       await invalidateProfile();
       router.refresh();
-    } catch {
-      /* 오프라인 시 로컬 상태만 업데이트 */
+    } catch (e) {
+      setNickname(previous);
+      toast.apiError(await toApiError(e), '닉네임을 변경하는 데 실패했습니다.');
+      throw e;
     }
   };
 
@@ -76,8 +69,9 @@ export function useProfile({ initialProfile = null, initialStats = null }: UsePr
       setProfile((prev) => (prev ? { ...prev, nickname: resetResult.nickname } : prev));
       await invalidateProfile();
       router.refresh();
-    } catch {
-      /* API 에러 시 무시 */
+    } catch (e) {
+      toast.apiError(await toApiError(e), '닉네임을 초기화하는 데 실패했습니다.');
+      throw e;
     } finally {
       setIsResettingNickname(false);
     }
@@ -93,4 +87,5 @@ export function useProfile({ initialProfile = null, initialStats = null }: UsePr
     updateNickname,
     resetNickname,
   };
+
 }
