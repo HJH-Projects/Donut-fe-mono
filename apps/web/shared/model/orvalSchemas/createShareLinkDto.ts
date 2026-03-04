@@ -9,6 +9,6 @@
 export interface CreateShareLinkDto {
   /** 공유할 룩 ID */
   lookId: string;
-  /** 만료 일시 (선택) */
+  /** 만료 일시 (미사용: 서버에서 생성 시점 기준 3시간으로 고정) */
   expiresAt?: string;
 }

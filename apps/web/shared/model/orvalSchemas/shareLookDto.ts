@@ -11,6 +11,7 @@ import type { ShareUserDto } from './shareUserDto';
 export interface ShareLookDto {
   id: string;
   name: string;
+  tags: string;
   items: ShareLookItemDto[];
   user: ShareUserDto;
 }

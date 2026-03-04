@@ -5,10 +5,14 @@
  * Donut 서비스 API 문서
  * OpenAPI spec version: 1.0
  */
+import type { ShareLookItemDtoClothes } from './shareLookItemDtoClothes';
+import type { ShareLookItemDtoImages } from './shareLookItemDtoImages';
 
 export interface ShareLookItemDto {
   id: string;
   clothesId?: string;
   sortOrder?: number;
   role?: string;
+  clothes?: ShareLookItemDtoClothes;
+  images?: ShareLookItemDtoImages;
 }

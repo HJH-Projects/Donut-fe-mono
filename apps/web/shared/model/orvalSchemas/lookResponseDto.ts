@@ -13,4 +13,6 @@ export interface LookResponseDto {
   /** 태그 문자열(쉼표 구분) */
   tags: string;
   items: LookItemResponseDto[];
+  likeCount: number;
+  isLiked: boolean;
 }

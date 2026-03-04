@@ -13,6 +13,7 @@ export const LookClothesDtoCategory = {
   TOP: 'TOP',
   BOTTOM: 'BOTTOM',
   OUTER: 'OUTER',
+  DRESS_SKIRT: 'DRESS_SKIRT',
   SHOES: 'SHOES',
   ACCESSORY: 'ACCESSORY',
 } as const;

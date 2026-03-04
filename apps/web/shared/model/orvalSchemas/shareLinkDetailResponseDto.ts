@@ -11,5 +11,7 @@ export interface ShareLinkDetailResponseDto {
   id: string;
   path: string;
   isActive: boolean;
+  /** @nullable */
+  expiresAt: string | null;
   look: ShareLookDto;
 }

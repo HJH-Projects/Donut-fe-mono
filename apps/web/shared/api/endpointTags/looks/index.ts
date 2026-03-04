@@ -33,3 +33,17 @@ export const patchLooksApi = (
 export const deleteLooksApi = (ky: KyInstance, id: string, options?: ApiRequestOptions) => {
   return ky.delete(`looks/${id}`, options).then((res) => res.json<S.LookDeleteResponseDto>());
 };
+
+export const postLooksFavoriteApi = (ky: KyInstance, id: string, options?: ApiRequestOptions) => {
+  return ky.post(`looks/${id}/favorite`, options).then((res) => res.json<S.LookFavoriteResponseDto>());
+};
+
+export const deleteLooksFavoriteApi = (
+  ky: KyInstance,
+  id: string,
+  options?: ApiRequestOptions,
+) => {
+  return ky
+    .delete(`looks/${id}/favorite`, options)
+    .then((res) => res.json<S.LookFavoriteResponseDto>());
+};

@@ -14,7 +14,6 @@ export type CreatePresignedUrlDtoContentType = typeof CreatePresignedUrlDtoConte
 
 export const CreatePresignedUrlDtoContentType = {
   'image/jpeg': 'image/jpeg',
-  'image/jpg': 'image/jpg',
   'image/png': 'image/png',
   'image/webp': 'image/webp',
 } as const;

@@ -11,6 +11,5 @@ export interface LookClothesDto {
   id: string;
   title: string;
   category: LookClothesDtoCategory;
-  color: string;
-  imageUrl: string;
+  color: string[];
 }

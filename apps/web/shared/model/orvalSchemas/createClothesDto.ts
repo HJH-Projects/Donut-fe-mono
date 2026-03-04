@@ -6,14 +6,31 @@
  * OpenAPI spec version: 1.0
  */
 import type { CreateClothesDtoCategory } from './createClothesDtoCategory';
+import type { CreateClothesDtoColorItem } from './createClothesDtoColorItem';
+import type { CreateClothesDtoMaterialItem } from './createClothesDtoMaterialItem';
+import type { CreateClothesDtoSeasonItem } from './createClothesDtoSeasonItem';
+import type { CreateClothesDtoSize } from './createClothesDtoSize';
+import type { CreateClothesDtoSubCategory } from './createClothesDtoSubCategory';
 
 export interface CreateClothesDto {
-  /** 의류 명칭 */
+  /** [필수] 의류 명칭 */
   title: string;
-  /** 의류 카테고리 */
+  /** [필수] 의류 카테고리 */
   category: CreateClothesDtoCategory;
-  /** 의류 색상 */
-  color: string;
-  /** 의류 이미지 URL (업로드 완료된 URL) */
-  imageUrl: string;
+  /** [선택] 의류 색상 다중 선택 (예: 흰색=#FFFFFF, 아이보리=#FFFFF0, ... , 다채색) */
+  color?: CreateClothesDtoColorItem[];
+  /** [선택] 서브카테고리 (대분류별 허용 목록 적용) */
+  subCategory?: CreateClothesDtoSubCategory;
+  /** [선택] 시즌 */
+  season?: CreateClothesDtoSeasonItem[];
+  /** [선택] 브랜드 */
+  brand?: string;
+  /** [선택] 사이즈 */
+  size?: CreateClothesDtoSize;
+  /** [선택] 소재 */
+  material?: CreateClothesDtoMaterialItem[];
+  /** [선택] 메모 */
+  memo?: string;
+  /** [필수] preview API에서 발급된 draft ID */
+  draftId: string;
 }

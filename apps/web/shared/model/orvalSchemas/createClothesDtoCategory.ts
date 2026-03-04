@@ -7,7 +7,7 @@
  */
 
 /**
- * 의류 카테고리
+ * [필수] 의류 카테고리
  */
 export type CreateClothesDtoCategory = typeof CreateClothesDtoCategory[keyof typeof CreateClothesDtoCategory];
 
@@ -16,6 +16,7 @@ export const CreateClothesDtoCategory = {
   TOP: 'TOP',
   BOTTOM: 'BOTTOM',
   OUTER: 'OUTER',
+  DRESS_SKIRT: 'DRESS_SKIRT',
   SHOES: 'SHOES',
   ACCESSORY: 'ACCESSORY',
 } as const;

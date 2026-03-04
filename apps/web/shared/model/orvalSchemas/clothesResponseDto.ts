@@ -5,13 +5,26 @@
  * Donut 서비스 API 문서
  * OpenAPI spec version: 1.0
  */
+import type { ClothesImageVariantsResponseDto } from './clothesImageVariantsResponseDto';
 import type { ClothesResponseDtoCategory } from './clothesResponseDtoCategory';
+import type { ClothesResponseDtoColorItem } from './clothesResponseDtoColorItem';
+import type { ClothesResponseDtoMaterialItem } from './clothesResponseDtoMaterialItem';
+import type { ClothesResponseDtoSeasonItem } from './clothesResponseDtoSeasonItem';
+import type { ClothesResponseDtoSize } from './clothesResponseDtoSize';
+import type { ClothesResponseDtoSubCategory } from './clothesResponseDtoSubCategory';
 
 export interface ClothesResponseDto {
   id: string;
   title: string;
   category: ClothesResponseDtoCategory;
-  color: string;
-  imageUrl: string;
+  color?: ClothesResponseDtoColorItem[];
+  subCategory?: ClothesResponseDtoSubCategory;
+  season?: ClothesResponseDtoSeasonItem[];
+  brand?: string;
+  size?: ClothesResponseDtoSize;
+  material?: ClothesResponseDtoMaterialItem[];
+  memo?: string;
   createdAt: string;
+  /** 요청된 파생 이미지 링크 세트(detail/card/thumb, webp/jpeg) */
+  imageVariants?: ClothesImageVariantsResponseDto;
 }

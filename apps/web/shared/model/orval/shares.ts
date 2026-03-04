@@ -9,12 +9,15 @@ import type {
   CreateShareLinkDto,
   ShareLinkDeleteResponseDto,
   ShareLinkDetailResponseDto,
+  ShareLinkListItemResponseDto,
   ShareLinkResponseDto,
   ShareLinkUpdateResponseDto,
   SharesControllerCreate400,
   SharesControllerCreate401,
   SharesControllerFindByPath400,
   SharesControllerFindByPath404,
+  SharesControllerFindMine400,
+  SharesControllerFindMine401,
   SharesControllerRemove400,
   SharesControllerRemove401,
   SharesControllerRemove404,
@@ -27,44 +30,44 @@ import type {
 
 
 /**
- * 고유 경로(path)를 통해 공유된 룩의 정보를 조회합니다. (인증 불필요)
- * @summary 공유된 룩 상세 조회
+ * 현재 로그인한 사용자가 생성한 공유 링크 목록을 조회합니다.
+ * @summary 내 공유 링크 목록 조회
  */
-export type sharesControllerFindByPathResponse200 = {
-  data: ShareLinkDetailResponseDto
+export type sharesControllerFindMineResponse200 = {
+  data: ShareLinkListItemResponseDto[]
   status: 200
 }
 
-export type sharesControllerFindByPathResponse400 = {
-  data: SharesControllerFindByPath400
+export type sharesControllerFindMineResponse400 = {
+  data: SharesControllerFindMine400
   status: 400
 }
 
-export type sharesControllerFindByPathResponse404 = {
-  data: SharesControllerFindByPath404
-  status: 404
+export type sharesControllerFindMineResponse401 = {
+  data: SharesControllerFindMine401
+  status: 401
 }
     
-export type sharesControllerFindByPathResponseSuccess = (sharesControllerFindByPathResponse200) & {
+export type sharesControllerFindMineResponseSuccess = (sharesControllerFindMineResponse200) & {
   headers: Headers;
 };
-export type sharesControllerFindByPathResponseError = (sharesControllerFindByPathResponse400 | sharesControllerFindByPathResponse404) & {
+export type sharesControllerFindMineResponseError = (sharesControllerFindMineResponse400 | sharesControllerFindMineResponse401) & {
   headers: Headers;
 };
 
-export type sharesControllerFindByPathResponse = (sharesControllerFindByPathResponseSuccess | sharesControllerFindByPathResponseError)
+export type sharesControllerFindMineResponse = (sharesControllerFindMineResponseSuccess | sharesControllerFindMineResponseError)
 
-export const getSharesControllerFindByPathUrl = (path: string,) => {
+export const getSharesControllerFindMineUrl = () => {
 
 
   
 
-  return `/shares/${path}`
+  return `/shares`
 }
 
-export const sharesControllerFindByPath = async (path: string, options?: RequestInit): Promise<sharesControllerFindByPathResponse> => {
+export const sharesControllerFindMine = async ( options?: RequestInit): Promise<sharesControllerFindMineResponse> => {
   
-  const res = await fetch(getSharesControllerFindByPathUrl(path),
+  const res = await fetch(getSharesControllerFindMineUrl(),
   {      
     ...options,
     method: 'GET'
@@ -75,8 +78,8 @@ export const sharesControllerFindByPath = async (path: string, options?: Request
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
   
-  const data: sharesControllerFindByPathResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as sharesControllerFindByPathResponse
+  const data: sharesControllerFindMineResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as sharesControllerFindMineResponse
 }
 
 
@@ -132,6 +135,60 @@ export const sharesControllerCreate = async (createShareLinkDto: CreateShareLink
   
   const data: sharesControllerCreateResponse['data'] = body ? JSON.parse(body) : {}
   return { data, status: res.status, headers: res.headers } as sharesControllerCreateResponse
+}
+
+
+/**
+ * 고유 경로(path)를 통해 공유된 룩의 정보를 조회합니다. (인증 불필요)
+ * @summary 공유된 룩 상세 조회
+ */
+export type sharesControllerFindByPathResponse200 = {
+  data: ShareLinkDetailResponseDto
+  status: 200
+}
+
+export type sharesControllerFindByPathResponse400 = {
+  data: SharesControllerFindByPath400
+  status: 400
+}
+
+export type sharesControllerFindByPathResponse404 = {
+  data: SharesControllerFindByPath404
+  status: 404
+}
+    
+export type sharesControllerFindByPathResponseSuccess = (sharesControllerFindByPathResponse200) & {
+  headers: Headers;
+};
+export type sharesControllerFindByPathResponseError = (sharesControllerFindByPathResponse400 | sharesControllerFindByPathResponse404) & {
+  headers: Headers;
+};
+
+export type sharesControllerFindByPathResponse = (sharesControllerFindByPathResponseSuccess | sharesControllerFindByPathResponseError)
+
+export const getSharesControllerFindByPathUrl = (path: string,) => {
+
+
+  
+
+  return `/shares/${path}`
+}
+
+export const sharesControllerFindByPath = async (path: string, options?: RequestInit): Promise<sharesControllerFindByPathResponse> => {
+  
+  const res = await fetch(getSharesControllerFindByPathUrl(path),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+)
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  
+  const data: sharesControllerFindByPathResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as sharesControllerFindByPathResponse
 }
 
 

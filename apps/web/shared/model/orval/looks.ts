@@ -8,9 +8,13 @@
 import type {
   CreateLookDto,
   LookDeleteResponseDto,
+  LookFavoriteResponseDto,
   LookResponseDto,
   LooksControllerCreate400,
   LooksControllerCreate401,
+  LooksControllerFavorite400,
+  LooksControllerFavorite401,
+  LooksControllerFavorite404,
   LooksControllerFindAll400,
   LooksControllerFindAll401,
   LooksControllerFindOne400,
@@ -19,6 +23,9 @@ import type {
   LooksControllerRemove400,
   LooksControllerRemove401,
   LooksControllerRemove404,
+  LooksControllerUnfavorite400,
+  LooksControllerUnfavorite401,
+  LooksControllerUnfavorite404,
   LooksControllerUpdate400,
   LooksControllerUpdate401,
   LooksControllerUpdate404,
@@ -312,6 +319,122 @@ export const looksControllerRemove = async (id: string, options?: RequestInit): 
   
   const data: looksControllerRemoveResponse['data'] = body ? JSON.parse(body) : {}
   return { data, status: res.status, headers: res.headers } as looksControllerRemoveResponse
+}
+
+
+/**
+ * @summary 룩 좋아요 등록
+ */
+export type looksControllerFavoriteResponse200 = {
+  data: LookFavoriteResponseDto
+  status: 200
+}
+
+export type looksControllerFavoriteResponse400 = {
+  data: LooksControllerFavorite400
+  status: 400
+}
+
+export type looksControllerFavoriteResponse401 = {
+  data: LooksControllerFavorite401
+  status: 401
+}
+
+export type looksControllerFavoriteResponse404 = {
+  data: LooksControllerFavorite404
+  status: 404
+}
+    
+export type looksControllerFavoriteResponseSuccess = (looksControllerFavoriteResponse200) & {
+  headers: Headers;
+};
+export type looksControllerFavoriteResponseError = (looksControllerFavoriteResponse400 | looksControllerFavoriteResponse401 | looksControllerFavoriteResponse404) & {
+  headers: Headers;
+};
+
+export type looksControllerFavoriteResponse = (looksControllerFavoriteResponseSuccess | looksControllerFavoriteResponseError)
+
+export const getLooksControllerFavoriteUrl = (id: string,) => {
+
+
+  
+
+  return `/looks/${id}/favorite`
+}
+
+export const looksControllerFavorite = async (id: string, options?: RequestInit): Promise<looksControllerFavoriteResponse> => {
+  
+  const res = await fetch(getLooksControllerFavoriteUrl(id),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+)
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  
+  const data: looksControllerFavoriteResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as looksControllerFavoriteResponse
+}
+
+
+/**
+ * @summary 룩 좋아요 해제
+ */
+export type looksControllerUnfavoriteResponse200 = {
+  data: LookFavoriteResponseDto
+  status: 200
+}
+
+export type looksControllerUnfavoriteResponse400 = {
+  data: LooksControllerUnfavorite400
+  status: 400
+}
+
+export type looksControllerUnfavoriteResponse401 = {
+  data: LooksControllerUnfavorite401
+  status: 401
+}
+
+export type looksControllerUnfavoriteResponse404 = {
+  data: LooksControllerUnfavorite404
+  status: 404
+}
+    
+export type looksControllerUnfavoriteResponseSuccess = (looksControllerUnfavoriteResponse200) & {
+  headers: Headers;
+};
+export type looksControllerUnfavoriteResponseError = (looksControllerUnfavoriteResponse400 | looksControllerUnfavoriteResponse401 | looksControllerUnfavoriteResponse404) & {
+  headers: Headers;
+};
+
+export type looksControllerUnfavoriteResponse = (looksControllerUnfavoriteResponseSuccess | looksControllerUnfavoriteResponseError)
+
+export const getLooksControllerUnfavoriteUrl = (id: string,) => {
+
+
+  
+
+  return `/looks/${id}/favorite`
+}
+
+export const looksControllerUnfavorite = async (id: string, options?: RequestInit): Promise<looksControllerUnfavoriteResponse> => {
+  
+  const res = await fetch(getLooksControllerUnfavoriteUrl(id),
+  {      
+    ...options,
+    method: 'DELETE'
+    
+    
+  }
+)
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  
+  const data: looksControllerUnfavoriteResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as looksControllerUnfavoriteResponse
 }
 
 

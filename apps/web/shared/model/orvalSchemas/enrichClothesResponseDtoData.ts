@@ -6,4 +6,10 @@
  * OpenAPI spec version: 1.0
  */
 
-export type EnrichClothesResponseDtoData = { [key: string]: unknown };
+export interface EnrichClothesResponseDtoData {
+  mainCategory: string;
+  subCategory: string[];
+  color: string[] | string;
+  season: string[] | string;
+  material?: string[] | string;
+}

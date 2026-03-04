@@ -6,14 +6,29 @@
  * OpenAPI spec version: 1.0
  */
 import type { UpdateClothesDtoCategory } from './updateClothesDtoCategory';
+import type { UpdateClothesDtoColorItem } from './updateClothesDtoColorItem';
+import type { UpdateClothesDtoMaterialItem } from './updateClothesDtoMaterialItem';
+import type { UpdateClothesDtoSeasonItem } from './updateClothesDtoSeasonItem';
+import type { UpdateClothesDtoSize } from './updateClothesDtoSize';
+import type { UpdateClothesDtoSubCategory } from './updateClothesDtoSubCategory';
 
 export interface UpdateClothesDto {
-  /** 의류 명칭 */
+  /** [선택] 의류 명칭 */
   title?: string;
-  /** 의류 카테고리 */
+  /** [선택] 의류 카테고리 */
   category?: UpdateClothesDtoCategory;
-  /** 의류 색상 */
-  color?: string;
-  /** 의류 이미지 URL */
-  imageUrl?: string;
+  /** [선택] 의류 색상 */
+  color?: UpdateClothesDtoColorItem[];
+  /** [선택] 서브카테고리 (대분류별 허용 목록 적용) */
+  subCategory?: UpdateClothesDtoSubCategory;
+  /** [선택] 시즌 */
+  season?: UpdateClothesDtoSeasonItem[];
+  /** [선택] 브랜드 */
+  brand?: string;
+  /** [선택] 사이즈 */
+  size?: UpdateClothesDtoSize;
+  /** [선택] 소재 */
+  material?: UpdateClothesDtoMaterialItem[];
+  /** [선택] 메모 */
+  memo?: string;
 }

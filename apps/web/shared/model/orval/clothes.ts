@@ -6,23 +6,42 @@
  * OpenAPI spec version: 1.0
  */
 import type {
+  ClothesCommitResponseDto,
   ClothesControllerCreate400,
   ClothesControllerCreate401,
+  ClothesControllerCreateBackgroundRemovalPreview400,
+  ClothesControllerCreateBackgroundRemovalPreview401,
   ClothesControllerEnrich400,
   ClothesControllerEnrich401,
+  ClothesControllerFavorite400,
+  ClothesControllerFavorite401,
+  ClothesControllerFavorite404,
   ClothesControllerFindAll400,
   ClothesControllerFindAll401,
+  ClothesControllerFindAllParams,
   ClothesControllerFindOne400,
   ClothesControllerFindOne401,
   ClothesControllerFindOne404,
+  ClothesControllerFindOneParams,
+  ClothesControllerGetClothesImage400,
+  ClothesControllerGetClothesImage401,
+  ClothesControllerGetClothesImage404,
+  ClothesControllerGetClothesImageParams,
   ClothesControllerRemove400,
   ClothesControllerRemove401,
   ClothesControllerRemove404,
   ClothesControllerSuggest400,
+  ClothesControllerUnfavorite400,
+  ClothesControllerUnfavorite401,
+  ClothesControllerUnfavorite404,
   ClothesControllerUpdate400,
   ClothesControllerUpdate401,
   ClothesControllerUpdate404,
   ClothesDeleteResponseDto,
+  ClothesFavoriteResponseDto,
+  ClothesImagePreviewRequestDto,
+  ClothesListItemResponseDto,
+  ClothesPreviewResponseDto,
   ClothesResponseDto,
   ClothesUpdateResponseDto,
   CreateClothesDto,
@@ -94,7 +113,7 @@ export const clothesControllerCreate = async (createClothesDto: CreateClothesDto
  * @summary 의류 목록 조회
  */
 export type clothesControllerFindAllResponse200 = {
-  data: ClothesResponseDto[]
+  data: ClothesListItemResponseDto[]
   status: 200
 }
 
@@ -117,17 +136,24 @@ export type clothesControllerFindAllResponseError = (clothesControllerFindAllRes
 
 export type clothesControllerFindAllResponse = (clothesControllerFindAllResponseSuccess | clothesControllerFindAllResponseError)
 
-export const getClothesControllerFindAllUrl = () => {
+export const getClothesControllerFindAllUrl = (params?: ClothesControllerFindAllParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
-  
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/clothes`
+  return stringifiedParams.length > 0 ? `/clothes?${stringifiedParams}` : `/clothes`
 }
 
-export const clothesControllerFindAll = async ( options?: RequestInit): Promise<clothesControllerFindAllResponse> => {
+export const clothesControllerFindAll = async (params?: ClothesControllerFindAllParams, options?: RequestInit): Promise<clothesControllerFindAllResponse> => {
   
-  const res = await fetch(getClothesControllerFindAllUrl(),
+  const res = await fetch(getClothesControllerFindAllUrl(params),
   {      
     ...options,
     method: 'GET'
@@ -176,17 +202,26 @@ export type clothesControllerFindOneResponseError = (clothesControllerFindOneRes
 
 export type clothesControllerFindOneResponse = (clothesControllerFindOneResponseSuccess | clothesControllerFindOneResponseError)
 
-export const getClothesControllerFindOneUrl = (id: string,) => {
+export const getClothesControllerFindOneUrl = (id: string,
+    params?: ClothesControllerFindOneParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
-  
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/clothes/${id}`
+  return stringifiedParams.length > 0 ? `/clothes/${id}?${stringifiedParams}` : `/clothes/${id}`
 }
 
-export const clothesControllerFindOne = async (id: string, options?: RequestInit): Promise<clothesControllerFindOneResponse> => {
+export const clothesControllerFindOne = async (id: string,
+    params?: ClothesControllerFindOneParams, options?: RequestInit): Promise<clothesControllerFindOneResponse> => {
   
-  const res = await fetch(getClothesControllerFindOneUrl(id),
+  const res = await fetch(getClothesControllerFindOneUrl(id,params),
   {      
     ...options,
     method: 'GET'
@@ -323,6 +358,124 @@ export const clothesControllerRemove = async (id: string, options?: RequestInit)
 
 
 /**
+ * 해당 의류를 즐겨찾기 상태로 설정합니다.
+ * @summary 의류 즐겨찾기 등록
+ */
+export type clothesControllerFavoriteResponse200 = {
+  data: ClothesFavoriteResponseDto
+  status: 200
+}
+
+export type clothesControllerFavoriteResponse400 = {
+  data: ClothesControllerFavorite400
+  status: 400
+}
+
+export type clothesControllerFavoriteResponse401 = {
+  data: ClothesControllerFavorite401
+  status: 401
+}
+
+export type clothesControllerFavoriteResponse404 = {
+  data: ClothesControllerFavorite404
+  status: 404
+}
+    
+export type clothesControllerFavoriteResponseSuccess = (clothesControllerFavoriteResponse200) & {
+  headers: Headers;
+};
+export type clothesControllerFavoriteResponseError = (clothesControllerFavoriteResponse400 | clothesControllerFavoriteResponse401 | clothesControllerFavoriteResponse404) & {
+  headers: Headers;
+};
+
+export type clothesControllerFavoriteResponse = (clothesControllerFavoriteResponseSuccess | clothesControllerFavoriteResponseError)
+
+export const getClothesControllerFavoriteUrl = (id: string,) => {
+
+
+  
+
+  return `/clothes/${id}/favorite`
+}
+
+export const clothesControllerFavorite = async (id: string, options?: RequestInit): Promise<clothesControllerFavoriteResponse> => {
+  
+  const res = await fetch(getClothesControllerFavoriteUrl(id),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+)
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  
+  const data: clothesControllerFavoriteResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as clothesControllerFavoriteResponse
+}
+
+
+/**
+ * 해당 의류의 즐겨찾기 상태를 해제합니다.
+ * @summary 의류 즐겨찾기 해제
+ */
+export type clothesControllerUnfavoriteResponse200 = {
+  data: ClothesFavoriteResponseDto
+  status: 200
+}
+
+export type clothesControllerUnfavoriteResponse400 = {
+  data: ClothesControllerUnfavorite400
+  status: 400
+}
+
+export type clothesControllerUnfavoriteResponse401 = {
+  data: ClothesControllerUnfavorite401
+  status: 401
+}
+
+export type clothesControllerUnfavoriteResponse404 = {
+  data: ClothesControllerUnfavorite404
+  status: 404
+}
+    
+export type clothesControllerUnfavoriteResponseSuccess = (clothesControllerUnfavoriteResponse200) & {
+  headers: Headers;
+};
+export type clothesControllerUnfavoriteResponseError = (clothesControllerUnfavoriteResponse400 | clothesControllerUnfavoriteResponse401 | clothesControllerUnfavoriteResponse404) & {
+  headers: Headers;
+};
+
+export type clothesControllerUnfavoriteResponse = (clothesControllerUnfavoriteResponseSuccess | clothesControllerUnfavoriteResponseError)
+
+export const getClothesControllerUnfavoriteUrl = (id: string,) => {
+
+
+  
+
+  return `/clothes/${id}/favorite`
+}
+
+export const clothesControllerUnfavorite = async (id: string, options?: RequestInit): Promise<clothesControllerUnfavoriteResponse> => {
+  
+  const res = await fetch(getClothesControllerUnfavoriteUrl(id),
+  {      
+    ...options,
+    method: 'DELETE'
+    
+    
+  }
+)
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  
+  const data: clothesControllerUnfavoriteResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as clothesControllerUnfavoriteResponse
+}
+
+
+/**
  * AI를 사용하여 의류 이미지에서 속성(색상, 카테고리 등)을 추출합니다. Supabase Storage URL을 전달하세요.
  * @summary 의류 이미지 분석
  */
@@ -430,6 +583,131 @@ export const clothesControllerSuggest = async (suggestClothesDto: SuggestClothes
   
   const data: clothesControllerSuggestResponse['data'] = body ? JSON.parse(body) : {}
   return { data, status: res.status, headers: res.headers } as clothesControllerSuggestResponse
+}
+
+
+/**
+ * 원본 이미지를 기준으로 배경제거를 수행하고 미리보기 URL을 반환합니다.
+ * @summary 의류 이미지 배경제거 미리보기 생성
+ */
+export type clothesControllerCreateBackgroundRemovalPreviewResponse200 = {
+  data: ClothesPreviewResponseDto
+  status: 200
+}
+
+export type clothesControllerCreateBackgroundRemovalPreviewResponse400 = {
+  data: ClothesControllerCreateBackgroundRemovalPreview400
+  status: 400
+}
+
+export type clothesControllerCreateBackgroundRemovalPreviewResponse401 = {
+  data: ClothesControllerCreateBackgroundRemovalPreview401
+  status: 401
+}
+    
+export type clothesControllerCreateBackgroundRemovalPreviewResponseSuccess = (clothesControllerCreateBackgroundRemovalPreviewResponse200) & {
+  headers: Headers;
+};
+export type clothesControllerCreateBackgroundRemovalPreviewResponseError = (clothesControllerCreateBackgroundRemovalPreviewResponse400 | clothesControllerCreateBackgroundRemovalPreviewResponse401) & {
+  headers: Headers;
+};
+
+export type clothesControllerCreateBackgroundRemovalPreviewResponse = (clothesControllerCreateBackgroundRemovalPreviewResponseSuccess | clothesControllerCreateBackgroundRemovalPreviewResponseError)
+
+export const getClothesControllerCreateBackgroundRemovalPreviewUrl = () => {
+
+
+  
+
+  return `/clothes/images/preview`
+}
+
+export const clothesControllerCreateBackgroundRemovalPreview = async (clothesImagePreviewRequestDto: ClothesImagePreviewRequestDto, options?: RequestInit): Promise<clothesControllerCreateBackgroundRemovalPreviewResponse> => {
+    const formData = new FormData();
+formData.append(`file`, clothesImagePreviewRequestDto.file);
+
+  const res = await fetch(getClothesControllerCreateBackgroundRemovalPreviewUrl(),
+  {      
+    ...options,
+    method: 'POST'
+    ,
+    body: 
+      formData,
+  }
+)
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  
+  const data: clothesControllerCreateBackgroundRemovalPreviewResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as clothesControllerCreateBackgroundRemovalPreviewResponse
+}
+
+
+/**
+ * 저장된 의류 이미지 파생본(detail/card/thumb)의 signed URL을 조회합니다.
+ * @summary 의류 이미지 파생본 조회
+ */
+export type clothesControllerGetClothesImageResponse200 = {
+  data: ClothesCommitResponseDto
+  status: 200
+}
+
+export type clothesControllerGetClothesImageResponse400 = {
+  data: ClothesControllerGetClothesImage400
+  status: 400
+}
+
+export type clothesControllerGetClothesImageResponse401 = {
+  data: ClothesControllerGetClothesImage401
+  status: 401
+}
+
+export type clothesControllerGetClothesImageResponse404 = {
+  data: ClothesControllerGetClothesImage404
+  status: 404
+}
+    
+export type clothesControllerGetClothesImageResponseSuccess = (clothesControllerGetClothesImageResponse200) & {
+  headers: Headers;
+};
+export type clothesControllerGetClothesImageResponseError = (clothesControllerGetClothesImageResponse400 | clothesControllerGetClothesImageResponse401 | clothesControllerGetClothesImageResponse404) & {
+  headers: Headers;
+};
+
+export type clothesControllerGetClothesImageResponse = (clothesControllerGetClothesImageResponseSuccess | clothesControllerGetClothesImageResponseError)
+
+export const getClothesControllerGetClothesImageUrl = (clothesId: string,
+    params?: ClothesControllerGetClothesImageParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/clothes/${clothesId}/images?${stringifiedParams}` : `/clothes/${clothesId}/images`
+}
+
+export const clothesControllerGetClothesImage = async (clothesId: string,
+    params?: ClothesControllerGetClothesImageParams, options?: RequestInit): Promise<clothesControllerGetClothesImageResponse> => {
+  
+  const res = await fetch(getClothesControllerGetClothesImageUrl(clothesId,params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+)
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  
+  const data: clothesControllerGetClothesImageResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as clothesControllerGetClothesImageResponse
 }
 
 
