@@ -4,15 +4,13 @@ import { LookPage } from '@/page/look/ui/LookPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 
 export default async function Page() {
-  const [initialLooks, initialClothes] = await Promise.all([
-    getCachedLooks().catch(() => []),
-    getCachedClothes().catch(() => []),
-  ]);
+  const looksPromise = getCachedLooks().catch(() => []);
+  const clothesPromise = getCachedClothes().catch(() => []);
 
   return (
     <LookPage
-      initialLooks={initialLooks}
-      initialClothes={initialClothes}
+      looksPromise={looksPromise}
+      clothesPromise={clothesPromise}
       header={<PageHeader title="Looks" titleHref="/look" />}
     />
   );

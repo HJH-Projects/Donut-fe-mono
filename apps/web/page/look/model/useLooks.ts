@@ -9,6 +9,8 @@ import {
   getLooksApi,
   deleteLooksApi,
   patchLooksApi,
+  postLooksFavoriteApi,
+  deleteLooksFavoriteApi,
 } from '@/shared/api/endpointTags/looks';
 import { clientKy } from '@/features/api/clientKy';
 import { toApiError, type ApiError } from '@/shared/api/error';
@@ -38,9 +40,9 @@ function dtoToLook(look: LookResponseDto): Look {
       id: item.clothes.id || item.clothesId,
       name: item.clothes.title || '',
       category: item.clothes.category || '',
-      imageUrl: item.clothes.imageUrl || '',
+      imageUrl: '',
     })),
-    isFavorite: false,
+    isFavorite: look.isLiked,
   };
 }
 
@@ -73,27 +75,27 @@ export function useLooks({ initialLooks = [], skipBootstrap = false }: UseLooksO
       .finally(() => setIsBootstrapped(true));
   }, [isBootstrapped]);
 
-  const addLook = async (lookData: Partial<Look>) => {
-    const newId = Date.now().toString();
-    const newLook: Look = {
-      id: newId,
-      name: lookData.name || '',
-      tags: lookData.tags || [],
-      items: lookData.items || [],
-      isFavorite: false,
-    };
-    setLooks((prev) => [...prev, newLook]);
+  useEffect(() => {
+    setLooks(initialLooks.map(dtoToLook));
+    setIsBootstrapped(initialLooks.length > 0 || skipBootstrap);
+  }, [initialLooks, skipBootstrap]);
 
+  const addLook = async (lookData: Partial<Look>) => {
     try {
       await postLooksApi(clientKy, {
-        name: newLook.name,
-        tags: newLook.tags.join(','),
-        items: newLook.items.map((item, i) => ({ clothesId: item.id, sortOrder: i, role: 'ITEM' })),
+        name: lookData.name || '',
+        tags: (lookData.tags || []).join(','),
+        items: (lookData.items || []).map((item, i) => ({
+          clothesId: item.id,
+          sortOrder: i,
+          role: 'ITEM',
+        })),
       });
       await invalidateLooks();
       router.refresh();
     } catch (e) {
       toast.apiError(await toApiError(e), '룩을 추가하는 데 실패했습니다.');
+      throw e;
     }
   };
 
@@ -103,11 +105,6 @@ export function useLooks({ initialLooks = [], skipBootstrap = false }: UseLooksO
       tags: lookData.tags || [],
       items: lookData.items || [],
     };
-    setLooks((prev) =>
-      prev.map((look) =>
-        look.id === lookId ? { ...look, ...updatedFields } : look,
-      ),
-    );
 
     try {
       await patchLooksApi(clientKy, lookId, {
@@ -119,27 +116,51 @@ export function useLooks({ initialLooks = [], skipBootstrap = false }: UseLooksO
       router.refresh();
     } catch (e) {
       toast.apiError(await toApiError(e), '룩을 수정하는 데 실패했습니다.');
+      throw e;
     }
   };
 
   const removeLook = async (id: string) => {
-    setLooks((prev) => prev.filter((look) => look.id !== id));
-
     try {
       await deleteLooksApi(clientKy, id);
       await invalidateLooks();
       router.refresh();
     } catch (e) {
       toast.apiError(await toApiError(e), '룩을 삭제하는 데 실패했습니다.');
+      throw e;
     }
   };
 
-  const toggleFavorite = (id: string) => {
+  const toggleFavorite = async (id: string) => {
+    const target = looks.find((look) => look.id === id);
+    if (!target) return;
+    const previous = target.isFavorite;
+
     setLooks((prev) =>
       prev.map((look) =>
-        look.id === id ? { ...look, isFavorite: !look.isFavorite } : look,
+        look.id === id ? { ...look, isFavorite: !previous } : look,
       ),
     );
+
+    try {
+      const response = previous
+        ? await deleteLooksFavoriteApi(clientKy, id)
+        : await postLooksFavoriteApi(clientKy, id);
+
+      setLooks((prev) =>
+        prev.map((look) =>
+          look.id === id ? { ...look, isFavorite: response.isLiked } : look,
+        ),
+      );
+      await invalidateLooks();
+    } catch (e) {
+      setLooks((prev) =>
+        prev.map((look) =>
+          look.id === id ? { ...look, isFavorite: previous } : look,
+        ),
+      );
+      toast.apiError(await toApiError(e), '룩 좋아요 처리에 실패했습니다.');
+    }
   };
 
   return {

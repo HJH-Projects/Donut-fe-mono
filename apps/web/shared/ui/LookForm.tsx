@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { ImageWithFallback } from "@/shared/ui/ImageWithFallback";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/shared/model/useToast";
+import Spinner from "@/shared/ui/Spinner";
 
 type LookItem = {
   id: string;
@@ -27,6 +28,7 @@ type LookFormProps = {
   closetItems: LookItem[];
   onSave: (look: Partial<Look>) => void;
   onCancel: () => void;
+  isSaving?: boolean;
 };
 
 const CATEGORIES = ["상의", "하의", "아우터", "신발", "악세사리"];
@@ -53,6 +55,7 @@ export function LookForm({
   closetItems,
   onSave,
   onCancel,
+  isSaving = false,
 }: LookFormProps) {
   const { t } = useTranslation();
   const toast = useToast();
@@ -123,8 +126,10 @@ export function LookForm({
     });
   };
 
+  const isFormValid = !!lookName.trim() && selectedTags.length > 0 && selectedItems.length > 0;
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0">
       {/* 헤더 */}
       <div className="flex-shrink-0 p-6 pb-4 bg-white">
         <h2
@@ -140,7 +145,7 @@ export function LookForm({
       </div>
 
       {/* 폼 내용 */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
         {/* 룩 이름 입력 */}
         <div className="mb-6">
           <label
@@ -530,7 +535,8 @@ export function LookForm({
         </button>
         <button
           onClick={handleSave}
-          className="flex-1 px-5 py-3 text-white hover:opacity-90 transition-opacity"
+          disabled={isSaving || !isFormValid}
+          className="flex-1 px-5 py-3 text-white hover:opacity-90 transition-opacity disabled:opacity-60 inline-flex items-center justify-center gap-2"
           style={{
             borderRadius: "12px",
             backgroundColor: "#000",
@@ -539,7 +545,7 @@ export function LookForm({
             fontWeight: 600,
           }}
         >
-          {mode === "add" ? t('looks.createLook') : t('looks.saveLook')}
+          {isSaving ? <><Spinner size="sm" className="text-white" />{mode === "add" ? t('looks.createLook') : t('looks.saveLook')}</> : (mode === "add" ? t('looks.createLook') : t('looks.saveLook'))}
         </button>
       </div>
     </div>

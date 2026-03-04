@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { notFound } from 'next/navigation';
 import { SharedLookPage } from '@/page/share/ui/SharedLookPage';
 import { BottomNav } from '@/shared/ui/BottomNav';
 import { serverKy } from '@/features/api/serverKy';
@@ -10,7 +11,10 @@ export default async function Page({ params }: { params: Promise<{ lookId: strin
   const cookieStore = await cookies();
   const isLoggedIn = !!cookieStore.get('accessToken');
 
-  const initialShareDetail = await getSharesDetailApi(serverKy, sharePath);
+  const initialShareDetail = await getSharesDetailApi(serverKy, sharePath).catch(() => null);
+  if (!initialShareDetail) {
+    notFound();
+  }
 
   const initialComments = await getShareCommentsApi(serverKy, sharePath).catch(() => []);
 

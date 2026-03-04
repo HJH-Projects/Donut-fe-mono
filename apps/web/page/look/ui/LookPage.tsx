@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, type ReactNode } from 'react';
+import { useState, useRef, useEffect, use, Suspense, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { Dialog } from '@base-ui/react/dialog';
 import { ImageWithFallback } from '@/shared/ui/ImageWithFallback';
@@ -21,10 +21,14 @@ import {
   Check,
   Copy,
 } from 'lucide-react';
-import type { ClothesResponseDto, LookResponseDto } from '@/shared/model/orvalSchemas';
+import type { ClothesListItemResponseDto, LookResponseDto } from '@/shared/model/orvalSchemas';
+import { LookListSkeleton } from './LookListSkeleton';
 import { useLooks, type Look, type LookItem } from '../model/useLooks';
 import { useClothes } from '@/page/closet/model/useClothes';
 import { useToast } from '@/shared/model/useToast';
+import Spinner from '@/shared/ui/Spinner';
+import { deleteSharesApi, getSharesApi, postSharesApi } from '@/shared/api/endpointTags/shares';
+import { clientKy } from '@/features/api/clientKy';
 
 type SharedLink = {
   id: string;
@@ -33,30 +37,59 @@ type SharedLink = {
   createdAt: Date;
 };
 
-interface LookPageProps {
-  initialLooks?: LookResponseDto[];
-  initialClothes?: ClothesResponseDto[];
-  header?: ReactNode;
+interface LookContentProps {
+  looksPromise: Promise<LookResponseDto[]>;
+  clothesPromise: Promise<ClothesListItemResponseDto[]>;
+  showFavoriteOnly: boolean;
+  searchQuery: string;
+  showAddDialog: boolean;
+  onShowAddDialogChange: (open: boolean) => void;
 }
 
-export function LookPage({ initialLooks = [], initialClothes = [], header }: LookPageProps) {
+function LookContent({
+  looksPromise,
+  clothesPromise,
+  showFavoriteOnly,
+  searchQuery,
+  showAddDialog,
+  onShowAddDialogChange,
+}: LookContentProps) {
+  const initialLooks = use(looksPromise);
+  const initialClothes = use(clothesPromise);
   const { t } = useTranslation();
   const router = useRouter();
   const toast = useToast();
-  const [showFavoriteOnly, setShowFavoriteOnly] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showAddDialog, setShowAddDialog] = useState(false);
 
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = useState(false);
+  const [isSavingLook, setIsSavingLook] = useState(false);
+  const [isDeletingLook, setIsDeletingLook] = useState(false);
   const [showCreateLinkDialog, setShowCreateLinkDialog] = useState(false);
   const [selectedLook, setSelectedLook] = useState<Look | null>(null);
   const [sharedLinks, setSharedLinks] = useState<SharedLink[]>([]);
   const [selectedLink, setSelectedLink] = useState<SharedLink | null>(null);
   const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
   const [linkName, setLinkName] = useState('');
+  const [isLoadingSharedLinks, setIsLoadingSharedLinks] = useState(false);
   const tagScrollRef = useRef<HTMLDivElement>(null);
+
+  const loadSharedLinks = async (lookId: string) => {
+    setIsLoadingSharedLinks(true);
+    const list = await getSharesApi(clientKy);
+    const mapped = list
+      .filter((link) => link.lookId === lookId)
+      .map((link) => ({
+        id: link.id,
+        name: link.lookName || '공유 링크',
+        url: `${window.location.origin}/share/${link.path}`,
+        createdAt: new Date(link.createdAt),
+      }))
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    setSharedLinks(mapped);
+    setIsLoadingSharedLinks(false);
+  };
 
   const {
     looks,
@@ -73,6 +106,8 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
     category: c.category1,
     imageUrl: c.imageUrl,
   }));
+
+  const clothesImageMap = new Map<string, string>(clothesData.map((c) => [c.id, c.imageUrl]));
 
   const [newLook, setNewLook] = useState<Partial<Look>>({
     name: '',
@@ -103,7 +138,13 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
   };
 
   const handleLookClick = (look: Look) => {
-    setSelectedLook(look);
+    setSelectedLook({
+      ...look,
+      items: look.items.map((item) => ({
+        ...item,
+        imageUrl: item.imageUrl || clothesImageMap.get(item.id) || '',
+      })),
+    });
     setShowDetailDialog(true);
   };
 
@@ -141,63 +182,115 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
     e.currentTarget.classList.remove('card-active');
   };
 
-  const handleDeleteLook = async () => {
+  const handleDeleteClick = () => setShowDeleteConfirmDialog(true);
+
+  const handleDeleteConfirm = async () => {
     if (!selectedLook) return;
     const lookId = selectedLook.id;
-    setShowDetailDialog(false);
-    setSelectedLook(null);
-    await hookRemoveLook(lookId);
+    setIsDeletingLook(true);
+    try {
+      await hookRemoveLook(lookId);
+      setShowDeleteConfirmDialog(false);
+      setShowDetailDialog(false);
+      setSelectedLook(null);
+    } catch {
+      // useLooks에서 이미 toast 처리
+    } finally {
+      setIsDeletingLook(false);
+    }
   };
 
   const handleAddLook = async (lookData: Partial<Look>) => {
-    setShowAddDialog(false);
-    await hookAddLook(lookData);
+    setIsSavingLook(true);
+    try {
+      await hookAddLook(lookData);
+      onShowAddDialogChange(false);
+    } catch {
+      // useLooks에서 이미 toast 처리
+    } finally {
+      setIsSavingLook(false);
+    }
   };
 
   const handleEditLook = async (lookData: Partial<Look>) => {
     if (!selectedLook) return;
     const lookId = selectedLook.id;
-    setShowEditDialog(false);
-    setShowDetailDialog(false);
-    setSelectedLook(null);
-    await hookEditLook(lookId, {
-      name: lookData.name || selectedLook.name,
-      tags: lookData.tags || selectedLook.tags,
-      items: lookData.items || selectedLook.items,
-    });
+    setIsSavingLook(true);
+    try {
+      await hookEditLook(lookId, {
+        name: lookData.name || selectedLook.name,
+        tags: lookData.tags || selectedLook.tags,
+        items: lookData.items || selectedLook.items,
+      });
+      setShowEditDialog(false);
+      setShowDetailDialog(false);
+      setSelectedLook(null);
+    } catch {
+      // useLooks에서 이미 toast 처리
+    } finally {
+      setIsSavingLook(false);
+    }
   };
 
-  const handleShareLook = () => {
+  const handleShareLook = async () => {
     if (!selectedLook) return;
 
-    // 실제로는 서버에서 공유 링크를 생성받지만, 여기서는 클라이언트에서 생성
-    const shareUrl = `${window.location.origin}/share/${selectedLook.id}`;
-
-    // 클립보드에 복사
-    navigator.clipboard.writeText(shareUrl).then(
-      () => {
-        toast.success('공유 링크가 클립보드에 복사되었습니다!');
-      },
-      () => {
-        toast.error('링크 복사에 실패했습니다. 다시 시도해주세요.');
-      },
-    );
+    try {
+      const created = await postSharesApi(clientKy, { lookId: selectedLook.id });
+      const shareUrl = `${window.location.origin}/share/${created.path}`;
+      navigator.clipboard.writeText(shareUrl).then(
+        () => {
+          toast.success('공유 링크가 클립보드에 복사되었습니다!');
+        },
+        () => {
+          toast.error('링크 복사에 실패했습니다. 다시 시도해주세요.');
+        },
+      );
+    } catch {
+      toast.error('공유 링크 생성에 실패했습니다. 다시 시도해주세요.');
+    }
   };
 
-  const handleCreateLink = () => {
+  const handleCreateLink = async () => {
     if (!selectedLook) return;
 
-    const linkId = Date.now().toString();
-    const url = `${window.location.origin}/share/${selectedLook.id}?ref=${linkId}`;
-    const newLink: SharedLink = {
-      id: linkId,
-      name: linkName || '새 링크',
-      url: url,
-      createdAt: new Date(),
-    };
-    setSharedLinks([newLink, ...sharedLinks]);
-    setLinkName('');
-    setShowCreateLinkDialog(false);
+    try {
+      await postSharesApi(clientKy, { lookId: selectedLook.id });
+      await loadSharedLinks(selectedLook.id);
+      setLinkName('');
+      setShowCreateLinkDialog(false);
+    } catch {
+      toast.error('공유 링크 생성에 실패했습니다. 다시 시도해주세요.');
+    }
+  };
+
+  const handleKakaoShare = async () => {
+    if (!selectedLook) return;
+
+    try {
+      const created = await postSharesApi(clientKy, { lookId: selectedLook.id });
+      router.push(`/share/${created.path}`);
+      setShowShareDialog(false);
+      setShowCreateLinkDialog(false);
+    } catch {
+      toast.error('공유 링크 생성에 실패했습니다. 다시 시도해주세요.');
+    }
+  };
+
+  const handleDeleteLink = (linkId: string) => {
+    if (!selectedLook) return;
+    if (!confirm('링크를 삭제하시겠습니까?')) return;
+
+    deleteSharesApi(clientKy, linkId)
+      .then(async () => {
+        await loadSharedLinks(selectedLook.id);
+        if (selectedLink?.id === linkId) {
+          setSelectedLink(null);
+        }
+      })
+      .catch(() => {
+        toast.error('링크 삭제에 실패했습니다. 다시 시도해주세요.');
+      });
   };
 
   const handleCopyLink = (url: string, linkId: string) => {
@@ -237,21 +330,6 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
     }
   };
 
-  const handleKakaoShare = () => {
-    // 임시: 공유 페이지로 이동
-    if (selectedLook) {
-      router.push(`/share/${selectedLook.id}`);
-      setShowShareDialog(false);
-      setShowCreateLinkDialog(false);
-    }
-  };
-
-  const handleDeleteLink = (linkId: string) => {
-    if (confirm('링크를 삭제하시겠습니까?')) {
-      setSharedLinks(sharedLinks.filter((link) => link.id !== linkId));
-    }
-  };
-
   const formatDate = (date: Date) => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
@@ -270,6 +348,13 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
+
+  useEffect(() => {
+    if (!showShareDialog || !selectedLook) return;
+    loadSharedLinks(selectedLook.id).catch(() => {
+      toast.error('공유 링크 목록을 불러오지 못했습니다.');
+    });
+  }, [showShareDialog, selectedLook?.id]);
 
   // 스크롤 가능한 이미지 갤러리 컴포넌트
   const ScrollableImageGallery = ({ items, lookId }: { items: LookItem[]; lookId: string }) => {
@@ -474,113 +559,9 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
   };
 
   return (
-    <div
-      className="flex-1 min-h-0 w-full flex flex-col overflow-hidden"
-      style={{ backgroundColor: '#FFFFFF' }}
-    >
-      <div className="flex-shrink-0 relative">
-        {header}
-        <div className="absolute right-6 top-1/2 -translate-y-1/2">
-          <PlusAction onClick={() => setShowAddDialog(true)} />
-        </div>
-      </div>
-
-      {/* 필터 토글 + 검색 + 룩 개수 표시 */}
-      <div className="flex-shrink-0 px-6 pb-4 pt-4 flex items-center justify-between">
-        {/* 왼쪽: 필터 토글 + 검색창 */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowFavoriteOnly(false)}
-            className="transition-all"
-            style={{
-              fontFamily: "var(--font-inter), 'Inter', sans-serif",
-              fontSize: '12px',
-              fontWeight: !showFavoriteOnly ? 600 : 500,
-              color: !showFavoriteOnly ? '#000' : '#999',
-              background: 'none',
-              border: 'none',
-              padding: 0,
-            }}
-          >
-            {t('looks.all')}
-          </button>
-          <div
-            style={{
-              width: '1px',
-              height: '12px',
-              backgroundColor: '#D9D9D9',
-            }}
-          />
-          <button
-            onClick={() => setShowFavoriteOnly(true)}
-            className="transition-all flex items-center gap-1"
-            style={{
-              fontFamily: "var(--font-inter), 'Inter', sans-serif",
-              fontSize: '12px',
-              fontWeight: showFavoriteOnly ? 600 : 500,
-              color: showFavoriteOnly ? '#000' : '#999',
-              background: 'none',
-              border: 'none',
-              padding: 0,
-            }}
-          >
-            <Heart
-              size={12}
-              color={showFavoriteOnly ? '#000' : '#999'}
-              fill={showFavoriteOnly ? '#000' : 'none'}
-              strokeWidth={2}
-            />
-            {t('looks.favorite')}
-          </button>
-
-          <div
-            style={{
-              width: '1px',
-              height: '12px',
-              backgroundColor: '#D9D9D9',
-            }}
-          />
-
-          {/* 작은 검색창 */}
-          <div className="relative">
-            <Search
-              size={12}
-              color="#999"
-              strokeWidth={2}
-              className="absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none"
-            />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('looks.searchPlaceholder')}
-              className="pl-7 pr-2 py-1 transition-all"
-              style={{
-                width: '85px',
-                borderRadius: '999px',
-                backgroundColor: '#F5F5F5',
-                border: '1px solid transparent',
-                fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                fontSize: '12px',
-                fontWeight: 400,
-                color: '#000',
-                outline: 'none',
-              }}
-              onFocus={(e) => {
-                e.target.style.backgroundColor = '#FFF';
-                e.target.style.borderColor = '#E5E5E5';
-              }}
-              onBlur={(e) => {
-                if (!searchQuery) {
-                  e.target.style.backgroundColor = '#F5F5F5';
-                  e.target.style.borderColor = 'transparent';
-                }
-              }}
-            />
-          </div>
-        </div>
-
-        {/* 오른쪽: 개수 표시 */}
+    <>
+      {/* 개수 표시 */}
+      <div className="flex-shrink-0 px-6 pb-2 pt-1 flex justify-end">
         <p
           className="text-[#555555] flex-shrink-0"
           style={{
@@ -597,10 +578,15 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
       {/* 룩 목록 */}
       <div className="flex-1 overflow-y-auto pb-24">
         {filteredLooks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full px-6">
-            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+          <div className="fixed left-1/2 top-[52%] -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-48px)] max-w-[320px] flex flex-col items-center justify-center px-6">
+            <button
+              type="button"
+              onClick={() => onShowAddDialogChange(true)}
+              aria-label={t('looks.createFirst')}
+              className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4 hover:bg-gray-200 transition-colors"
+            >
               <Plus size={28} color="#999" strokeWidth={1.5} />
-            </div>
+            </button>
             <p
               className="text-black mb-1"
               style={{
@@ -623,7 +609,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
             </p>
             {looks.length === 0 && (
               <button
-                onClick={() => setShowAddDialog(true)}
+                onClick={() => onShowAddDialogChange(true)}
                 className="px-6 py-3 text-white hover:opacity-90 transition-opacity flex items-center gap-2"
                 style={{
                   borderRadius: '12px',
@@ -686,7 +672,13 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                 </div>
 
                 {/* 상단: 이미지 갤러리 */}
-                <ScrollableImageGallery items={look.items} lookId={look.id} />
+                <ScrollableImageGallery
+                  items={look.items.map((item) => ({
+                    ...item,
+                    imageUrl: item.imageUrl || clothesImageMap.get(item.id) || '',
+                  }))}
+                  lookId={look.id}
+                />
 
                 {/* 중앙: 룩 이름 */}
                 <div className="px-4 pt-2 mb-2">
@@ -811,9 +803,9 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                           className="w-full aspect-square bg-gray-200 overflow-hidden"
                           style={{ borderRadius: '10px' }}
                         >
-                          {item.imageUrl ? (
+                          {item.imageUrl || clothesImageMap.get(item.id) ? (
                             <ImageWithFallback
-                              src={item.imageUrl}
+                              src={item.imageUrl || clothesImageMap.get(item.id) || ''}
                               alt={item.name}
                               className="w-full h-full object-cover"
                             />
@@ -862,7 +854,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                 {/* 하단 버튼 */}
                 <div className="flex-shrink-0 p-6 pt-4 flex gap-3">
                   <button
-                    onClick={handleDeleteLook}
+                    onClick={handleDeleteClick}
                     className="flex-1 px-5 py-3 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
                     style={{
                       borderRadius: '12px',
@@ -901,7 +893,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
       </Dialog.Root>
 
       {/* 룩 추가 다이얼로그 */}
-      <Dialog.Root open={showAddDialog} onOpenChange={setShowAddDialog}>
+      <Dialog.Root open={showAddDialog} onOpenChange={onShowAddDialogChange}>
         <Dialog.Portal>
           <Dialog.Backdrop className="fixed inset-0 bg-black/30 z-50" />
           <Dialog.Popup
@@ -915,7 +907,8 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
               mode="add"
               closetItems={closetItems}
               onSave={handleAddLook}
-              onCancel={() => setShowAddDialog(false)}
+              onCancel={() => onShowAddDialogChange(false)}
+              isSaving={isSavingLook}
             />
           </Dialog.Popup>
         </Dialog.Portal>
@@ -942,6 +935,7 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                   setShowEditDialog(false);
                   setSelectedLook(null);
                 }}
+                isSaving={isSavingLook}
               />
             )}
           </Dialog.Popup>
@@ -1089,19 +1083,51 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                 </div>
 
                 {/* 링크 리스트 */}
-                {sharedLinks.length > 0 && (
-                  <div className="mb-4 px-6">
-                    <p
-                      className="text-[#666] mb-3"
-                      style={{
-                        fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                        fontSize: '13px',
-                        fontWeight: 500,
-                      }}
-                    >
-                      {t('looks.shareDialog.generatedLinks')} ({sharedLinks.length})
-                    </p>
-                    <div className="max-h-[300px] overflow-y-auto" style={{ paddingTop: '8px' }}>
+                <div className="mb-4 px-6">
+                  <p
+                    className="text-[#666] mb-3"
+                    style={{
+                      fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                      fontSize: '13px',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {t('looks.shareDialog.generatedLinks')} ({sharedLinks.length})
+                  </p>
+                  <div className="max-h-[300px] overflow-y-auto" style={{ paddingTop: '8px' }}>
+                    {isLoadingSharedLinks ? (
+                      <div>
+                        <div
+                          className="p-3 bg-gray-50 border border-[#E5E5E5] flex items-center justify-center"
+                          style={{ borderRadius: '12px' }}
+                        >
+                          <div className="inline-flex items-center gap-2 text-[#666]">
+                            <Spinner size="sm" />
+                            <span
+                              style={{
+                                fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                                fontSize: '13px',
+                                fontWeight: 500,
+                              }}
+                            >
+                              로딩 중...
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : sharedLinks.length === 0 ? (
+                      <div className="flex items-center justify-center text-[#999] py-3">
+                        <span
+                          style={{
+                            fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                            fontSize: '13px',
+                            fontWeight: 500,
+                          }}
+                        >
+                          생성된 링크가 없습니다
+                        </span>
+                      </div>
+                    ) : (
                       <div className="space-y-3">
                         {sharedLinks.map((link) => (
                           <div key={link.id} className="relative">
@@ -1186,9 +1212,9 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
                           </div>
                         ))}
                       </div>
-                    </div>
+                    )}
                   </div>
-                )}
+                </div>
 
                 {/* 하단 버튼 영역 */}
                 <div className="px-6 pb-6">
@@ -1252,6 +1278,202 @@ export function LookPage({ initialLooks = [], initialClothes = [], header }: Loo
           </Dialog.Popup>
         </Dialog.Portal>
       </Dialog.Root>
+
+      {/* 룩 삭제 확인 다이얼로그 */}
+      <Dialog.Root open={showDeleteConfirmDialog} onOpenChange={setShowDeleteConfirmDialog}>
+        <Dialog.Portal>
+          <Dialog.Backdrop className="fixed inset-0 bg-black/40 z-[70]" />
+          <Dialog.Popup
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-[70] w-[90%] max-w-[340px] p-8"
+            style={{ borderRadius: 'var(--radius-xl)' }}
+            aria-describedby={undefined}
+          >
+            <h2
+              className="text-black mb-3"
+              style={{
+                fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                fontSize: '20px',
+                fontWeight: 700,
+              }}
+            >
+              룩을 삭제할까요?
+            </h2>
+            <p
+              className="text-gray-500 mb-8"
+              style={{
+                fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                fontSize: '14px',
+                fontWeight: 400,
+              }}
+            >
+              삭제된 룩은 복구할 수 없습니다.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirmDialog(false)}
+                disabled={isDeletingLook}
+                className="flex-1 py-4 disabled:opacity-60"
+                style={{
+                  border: '1.5px solid #E5E5E5',
+                  borderRadius: 'var(--radius-pill)',
+                  fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                  fontSize: '14px',
+                  fontWeight: 600,
+                }}
+              >
+                취소
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={isDeletingLook}
+                className="flex-1 py-4 text-white inline-flex items-center justify-center gap-2 disabled:opacity-60"
+                style={{
+                  backgroundColor: '#000',
+                  borderRadius: 'var(--radius-pill)',
+                  fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                  fontSize: '14px',
+                  fontWeight: 600,
+                }}
+              >
+                {isDeletingLook ? <><Spinner size="sm" className="text-white" />삭제 중...</> : '삭제'}
+              </button>
+            </div>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </>
+  );
+}
+
+interface LookPageProps {
+  looksPromise: Promise<LookResponseDto[]>;
+  clothesPromise: Promise<ClothesListItemResponseDto[]>;
+  header?: ReactNode;
+}
+
+export function LookPage({ looksPromise, clothesPromise, header }: LookPageProps) {
+  const { t } = useTranslation();
+  const [showFavoriteOnly, setShowFavoriteOnly] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showAddDialog, setShowAddDialog] = useState(false);
+
+  return (
+    <div
+      className="flex-1 min-h-0 w-full flex flex-col overflow-hidden"
+      style={{ backgroundColor: '#FFFFFF' }}
+    >
+      {/* 헤더 + 플러스 버튼 */}
+      <div className="flex-shrink-0 relative">
+        {header}
+        <div className="absolute right-6 top-1/2 -translate-y-1/2">
+          <PlusAction onClick={() => setShowAddDialog(true)} />
+        </div>
+      </div>
+
+      {/* 필터 토글 + 검색 */}
+      <div className="flex-shrink-0 px-6 pb-4 pt-4 flex items-center">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowFavoriteOnly(false)}
+            className="transition-all"
+            style={{
+              fontFamily: "var(--font-inter), 'Inter', sans-serif",
+              fontSize: '12px',
+              fontWeight: !showFavoriteOnly ? 600 : 500,
+              color: !showFavoriteOnly ? '#000' : '#999',
+              background: 'none',
+              border: 'none',
+              padding: 0,
+            }}
+          >
+            {t('looks.all')}
+          </button>
+          <div
+            style={{
+              width: '1px',
+              height: '12px',
+              backgroundColor: '#D9D9D9',
+            }}
+          />
+          <button
+            onClick={() => setShowFavoriteOnly(true)}
+            className="transition-all flex items-center gap-1"
+            style={{
+              fontFamily: "var(--font-inter), 'Inter', sans-serif",
+              fontSize: '12px',
+              fontWeight: showFavoriteOnly ? 600 : 500,
+              color: showFavoriteOnly ? '#000' : '#999',
+              background: 'none',
+              border: 'none',
+              padding: 0,
+            }}
+          >
+            <Heart
+              size={12}
+              color={showFavoriteOnly ? '#000' : '#999'}
+              fill={showFavoriteOnly ? '#000' : 'none'}
+              strokeWidth={2}
+            />
+            {t('looks.favorite')}
+          </button>
+          <div
+            style={{
+              width: '1px',
+              height: '12px',
+              backgroundColor: '#D9D9D9',
+            }}
+          />
+          {/* 작은 검색창 */}
+          <div className="relative">
+            <Search
+              size={12}
+              color="#999"
+              strokeWidth={2}
+              className="absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none"
+            />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('looks.searchPlaceholder')}
+              className="pl-7 pr-2 py-1 transition-all"
+              style={{
+                width: '85px',
+                borderRadius: '999px',
+                backgroundColor: '#F5F5F5',
+                border: '1px solid transparent',
+                fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                fontSize: '12px',
+                fontWeight: 400,
+                color: '#000',
+                outline: 'none',
+              }}
+              onFocus={(e) => {
+                e.target.style.backgroundColor = '#FFF';
+                e.target.style.borderColor = '#E5E5E5';
+              }}
+              onBlur={(e) => {
+                if (!searchQuery) {
+                  e.target.style.backgroundColor = '#F5F5F5';
+                  e.target.style.borderColor = 'transparent';
+                }
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 컨텐츠 (Suspense) */}
+      <Suspense fallback={<LookListSkeleton />}>
+        <LookContent
+          looksPromise={looksPromise}
+          clothesPromise={clothesPromise}
+          showFavoriteOnly={showFavoriteOnly}
+          searchQuery={searchQuery}
+          showAddDialog={showAddDialog}
+          onShowAddDialogChange={setShowAddDialog}
+        />
+      </Suspense>
     </div>
   );
 }
