@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react';
 import type { WeatherResponseDto } from '@/shared/model/orvalSchemas';
 import type { HomeLocation } from '@/app/(메인기능)/(home)/fetchHomeData';
 import type { HomeRecommendation } from './home.types';
+import type { Gender } from '@/shared/model/gender';
 import LocationWeather from './locationWeather';
 import RecommendBasicLook from './recommendBasicLook';
 import { useHomeData } from '../model/useHomeData';
 
 interface HomePageProps {
   isLoggedIn: boolean;
+  gender?: Gender;
   initialWeather?: WeatherResponseDto | null;
   initialRecommendation?: HomeRecommendation | null;
   initialLocations: HomeLocation[];
@@ -17,6 +19,7 @@ interface HomePageProps {
 
 const HomePage = ({
   isLoggedIn = false,
+  gender,
   initialWeather = null,
   initialRecommendation = null,
   initialLocations = [],
@@ -33,6 +36,7 @@ const HomePage = ({
     setLocations,
   } = useHomeData({
     isLoggedIn,
+    gender,
     initialWeather,
     initialRecommendation,
     initialLocations,

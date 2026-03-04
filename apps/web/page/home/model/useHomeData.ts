@@ -17,6 +17,7 @@ import { clientKy } from '@/features/api/clientKy';
 import { invalidateHomeLocations } from '@/shared/api/invalidations/homeLocations';
 import type { HomeWeatherState, HomeRecommendation, HomeLocationOption } from '../ui/home.types';
 import { toWeatherState } from './toWeatherData';
+import type { Gender } from '@/shared/model/gender';
 
 const DEFAULT_WEATHER: HomeWeatherState = {
   temp: 18,
@@ -48,12 +49,14 @@ function parseHomeLocations(locations: HomeLocation[]): HomeLocationOption[] {
 
 interface UseHomeDataOptions {
   isLoggedIn: boolean;
+  gender?: Gender;
   initialWeather?: WeatherResponseDto | null;
   initialRecommendation?: HomeRecommendation | null;
   initialLocations: HomeLocation[];
 }
 
 export function useHomeData({
+  gender,
   initialWeather = null,
   initialRecommendation = null,
   initialLocations = [],
@@ -80,7 +83,11 @@ export function useHomeData({
       try {
         const [snapshot, lookResult] = await Promise.all([
           getLocationWeatherApi(clientKy, locationId).catch(() => null),
-          getRecommendationsLookApi(clientKy, { latitude: lat, longitude: lon }).catch(() => null),
+          getRecommendationsLookApi(clientKy, {
+            latitude: lat,
+            longitude: lon,
+            ...(gender ? { gender } : {}),
+          }).catch(() => null),
         ]);
 
         if (snapshot) {
@@ -96,7 +103,7 @@ export function useHomeData({
         setIsLoading(false);
       }
     },
-    [],
+    [gender],
   );
 
   const selectLocation = useCallback(

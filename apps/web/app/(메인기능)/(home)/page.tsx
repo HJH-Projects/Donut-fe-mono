@@ -8,9 +8,9 @@ import { GENDER_COOKIE, type Gender } from '@/shared/model/gender';
 export default async function Page() {
   const cookieStore = await cookies();
   const isLoggedIn = !!cookieStore.get('accessToken');
-
+  const gender = (cookieStore.get(GENDER_COOKIE)?.value as Gender) ?? 'FEMALE';
   const { initialWeather, initialRecommendation, initialLocations } = isLoggedIn
-    ? await fetchHomeDataLoggedIn((cookieStore.get(GENDER_COOKIE)?.value as Gender) ?? 'FEMALE')
+    ? await fetchHomeDataLoggedIn(gender)
     : await fetchHomeDataGuest();
 
   return (
@@ -18,6 +18,7 @@ export default async function Page() {
       <PageHeader title="Donut" titleHref="/" right={<BellAction />} />
       <HomePage
         isLoggedIn={isLoggedIn}
+        gender={isLoggedIn ? gender : undefined}
         initialWeather={initialWeather}
         initialRecommendation={initialRecommendation}
         initialLocations={initialLocations}

@@ -41,7 +41,6 @@ function toHomeLocation(dto: LocationDto): HomeLocation {
 
 export async function fetchHomeDataLoggedIn(gender: Gender): Promise<HomeInitialData> {
   const locations = await getCachedHomeLocations().catch(() => []);
-
   if (!Array.isArray(locations)) {
     return { initialWeather: null, initialRecommendation: null, initialLocations: [] };
   }
