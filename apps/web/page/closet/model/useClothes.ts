@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import type {
   ClothesListItemResponseDto,
@@ -86,30 +86,33 @@ export function useClothes({ initialClothes = [] }: UseClothesOptions = {}) {
   const router = useRouter();
   const toast = useToast();
 
-  const [clothes, setClothes] = useState<ClothingItem[]>(() =>
-    initialClothes.map(dtoToClothingItem),
+  const initialMappedClothes = useMemo(
+    () => initialClothes.map(dtoToClothingItem),
+    [initialClothes],
   );
-  const [isBootstrapped, setIsBootstrapped] = useState(initialClothes.length > 0);
+  const needsClientFetch = initialMappedClothes.length === 0;
+  const [fetchedClothes, setFetchedClothes] = useState<ClothingItem[] | null>(null);
+  const [hasBootstrappedFetch, setHasBootstrappedFetch] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
 
+  const clothes = needsClientFetch
+    ? (fetchedClothes ?? initialMappedClothes)
+    : initialMappedClothes;
+  const isBootstrapped = !needsClientFetch || hasBootstrappedFetch;
+
   useEffect(() => {
-    if (isBootstrapped) return;
+    if (!needsClientFetch || hasBootstrappedFetch) return;
 
     getClothesApi(clientKy)
       .then((items) => {
-        setClothes(items.map(dtoToClothingItem));
+        setFetchedClothes(items.map(dtoToClothingItem));
       })
       .catch(async (e) => {
         const apiError = await toApiError(e);
         setError(apiError);
       })
-      .finally(() => setIsBootstrapped(true));
-  }, [isBootstrapped]);
-
-  useEffect(() => {
-    setClothes(initialClothes.map(dtoToClothingItem));
-    setIsBootstrapped(initialClothes.length > 0);
-  }, [initialClothes]);
+      .finally(() => setHasBootstrappedFetch(true));
+  }, [needsClientFetch, hasBootstrappedFetch]);
 
   const addClothing = async (item: ClothingItem, draftId: string) => {
     try {
@@ -169,10 +172,6 @@ export function useClothes({ initialClothes = [] }: UseClothesOptions = {}) {
     const item = clothes.find((c) => c.id === id);
     if (!item) return;
 
-    setClothes((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, isFavorite: !c.isFavorite } : c)),
-    );
-
     try {
       if (item.isFavorite) {
         await deleteClothesFavoriteApi(clientKy, id);
@@ -180,10 +179,8 @@ export function useClothes({ initialClothes = [] }: UseClothesOptions = {}) {
         await postClothesFavoriteApi(clientKy, id);
       }
       await invalidateClothes();
+      router.refresh();
     } catch (e) {
-      setClothes((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, isFavorite: item.isFavorite } : c)),
-      );
       toast.apiError(await toApiError(e), '즐겨찾기 처리에 실패했습니다.');
     }
   };

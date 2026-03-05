@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import type { LookResponseDto } from '@/shared/model/orvalSchemas';
 import { useToast } from '@/shared/model/useToast';
@@ -55,30 +55,28 @@ export function useLooks({ initialLooks = [], skipBootstrap = false }: UseLooksO
   const router = useRouter();
   const toast = useToast();
 
-  const [looks, setLooks] = useState<Look[]>(() => initialLooks.map(dtoToLook));
-  const [isBootstrapped, setIsBootstrapped] = useState(
-    initialLooks.length > 0 || skipBootstrap,
-  );
+  const initialMappedLooks = useMemo(() => initialLooks.map(dtoToLook), [initialLooks]);
+  const needsClientFetch = initialMappedLooks.length === 0 && !skipBootstrap;
+  const [fetchedLooks, setFetchedLooks] = useState<Look[] | null>(null);
+  const [hasBootstrappedFetch, setHasBootstrappedFetch] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
 
+  const looks = needsClientFetch ? (fetchedLooks ?? initialMappedLooks) : initialMappedLooks;
+  const isBootstrapped = !needsClientFetch || hasBootstrappedFetch;
+
   useEffect(() => {
-    if (isBootstrapped) return;
+    if (!needsClientFetch || hasBootstrappedFetch) return;
 
     getLooksApi(clientKy)
       .then((items) => {
-        setLooks(items.map(dtoToLook));
+        setFetchedLooks(items.map(dtoToLook));
       })
       .catch(async (e) => {
         const apiError = await toApiError(e);
         setError(apiError);
       })
-      .finally(() => setIsBootstrapped(true));
-  }, [isBootstrapped]);
-
-  useEffect(() => {
-    setLooks(initialLooks.map(dtoToLook));
-    setIsBootstrapped(initialLooks.length > 0 || skipBootstrap);
-  }, [initialLooks, skipBootstrap]);
+      .finally(() => setHasBootstrappedFetch(true));
+  }, [needsClientFetch, hasBootstrappedFetch]);
 
   const addLook = async (lookData: Partial<Look>) => {
     try {
@@ -134,31 +132,16 @@ export function useLooks({ initialLooks = [], skipBootstrap = false }: UseLooksO
   const toggleFavorite = async (id: string) => {
     const target = looks.find((look) => look.id === id);
     if (!target) return;
-    const previous = target.isFavorite;
-
-    setLooks((prev) =>
-      prev.map((look) =>
-        look.id === id ? { ...look, isFavorite: !previous } : look,
-      ),
-    );
 
     try {
-      const response = previous
-        ? await deleteLooksFavoriteApi(clientKy, id)
-        : await postLooksFavoriteApi(clientKy, id);
-
-      setLooks((prev) =>
-        prev.map((look) =>
-          look.id === id ? { ...look, isFavorite: response.isLiked } : look,
-        ),
-      );
+      if (target.isFavorite) {
+        await deleteLooksFavoriteApi(clientKy, id);
+      } else {
+        await postLooksFavoriteApi(clientKy, id);
+      }
       await invalidateLooks();
+      router.refresh();
     } catch (e) {
-      setLooks((prev) =>
-        prev.map((look) =>
-          look.id === id ? { ...look, isFavorite: previous } : look,
-        ),
-      );
       toast.apiError(await toApiError(e), '룩 좋아요 처리에 실패했습니다.');
     }
   };
