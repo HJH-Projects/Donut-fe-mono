@@ -1,6 +1,11 @@
 export function LookListSkeleton() {
   return (
     <>
+      {/* 개수 표시 영역 높이 확보 */}
+      <div className="flex-shrink-0 px-6 pb-2 pt-1 flex justify-end">
+        <div className="h-[16px] w-10 bg-gray-100 skeleton-shimmer rounded" />
+      </div>
+
       <div className="flex-1 overflow-y-auto pb-24">
         <div className="px-6" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {Array.from({ length: 3 }).map((_, i) => (

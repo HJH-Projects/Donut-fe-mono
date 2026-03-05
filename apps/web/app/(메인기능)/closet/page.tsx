@@ -4,13 +4,13 @@ import type { ClothesListItemResponseDto } from '@/shared/model/orvalSchemas';
 import { PageHeader } from '@/shared/ui/PageHeader';
 
 export default async function Page() {
-  const clothesPromise: Promise<ClothesListItemResponseDto[]> = getCachedClothes().catch(
+  const initialClothes: ClothesListItemResponseDto[] = await getCachedClothes().catch(
     () => [] as ClothesListItemResponseDto[],
   );
 
   return (
     <ClosetPage
-      clothesPromise={clothesPromise}
+      initialClothes={initialClothes}
       header={<PageHeader title="Closet" titleHref="/closet" />}
     />
   );

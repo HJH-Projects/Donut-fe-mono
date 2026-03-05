@@ -470,9 +470,9 @@ function ClosetContent({
   return (
     <>
       {/* 아이템 개수 표시 */}
-      <div className="flex-shrink-0 px-6 pb-4">
+      <div className="flex-shrink-0 px-6 pb-2 pt-1 flex justify-end">
         <p
-          className="text-[#555555]"
+          className="text-[#555555] flex-shrink-0"
           style={{
             fontFamily: "var(--font-inter), 'Inter', sans-serif",
             fontSize: '12px',
@@ -2257,14 +2257,16 @@ function ClosetContent({
 }
 
 interface ClosetPageProps {
-  clothesPromise: Promise<ClothesListItemResponseDto[]>;
+  clothesPromise?: Promise<ClothesListItemResponseDto[]>;
+  initialClothes?: ClothesListItemResponseDto[];
   header?: ReactNode;
 }
 
-export function ClosetPage({ clothesPromise, header }: ClosetPageProps) {
+export function ClosetPage({ clothesPromise, initialClothes = [], header }: ClosetPageProps) {
   const [selectedCategory, setSelectedCategory] = useState('전체');
   const [showFavoriteOnly, setShowFavoriteOnly] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const effectiveClothesPromise = clothesPromise ?? Promise.resolve(initialClothes);
   const categoryScrollRef = useRef<HTMLDivElement>(null);
   const handleCategoryWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     const container = categoryScrollRef.current;
@@ -2344,7 +2346,7 @@ export function ClosetPage({ clothesPromise, header }: ClosetPageProps) {
 
       <Suspense fallback={<ClosetGridSkeleton />}>
         <ClosetContent
-          clothesPromise={clothesPromise}
+          clothesPromise={effectiveClothesPromise}
           selectedCategory={selectedCategory}
           showFavoriteOnly={showFavoriteOnly}
           showAddDialog={showAddDialog}
