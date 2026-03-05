@@ -163,6 +163,7 @@ export function MyPage({ initialProfile = null, initialGender = 'MALE' }: MyPage
           style={{
             backgroundColor: '#000000',
             borderRadius: 'var(--radius-xl)',
+            minHeight: '212px',
           }}
         >
           <div className="flex items-center justify-between mb-2">

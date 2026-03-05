@@ -22,7 +22,7 @@ export function useProfile({ initialProfile = null }: UseProfileOptions = {}) {
   const toast = useToast();
 
   const [profile, setProfile] = useState<UserProfileResponseDto | null>(initialProfile);
-  const [nickname, setNickname] = useState(initialProfile?.nickname || '패션러버');
+  const [nickname, setNickname] = useState(initialProfile?.nickname || '파씨옹');
   const [isBootstrapped, setIsBootstrapped] = useState(!!initialProfile);
   const [isResettingNickname, setIsResettingNickname] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
@@ -87,5 +87,4 @@ export function useProfile({ initialProfile = null }: UseProfileOptions = {}) {
     updateNickname,
     resetNickname,
   };
-
 }

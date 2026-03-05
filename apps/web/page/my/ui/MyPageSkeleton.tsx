@@ -39,6 +39,7 @@ export function MyPageSkeleton({ initialGender: _ }: MyPageSkeletonProps) {
           style={{
             backgroundColor: '#000000',
             borderRadius: 'var(--radius-xl)',
+            minHeight: '212px',
           }}
         >
           {/* 닉네임 placeholder */}
