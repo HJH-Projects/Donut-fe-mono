@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect, use, Suspense, type ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
 import { Dialog } from '@base-ui/react/dialog';
 import { ImageWithFallback } from '@/shared/ui/ImageWithFallback';
 import { LookForm } from '@/shared/ui/LookForm';
@@ -30,6 +29,39 @@ import Spinner from '@/shared/ui/Spinner';
 import { deleteSharesApi, getSharesApi, postSharesApi } from '@/shared/api/endpointTags/shares';
 import { clientKy } from '@/features/api/clientKy';
 
+declare global {
+  interface Window {
+    Kakao?: {
+      init: (appKey: string) => void;
+      isInitialized: () => boolean;
+      Share?: {
+        sendDefault: (
+          payload:
+            | {
+                objectType: 'text';
+                text: string;
+                link: { mobileWebUrl: string; webUrl: string };
+                buttonTitle?: string;
+              }
+            | {
+                objectType: 'feed';
+                content: {
+                  title: string;
+                  description?: string;
+                  imageUrl: string;
+                  link: { mobileWebUrl: string; webUrl: string };
+                };
+                buttons?: Array<{
+                  title: string;
+                  link: { mobileWebUrl: string; webUrl: string };
+                }>;
+              },
+        ) => void;
+      };
+    };
+  }
+}
+
 type SharedLink = {
   id: string;
   name: string;
@@ -57,7 +89,6 @@ function LookContent({
   const initialLooks = use(looksPromise);
   const initialClothes = use(clothesPromise);
   const { t } = useTranslation();
-  const router = useRouter();
   const toast = useToast();
 
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -74,6 +105,88 @@ function LookContent({
   const [linkName, setLinkName] = useState('');
   const [isLoadingSharedLinks, setIsLoadingSharedLinks] = useState(false);
   const tagScrollRef = useRef<HTMLDivElement>(null);
+  const getShareBaseUrl = () => {
+    const configured = process.env.NEXT_PUBLIC_WEB_URL?.trim();
+    if (configured) return configured.replace(/\/+$/, '');
+    return 'https://doknot.xyz';
+  };
+
+  const loadKakaoSdk = () =>
+    new Promise<void>((resolve, reject) => {
+      if (window.Kakao) {
+        resolve();
+        return;
+      }
+
+      const existing = document.querySelector<HTMLScriptElement>('script[data-kakao-sdk="true"]');
+      if (existing) {
+        existing.addEventListener('load', () => resolve(), { once: true });
+        existing.addEventListener('error', () => reject(new Error('kakao sdk load failed')), {
+          once: true,
+        });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.6/kakao.min.js';
+      script.async = true;
+      script.dataset.kakaoSdk = 'true';
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('kakao sdk load failed'));
+      document.head.appendChild(script);
+    });
+
+  const shareViaKakao = async (shareUrl: string, lookName: string, imageUrl?: string) => {
+    const appKey = process.env.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY?.trim();
+    if (!appKey) return false;
+
+    try {
+      await loadKakaoSdk();
+      if (window.Kakao) {
+        if (!window.Kakao.isInitialized()) {
+          window.Kakao.init(appKey);
+        }
+        
+        if (imageUrl) {
+          window.Kakao.Share?.sendDefault({
+            objectType: 'feed',
+            content: {
+              title: lookName,
+              description: '룩을 확인해보세요.',
+              imageUrl,
+              link: {
+                mobileWebUrl: shareUrl,
+                webUrl: shareUrl,
+              },
+            },
+            buttons: [
+              {
+                title: '룩 보기',
+                link: {
+                  mobileWebUrl: shareUrl,
+                  webUrl: shareUrl,
+                },
+              },
+            ],
+          });
+        } else {
+          window.Kakao.Share?.sendDefault({
+            objectType: 'text',
+            text: `${lookName}\n${shareUrl}`,
+            link: {
+              mobileWebUrl: shareUrl,
+              webUrl: shareUrl,
+            },
+            buttonTitle: '룩 보기',
+          });
+        }
+        return true;
+      }
+    } catch {
+      return false;
+    }
+    return false;
+  };
 
   const loadSharedLinks = async (lookId: string) => {
     setIsLoadingSharedLinks(true);
@@ -83,7 +196,7 @@ function LookContent({
       .map((link) => ({
         id: link.id,
         name: link.lookName || '공유 링크',
-        url: `${window.location.origin}/share/${link.path}`,
+        url: `${getShareBaseUrl()}/share/${link.path}`,
         createdAt: new Date(link.createdAt),
       }))
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
@@ -237,7 +350,7 @@ function LookContent({
 
     try {
       const created = await postSharesApi(clientKy, { lookId: selectedLook.id });
-      const shareUrl = `${window.location.origin}/share/${created.path}`;
+      const shareUrl = `${getShareBaseUrl()}/share/${created.path}`;
       navigator.clipboard.writeText(shareUrl).then(
         () => {
           toast.success('공유 링크가 클립보드에 복사되었습니다!');
@@ -265,15 +378,33 @@ function LookContent({
   };
 
   const handleKakaoShare = async () => {
-    if (!selectedLook) return;
+    if (!selectedLook || !selectedLink) {
+      toast.error('공유할 링크를 먼저 선택해주세요.');
+      return;
+    }
 
     try {
-      const created = await postSharesApi(clientKy, { lookId: selectedLook.id });
-      router.push(`/share/${created.path}`);
+      const shareUrl = selectedLink.url;
+      if (shareUrl.includes('://localhost') || shareUrl.includes('://127.0.0.1')) {
+        toast.info('현재 localhost 링크입니다. 다른 기기에서는 열리지 않을 수 있습니다.');
+      }
+      const firstImageUrl =
+        selectedLook.items.find((item) => item.imageUrl || clothesImageMap.get(item.id))?.imageUrl ||
+        selectedLook.items.map((item) => clothesImageMap.get(item.id)).find(Boolean);
+      const didShare = await shareViaKakao(shareUrl, selectedLook.name, firstImageUrl);
+
+      if (!didShare) {
+        toast.error(
+          '카카오 공유 설정이 필요합니다. NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY와 카카오 도메인 등록을 확인해주세요.',
+        );
+        return;
+      }
+
       setShowShareDialog(false);
       setShowCreateLinkDialog(false);
-    } catch {
-      toast.error('공유 링크 생성에 실패했습니다. 다시 시도해주세요.');
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') return;
+      toast.error('카카오톡 공유에 실패했습니다. 다시 시도해주세요.');
     }
   };
 
@@ -1096,23 +1227,18 @@ function LookContent({
                   </p>
                   <div className="max-h-[300px] overflow-y-auto" style={{ paddingTop: '8px' }}>
                     {isLoadingSharedLinks ? (
-                      <div>
-                        <div
-                          className="p-3 bg-gray-50 border border-[#E5E5E5] flex items-center justify-center"
-                          style={{ borderRadius: '12px' }}
-                        >
-                          <div className="inline-flex items-center gap-2 text-[#666]">
-                            <Spinner size="sm" />
-                            <span
-                              style={{
-                                fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                                fontSize: '13px',
-                                fontWeight: 500,
-                              }}
-                            >
-                              로딩 중...
-                            </span>
-                          </div>
+                      <div className="flex items-center justify-center py-3">
+                        <div className="inline-flex items-center gap-2 text-[#666]">
+                          <Spinner size="sm" />
+                          <span
+                            style={{
+                              fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                              fontSize: '13px',
+                              fontWeight: 500,
+                            }}
+                          >
+                            로딩 중...
+                          </span>
                         </div>
                       </div>
                     ) : sharedLinks.length === 0 ? (
