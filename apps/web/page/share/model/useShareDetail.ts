@@ -40,20 +40,20 @@ function mapShareDetailToLocal(detail: ShareLinkDetailResponseDto): Look {
     name: detail.look.name,
     tags: [],
     items: (detail.look.items || []).map((item) => ({
-      id: item.clothesId || item.id,
-      name: '',
-      category: item.role || '',
-      imageUrl: '',
+      id: item.clothes?.id ?? item.clothesId ?? item.id,
+      name: item.clothes?.title ?? '',
+      category: item.clothes?.category ?? item.role ?? '',
+      imageUrl: item.images?.cardWebpUrl ?? item.images?.cardJpegUrl ?? '',
     })),
-    user: detail.look.user,
+    user: detail.look.user ?? null,
   };
 }
 
 function mapApiCommentToLocal(c: CommentResponseDto): Comment {
   return {
     id: c.id,
-    userId: c.user.id,
-    author: c.user.nickname,
+    userId: c.user?.id ?? '',
+    author: c.user?.nickname ?? '익명',
     content: c.content,
     createdAt: new Date(c.createdAt || Date.now()),
   };

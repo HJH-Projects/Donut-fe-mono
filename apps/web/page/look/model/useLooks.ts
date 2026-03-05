@@ -37,9 +37,9 @@ function dtoToLook(look: LookResponseDto): Look {
     name: look.name,
     tags: look.tags ? look.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
     items: (look.items || []).map((item) => ({
-      id: item.clothes.id || item.clothesId,
-      name: item.clothes.title || '',
-      category: item.clothes.category || '',
+      id: item.clothes?.id ?? item.clothesId ?? item.id,
+      name: item.clothes?.title ?? '',
+      category: item.clothes?.category ?? '',
       imageUrl: '',
     })),
     isFavorite: look.isLiked,
