@@ -11,5 +11,5 @@ export type ClothesControllerFindAllParams = {
 /**
  * 1차 카테고리 필터 (미지정 시 전체)
  */
-category?: ClothesControllerFindAllCategory;
+category: ClothesControllerFindAllCategory;
 };

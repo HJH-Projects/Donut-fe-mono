@@ -136,7 +136,7 @@ export type clothesControllerFindAllResponseError = (clothesControllerFindAllRes
 
 export type clothesControllerFindAllResponse = (clothesControllerFindAllResponseSuccess | clothesControllerFindAllResponseError)
 
-export const getClothesControllerFindAllUrl = (params?: ClothesControllerFindAllParams,) => {
+export const getClothesControllerFindAllUrl = (params: ClothesControllerFindAllParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -151,7 +151,7 @@ export const getClothesControllerFindAllUrl = (params?: ClothesControllerFindAll
   return stringifiedParams.length > 0 ? `/clothes?${stringifiedParams}` : `/clothes`
 }
 
-export const clothesControllerFindAll = async (params?: ClothesControllerFindAllParams, options?: RequestInit): Promise<clothesControllerFindAllResponse> => {
+export const clothesControllerFindAll = async (params: ClothesControllerFindAllParams, options?: RequestInit): Promise<clothesControllerFindAllResponse> => {
   
   const res = await fetch(getClothesControllerFindAllUrl(params),
   {      
@@ -203,7 +203,7 @@ export type clothesControllerFindOneResponseError = (clothesControllerFindOneRes
 export type clothesControllerFindOneResponse = (clothesControllerFindOneResponseSuccess | clothesControllerFindOneResponseError)
 
 export const getClothesControllerFindOneUrl = (id: string,
-    params?: ClothesControllerFindOneParams,) => {
+    params: ClothesControllerFindOneParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -219,7 +219,7 @@ export const getClothesControllerFindOneUrl = (id: string,
 }
 
 export const clothesControllerFindOne = async (id: string,
-    params?: ClothesControllerFindOneParams, options?: RequestInit): Promise<clothesControllerFindOneResponse> => {
+    params: ClothesControllerFindOneParams, options?: RequestInit): Promise<clothesControllerFindOneResponse> => {
   
   const res = await fetch(getClothesControllerFindOneUrl(id,params),
   {      
@@ -677,7 +677,7 @@ export type clothesControllerGetClothesImageResponseError = (clothesControllerGe
 export type clothesControllerGetClothesImageResponse = (clothesControllerGetClothesImageResponseSuccess | clothesControllerGetClothesImageResponseError)
 
 export const getClothesControllerGetClothesImageUrl = (clothesId: string,
-    params?: ClothesControllerGetClothesImageParams,) => {
+    params: ClothesControllerGetClothesImageParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -693,7 +693,7 @@ export const getClothesControllerGetClothesImageUrl = (clothesId: string,
 }
 
 export const clothesControllerGetClothesImage = async (clothesId: string,
-    params?: ClothesControllerGetClothesImageParams, options?: RequestInit): Promise<clothesControllerGetClothesImageResponse> => {
+    params: ClothesControllerGetClothesImageParams, options?: RequestInit): Promise<clothesControllerGetClothesImageResponse> => {
   
   const res = await fetch(getClothesControllerGetClothesImageUrl(clothesId,params),
   {      

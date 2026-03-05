@@ -10,7 +10,7 @@ export interface LookItemDto {
   /** 의류 ID (UUID) */
   clothesId: string;
   /** 아이템 정렬 순서 */
-  sortOrder: number;
+  sortOrder?: number;
   /** 아이템 역할 (top, bottom 등) */
-  role: string;
+  role?: string;
 }

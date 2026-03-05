@@ -9,7 +9,7 @@ import type { LookItemDto } from './lookItemDto';
 
 export interface CreateLookDto {
   /** 룩 명칭 */
-  name: string;
+  name?: string;
   /** 룩 태그 (쉼표 구분) */
   tags: string;
   /** 룩 구성 아이템 리스트 */

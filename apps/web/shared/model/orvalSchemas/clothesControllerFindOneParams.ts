@@ -11,9 +11,9 @@ export type ClothesControllerFindOneParams = {
 /**
  * 반환할 파생본 종류(csv). 예: detail,thumb
  */
-variant?: string;
+variant: string;
 /**
  * 반환할 포맷 (기본 both)
  */
-format?: ClothesControllerFindOneFormat;
+format: ClothesControllerFindOneFormat;
 };
