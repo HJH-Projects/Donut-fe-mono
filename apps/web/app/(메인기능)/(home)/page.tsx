@@ -1,7 +1,6 @@
 import { cookies } from 'next/headers';
-import { PageHeader } from '@/shared/ui/PageHeader';
-import { BellAction } from '@/shared/ui/BellAction';
 import HomePage from '@/page/home/ui/HomePage';
+import { PageHeader } from '@/shared/ui/PageHeader';
 import { fetchHomeDataLoggedIn, fetchHomeDataGuest } from './fetchHomeData';
 import { GENDER_COOKIE, type Gender } from '@/shared/model/gender';
 
@@ -14,15 +13,13 @@ export default async function Page() {
     : await fetchHomeDataGuest();
 
   return (
-    <>
-      <PageHeader title="Donut" titleHref="/" right={<BellAction />} />
-      <HomePage
-        isLoggedIn={isLoggedIn}
-        gender={isLoggedIn ? gender : undefined}
-        initialWeather={initialWeather}
-        initialRecommendation={initialRecommendation}
-        initialLocations={initialLocations}
-      />
-    </>
+    <HomePage
+      isLoggedIn={isLoggedIn}
+      gender={isLoggedIn ? gender : undefined}
+      initialWeather={initialWeather}
+      initialRecommendation={initialRecommendation}
+      initialLocations={initialLocations}
+      header={<PageHeader title="Donut" titleHref="/" />}
+    />
   );
 }
