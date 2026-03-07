@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from "react";
-import { X } from "lucide-react";
-import { ImageWithFallback } from "@/shared/ui/ImageWithFallback";
-import { useTranslation } from "react-i18next";
-import { useToast } from "@/shared/model/useToast";
-import Spinner from "@/shared/ui/Spinner";
+import { useState } from 'react';
+import { X } from 'lucide-react';
+import { ImageWithFallback } from '@/shared/ui/ImageWithFallback';
+import { useTranslation } from 'react-i18next';
+import { useToast } from '@/shared/model/useToast';
+import Spinner from '@/shared/ui/Spinner';
 
 type LookItem = {
   id: string;
@@ -23,7 +23,7 @@ type Look = {
 };
 
 type LookFormProps = {
-  mode: "add" | "edit";
+  mode: 'add' | 'edit';
   initialData?: Look;
   closetItems: LookItem[];
   onSave: (look: Partial<Look>) => void;
@@ -31,22 +31,22 @@ type LookFormProps = {
   isSaving?: boolean;
 };
 
-const CATEGORIES = ["상의", "하의", "아우터", "신발", "악세사리"];
+const CATEGORIES = ['상의', '하의', '아우터', '신발', '악세사리'];
 const COMMON_TAGS = [
-  "캐주얼",
-  "포멀",
-  "오피스",
-  "데이트",
-  "여행",
-  "홈웨어",
-  "운동",
-  "파티",
-  "봄",
-  "여름",
-  "가을",
-  "겨울",
-  "편안",
-  "세련",
+  '캐주얼',
+  '포멀',
+  '오피스',
+  '데이트',
+  '여행',
+  '홈웨어',
+  '운동',
+  '파티',
+  '봄',
+  '여름',
+  '가을',
+  '겨울',
+  '편안',
+  '세련',
 ];
 
 export function LookForm({
@@ -59,18 +59,14 @@ export function LookForm({
 }: LookFormProps) {
   const { t } = useTranslation();
   const toast = useToast();
-  const [lookName, setLookName] = useState(initialData?.name || "");
-  const [selectedTags, setSelectedTags] = useState<string[]>(
-    initialData?.tags || []
-  );
-  const [customTag, setCustomTag] = useState("");
-  const [selectedItems, setSelectedItems] = useState<LookItem[]>(
-    initialData?.items || []
-  );
-  const [activeCategory, setActiveCategory] = useState<string>("전체");
+  const [lookName, setLookName] = useState(initialData?.name || '');
+  const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.tags || []);
+  const [customTag, setCustomTag] = useState('');
+  const [selectedItems, setSelectedItems] = useState<LookItem[]>(initialData?.items || []);
+  const [activeCategory, setActiveCategory] = useState<string>('전체');
 
   const filteredItems =
-    activeCategory === "전체"
+    activeCategory === '전체'
       ? closetItems
       : closetItems.filter((item) => item.category === activeCategory);
 
@@ -85,7 +81,7 @@ export function LookForm({
   const handleAddCustomTag = () => {
     if (customTag.trim() && !selectedTags.includes(customTag.trim())) {
       setSelectedTags([...selectedTags, customTag.trim()]);
-      setCustomTag("");
+      setCustomTag('');
     }
   };
 
@@ -115,7 +111,7 @@ export function LookForm({
       return;
     }
     if (selectedItems.length === 0) {
-      toast.info("최소 1개 이상의 아이템을 선택해주세요");
+      toast.info('최소 1개 이상의 아이템을 선택해주세요');
       return;
     }
 
@@ -131,16 +127,16 @@ export function LookForm({
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* 헤더 */}
-      <div className="flex-shrink-0 p-6 pb-4 bg-white">
+      <div className="shrink-0 p-6 pb-4 bg-white">
         <h2
           className="text-black"
           style={{
             fontFamily: "var(--font-inter), 'Inter', sans-serif",
-            fontSize: "18px",
+            fontSize: '18px',
             fontWeight: 600,
           }}
         >
-          {mode === "add" ? t('looks.addLook') : t('looks.editLook')}
+          {mode === 'add' ? t('looks.addLook') : t('looks.editLook')}
         </h2>
       </div>
 
@@ -152,7 +148,7 @@ export function LookForm({
             className="block text-black mb-2"
             style={{
               fontFamily: "var(--font-inter), 'Inter', sans-serif",
-              fontSize: "13px",
+              fontSize: '13px',
               fontWeight: 600,
             }}
           >
@@ -165,12 +161,12 @@ export function LookForm({
             placeholder="예: 출근룩, 데이트룩"
             className="w-full px-4 py-3 bg-white text-black placeholder-gray-400"
             style={{
-              borderRadius: "12px",
-              border: "1.5px solid #E5E5E5",
+              borderRadius: '12px',
+              border: '1.5px solid #E5E5E5',
               fontFamily: "var(--font-inter), 'Inter', sans-serif",
-              fontSize: "14px",
+              fontSize: '14px',
               fontWeight: 400,
-              outline: "none",
+              outline: 'none',
             }}
           />
         </div>
@@ -181,7 +177,7 @@ export function LookForm({
             className="block text-black mb-2"
             style={{
               fontFamily: "var(--font-inter), 'Inter', sans-serif",
-              fontSize: "13px",
+              fontSize: '13px',
               fontWeight: 600,
             }}
           >
@@ -193,17 +189,13 @@ export function LookForm({
                 key={tag}
                 onClick={() => handleToggleTag(tag)}
                 className={`px-3 py-1.5 transition-all ${
-                  selectedTags.includes(tag)
-                    ? "text-white"
-                    : "text-black bg-gray-100"
+                  selectedTags.includes(tag) ? 'text-white' : 'text-black bg-gray-100'
                 }`}
                 style={{
-                  borderRadius: "999px",
-                  backgroundColor: selectedTags.includes(tag)
-                    ? "#000"
-                    : undefined,
+                  borderRadius: '999px',
+                  backgroundColor: selectedTags.includes(tag) ? '#000' : undefined,
                   fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                  fontSize: "12px",
+                  fontSize: '12px',
                   fontWeight: 500,
                 }}
               >
@@ -219,7 +211,7 @@ export function LookForm({
               value={customTag}
               onChange={(e) => setCustomTag(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") {
+                if (e.key === 'Enter') {
                   e.preventDefault();
                   handleAddCustomTag();
                 }
@@ -227,22 +219,22 @@ export function LookForm({
               placeholder={t('closet.enterTagPlaceholder')}
               className="flex-1 px-4 py-2 bg-white text-black placeholder-gray-400"
               style={{
-                borderRadius: "12px",
-                border: "1.5px solid #E5E5E5",
+                borderRadius: '12px',
+                border: '1.5px solid #E5E5E5',
                 fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                fontSize: "13px",
+                fontSize: '13px',
                 fontWeight: 400,
-                outline: "none",
+                outline: 'none',
               }}
             />
             <button
               onClick={handleAddCustomTag}
               className="px-4 py-2 text-white"
               style={{
-                borderRadius: "12px",
-                backgroundColor: "#000",
+                borderRadius: '12px',
+                backgroundColor: '#000',
                 fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                fontSize: "13px",
+                fontSize: '13px',
                 fontWeight: 600,
               }}
             >
@@ -252,12 +244,12 @@ export function LookForm({
 
           {/* 선택된 태그 표시 */}
           {selectedTags.length > 0 && (
-            <div className="mt-3 p-3 bg-gray-50" style={{ borderRadius: "12px" }}>
+            <div className="mt-3 p-3 bg-gray-50" style={{ borderRadius: '12px' }}>
               <p
                 className="text-[#666] mb-2"
                 style={{
                   fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                  fontSize: "11px",
+                  fontSize: '11px',
                   fontWeight: 500,
                 }}
               >
@@ -269,18 +261,15 @@ export function LookForm({
                     key={tag}
                     className="px-3 py-1 text-white inline-flex items-center gap-1"
                     style={{
-                      borderRadius: "999px",
-                      backgroundColor: "#000",
+                      borderRadius: '999px',
+                      backgroundColor: '#000',
                       fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                      fontSize: "11px",
+                      fontSize: '11px',
                       fontWeight: 500,
                     }}
                   >
                     #{tag}
-                    <button
-                      onClick={() => handleRemoveTag(tag)}
-                      className="hover:opacity-70"
-                    >
+                    <button onClick={() => handleRemoveTag(tag)} className="hover:opacity-70">
                       <X size={12} strokeWidth={2} />
                     </button>
                   </span>
@@ -297,7 +286,7 @@ export function LookForm({
               className="block text-black mb-2"
               style={{
                 fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                fontSize: "13px",
+                fontSize: '13px',
                 fontWeight: 600,
               }}
             >
@@ -308,11 +297,11 @@ export function LookForm({
                 <div
                   key={item.id}
                   className="flex items-center gap-2 p-2 bg-gray-50"
-                  style={{ borderRadius: "10px" }}
+                  style={{ borderRadius: '10px' }}
                 >
                   <div
-                    className="w-10 h-10 bg-gray-200 flex-shrink-0 overflow-hidden"
-                    style={{ borderRadius: "6px" }}
+                    className="w-10 h-10 bg-gray-200 shrink-0 overflow-hidden"
+                    style={{ borderRadius: '6px' }}
                   >
                     {item.imageUrl ? (
                       <ImageWithFallback
@@ -326,7 +315,7 @@ export function LookForm({
                           className="text-[#999]"
                           style={{
                             fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                            fontSize: "8px",
+                            fontSize: '8px',
                             fontWeight: 500,
                           }}
                         >
@@ -340,7 +329,7 @@ export function LookForm({
                       className="text-black truncate"
                       style={{
                         fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                        fontSize: "12px",
+                        fontSize: '12px',
                         fontWeight: 600,
                       }}
                     >
@@ -350,7 +339,7 @@ export function LookForm({
                       className="text-[#666] truncate"
                       style={{
                         fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                        fontSize: "10px",
+                        fontSize: '10px',
                         fontWeight: 400,
                       }}
                     >
@@ -359,8 +348,8 @@ export function LookForm({
                   </div>
                   <button
                     onClick={() => handleRemoveItem(item.id)}
-                    className="p-0.5 hover:bg-gray-200 transition-colors flex-shrink-0"
-                    style={{ borderRadius: "4px" }}
+                    className="p-0.5 hover:bg-gray-200 transition-colors shrink-0"
+                    style={{ borderRadius: '4px' }}
                   >
                     <X size={14} color="#666" strokeWidth={1.5} />
                   </button>
@@ -376,7 +365,7 @@ export function LookForm({
             className="block text-black mb-2"
             style={{
               fontFamily: "var(--font-inter), 'Inter', sans-serif",
-              fontSize: "13px",
+              fontSize: '13px',
               fontWeight: 600,
             }}
           >
@@ -386,15 +375,15 @@ export function LookForm({
           {/* 카테고리 탭 */}
           <div className="flex gap-2 mb-3 overflow-x-auto scrollbar-hide pb-2">
             <button
-              onClick={() => setActiveCategory("전체")}
-              className={`px-4 py-2 flex-shrink-0 transition-all ${
-                activeCategory === "전체" ? "text-white" : "text-black bg-gray-100"
+              onClick={() => setActiveCategory('전체')}
+              className={`px-4 py-2 shrink-0 transition-all ${
+                activeCategory === '전체' ? 'text-white' : 'text-black bg-gray-100'
               }`}
               style={{
-                borderRadius: "999px",
-                backgroundColor: activeCategory === "전체" ? "#000" : undefined,
+                borderRadius: '999px',
+                backgroundColor: activeCategory === '전체' ? '#000' : undefined,
                 fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                fontSize: "12px",
+                fontSize: '12px',
                 fontWeight: 600,
               }}
             >
@@ -404,14 +393,14 @@ export function LookForm({
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`px-4 py-2 flex-shrink-0 transition-all ${
-                  activeCategory === cat ? "text-white" : "text-black bg-gray-100"
+                className={`px-4 py-2 shrink-0 transition-all ${
+                  activeCategory === cat ? 'text-white' : 'text-black bg-gray-100'
                 }`}
                 style={{
-                  borderRadius: "999px",
-                  backgroundColor: activeCategory === cat ? "#000" : undefined,
+                  borderRadius: '999px',
+                  backgroundColor: activeCategory === cat ? '#000' : undefined,
                   fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                  fontSize: "12px",
+                  fontSize: '12px',
                   fontWeight: 600,
                 }}
               >
@@ -429,16 +418,16 @@ export function LookForm({
                   key={item.id}
                   onClick={() => handleToggleItem(item)}
                   className={`relative aspect-square overflow-hidden transition-all ${
-                    isSelected ? "ring-[3px] ring-black" : ""
+                    isSelected ? 'ring-[3px] ring-black' : ''
                   }`}
                   style={{
-                    borderRadius: "12px",
-                    border: isSelected ? "none" : "1.5px solid #E5E5E5",
+                    borderRadius: '12px',
+                    border: isSelected ? 'none' : '1.5px solid #E5E5E5',
                   }}
                 >
                   <div
                     className={`w-full h-full bg-gray-100 transition-opacity ${
-                      isSelected ? "opacity-75" : ""
+                      isSelected ? 'opacity-75' : ''
                     }`}
                   >
                     {item.imageUrl ? (
@@ -453,7 +442,7 @@ export function LookForm({
                           className="text-[#000] mb-1"
                           style={{
                             fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                            fontSize: "10px",
+                            fontSize: '10px',
                             fontWeight: 600,
                           }}
                         >
@@ -463,9 +452,9 @@ export function LookForm({
                           className="text-[#666] text-center"
                           style={{
                             fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                            fontSize: "9px",
+                            fontSize: '9px',
                             fontWeight: 400,
-                            lineHeight: "1.2",
+                            lineHeight: '1.2',
                           }}
                         >
                           {item.name}
@@ -476,7 +465,7 @@ export function LookForm({
                   {isSelected && (
                     <div
                       className="absolute top-2 right-2 w-6 h-6 bg-black flex items-center justify-center shadow-lg"
-                      style={{ borderRadius: "50%" }}
+                      style={{ borderRadius: '50%' }}
                     >
                       <svg
                         width="14"
@@ -506,7 +495,7 @@ export function LookForm({
                 className="text-[#999]"
                 style={{
                   fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                  fontSize: "13px",
+                  fontSize: '13px',
                   fontWeight: 400,
                 }}
               >
@@ -518,17 +507,17 @@ export function LookForm({
       </div>
 
       {/* 하단 버튼 */}
-      <div className="flex-shrink-0 px-6 pb-6 pt-3 flex gap-3">
+      <div className="shrink-0 px-6 pb-6 pt-3 flex gap-3">
         <button
           onClick={onCancel}
           className="flex-1 px-5 py-3 hover:bg-gray-50 transition-colors"
           style={{
-            borderRadius: "12px",
-            border: "1.5px solid #E5E5E5",
+            borderRadius: '12px',
+            border: '1.5px solid #E5E5E5',
             fontFamily: "var(--font-inter), 'Inter', sans-serif",
-            fontSize: "14px",
+            fontSize: '14px',
             fontWeight: 600,
-            color: "#000",
+            color: '#000',
           }}
         >
           {t('common.cancel')}
@@ -538,14 +527,23 @@ export function LookForm({
           disabled={isSaving || !isFormValid}
           className="flex-1 px-5 py-3 text-white hover:opacity-90 transition-opacity disabled:opacity-60 inline-flex items-center justify-center gap-2"
           style={{
-            borderRadius: "12px",
-            backgroundColor: "#000",
+            borderRadius: '12px',
+            backgroundColor: '#000',
             fontFamily: "var(--font-inter), 'Inter', sans-serif",
-            fontSize: "14px",
+            fontSize: '14px',
             fontWeight: 600,
           }}
         >
-          {isSaving ? <><Spinner size="sm" className="text-white" />{mode === "add" ? t('looks.createLook') : t('looks.saveLook')}</> : (mode === "add" ? t('looks.createLook') : t('looks.saveLook'))}
+          {isSaving ? (
+            <>
+              <Spinner size="sm" className="text-white" />
+              {mode === 'add' ? t('looks.createLook') : t('looks.saveLook')}
+            </>
+          ) : mode === 'add' ? (
+            t('looks.createLook')
+          ) : (
+            t('looks.saveLook')
+          )}
         </button>
       </div>
     </div>
