@@ -217,7 +217,7 @@ export function LookForm({
                 }
               }}
               placeholder={t('closet.enterTagPlaceholder')}
-              className="flex-1 px-4 py-2 bg-white text-black placeholder-gray-400"
+              className="flex-1 min-w-0 px-4 py-2 bg-white text-black placeholder-gray-400"
               style={{
                 borderRadius: '12px',
                 border: '1.5px solid #E5E5E5',
@@ -229,7 +229,7 @@ export function LookForm({
             />
             <button
               onClick={handleAddCustomTag}
-              className="px-4 py-2 text-white"
+              className="shrink-0 whitespace-nowrap px-4 py-2 text-white"
               style={{
                 borderRadius: '12px',
                 backgroundColor: '#000',
