@@ -2,7 +2,7 @@ export function ClosetGridSkeleton() {
   return (
     <>
       {/* 아이템 개수 placeholder */}
-      <div className="flex-shrink-0 px-6 pb-4">
+      <div className="shrink-0 px-6 pb-4">
         <div className="h-[18px] w-14 rounded bg-gray-100 skeleton-shimmer" />
       </div>
 
@@ -12,8 +12,7 @@ export function ClosetGridSkeleton() {
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i}>
               <div
-                className="aspect-square bg-gray-100 skeleton-shimmer"
-                style={{ borderRadius: '16px' }}
+                className="aspect-square bg-gray-100 skeleton-shimmer rounded-2xl"
               />
               <div className="mt-2 space-y-1.5">
                 <div className="h-[13px] bg-gray-100 skeleton-shimmer rounded w-3/4" />
