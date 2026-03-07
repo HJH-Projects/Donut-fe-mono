@@ -24,14 +24,14 @@ export function MyProfileCard({
   return (
     <div className="px-6 mb-8">
       <div
-        className="p-8"
+        className="p-8 relative"
         style={{
           backgroundColor: '#000000',
           borderRadius: 'var(--radius-xl)',
           minHeight: '212px',
         }}
       >
-        <div className="flex items-center justify-between mb-2">
+        <div className="mb-2">
           <h2
             style={{
               fontFamily: "var(--font-inter), 'Inter', sans-serif",
@@ -43,14 +43,14 @@ export function MyProfileCard({
           >
             {nickname}
           </h2>
-          <button
-            onClick={onEditNickname}
-            className="p-1.5 hover:bg-white/10 transition-colors"
-            style={{ borderRadius: '6px' }}
-          >
-            <Pencil size={18} color="rgba(255, 255, 255, 0.7)" strokeWidth={2} />
-          </button>
         </div>
+        <button
+          onClick={onEditNickname}
+          className="absolute top-8 right-8 z-10 p-2 bg-black hover:bg-black/90 transition-colors rounded-full"
+          style={{ border: '1px solid rgba(255, 255, 255, 0.15)' }}
+        >
+          <Pencil size={18} color="rgba(255, 255, 255, 0.7)" strokeWidth={2} />
+        </button>
 
         <p
           className="mb-6"
