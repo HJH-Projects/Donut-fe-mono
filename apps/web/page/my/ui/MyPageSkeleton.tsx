@@ -2,13 +2,7 @@
 
 import { ChevronRight, LogOut } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { Gender } from '@/shared/model/gender';
-
-interface MyPageSkeletonProps {
-  initialGender?: Gender;
-}
-
-export function MyPageSkeleton({ initialGender: _ }: MyPageSkeletonProps) {
+export function MyPageSkeleton() {
   const { t } = useTranslation();
 
   return (
@@ -17,11 +11,11 @@ export function MyPageSkeleton({ initialGender: _ }: MyPageSkeletonProps) {
       style={{ backgroundColor: '#FFFFFF' }}
     >
       {/* 상단 타이틀 */}
-      <div className="flex-shrink-0 px-6 pt-12 pb-10">
+      <div className="shrink-0 px-6 pt-12 pb-10">
         <h1
           className="text-black"
           style={{
-            fontFamily: "var(--font-playfair), 'Playfair Display', serif",
+            fontFamily: "var(--font-inter), 'Inter', sans-serif",
             fontSize: '42px',
             fontWeight: 700,
             fontStyle: 'italic',

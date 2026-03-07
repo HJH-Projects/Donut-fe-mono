@@ -10,7 +10,7 @@ export default async function Page() {
   const initialGender = (cookieStore.get(GENDER_COOKIE)?.value ?? 'FEMALE') as Gender;
 
   return (
-    <Suspense fallback={<MyPageSkeleton initialGender={initialGender} />}>
+    <Suspense fallback={<MyPageSkeleton />}>
       <MyPageLoader initialGender={initialGender} />
     </Suspense>
   );
