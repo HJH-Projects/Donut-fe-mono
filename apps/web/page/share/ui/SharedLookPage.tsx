@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Share2, Trash2, Link2, Copy, X } from 'lucide-react';
+import { Share2, Trash2, Link2, Copy, X, Crown } from 'lucide-react';
 import { ImageWithFallback } from '@/shared/ui/ImageWithFallback';
 import { useTranslation } from 'react-i18next';
 import type { CommentResponseDto, ShareLinkDetailResponseDto } from '@/shared/model/orvalSchemas';
@@ -138,9 +138,7 @@ export function SharedLookPage({
   };
 
   const handleDeleteComment = async (commentId: string) => {
-    if (confirm(t('sharedLook.deleteCommentConfirm'))) {
-      await deleteComment(commentId);
-    }
+    await deleteComment(commentId);
   };
 
   const closeShareDialog = () => {
@@ -451,7 +449,7 @@ export function SharedLookPage({
             {t('sharedLook.comments')} ({comments.length})
           </h3>
 
-          <div className="space-y-2 mb-6">
+          <div className="mb-6 divide-y divide-[#ECEEF1]">
             {comments.length === 0 ? (
               <div className="py-12 text-center">
                 <p
@@ -466,24 +464,31 @@ export function SharedLookPage({
                 </p>
               </div>
             ) : (
-              comments.map((comment) => (
+              comments.map((comment) => {
+                const isOwnerComment = !!(comment.userId && look.user?.id && comment.userId === look.user.id);
+
+                return (
                 <div
                   key={comment.id}
-                  className="p-4 bg-white relative"
-                  style={{ borderRadius: '12px', border: '1.5px solid #E5E5E5' }}
+                  className="py-3"
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <p
-                      className="text-black"
-                      style={{
-                        fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                        fontSize: '13px',
-                        fontWeight: 600,
-                      }}
-                    >
-                      {comment.author}
-                    </p>
+                  <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2">
+                      {isOwnerComment && (
+                        <Crown size={12} color="#F59E0B" strokeWidth={2.3} />
+                      )}
+                      <p
+                        className="text-black"
+                        style={{
+                          fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                          fontSize: '13px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {comment.author}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1">
                       <p
                         className="text-[#999]"
                         style={{
@@ -497,7 +502,7 @@ export function SharedLookPage({
                       {currentUserId && comment.userId === currentUserId && (
                         <button
                           onClick={() => handleDeleteComment(comment.id)}
-                          className="p-1 hover:bg-gray-100 transition-colors"
+                          className="w-7 h-7 inline-flex items-center justify-center hover:bg-gray-100 transition-colors"
                           style={{ borderRadius: '6px' }}
                         >
                           <Trash2 size={14} color="#999" strokeWidth={1.5} />
@@ -506,18 +511,19 @@ export function SharedLookPage({
                     </div>
                   </div>
                   <p
-                    className="text-[#333]"
+                    className="text-[#111827]"
                     style={{
                       fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                      fontSize: '13px',
+                      fontSize: '14px',
                       fontWeight: 400,
-                      lineHeight: '1.5',
+                      lineHeight: '1.55',
                     }}
                   >
                     {comment.content}
                   </p>
                 </div>
-              ))
+                );
+              })
             )}
           </div>
 
