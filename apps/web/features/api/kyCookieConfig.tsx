@@ -18,15 +18,3 @@ export const getRefreshTokenCookieHeader = async () => {
 export const getRequestCookies = async () => {
   return getAccessTokenCookieHeader();
 };
-
-export const getAccessTokenUserId = async (): Promise<string | null> => {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value;
-  if (!token) return null;
-  try {
-    const payload = token.split('.')[1];
-    return JSON.parse(Buffer.from(payload, 'base64url').toString()).sub ?? null;
-  } catch {
-    return null;
-  }
-};

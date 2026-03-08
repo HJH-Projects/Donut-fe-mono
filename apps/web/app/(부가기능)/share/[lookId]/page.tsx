@@ -4,9 +4,12 @@ import { notFound } from 'next/navigation';
 import { SharedLookPage } from '@/page/share/ui/SharedLookPage';
 import { BottomNav } from '@/shared/ui/BottomNav';
 import { serverKy } from '@/features/api/serverKy';
+import { getAccessTokenUserId } from '@/features/api/getEdgeCookieData';
 import { getSharesDetailApi } from '@/shared/api/endpointTags/shares';
 import { getShareCommentsApi } from '@/shared/api/endpointTags/comments';
 import type { ShareLinkDetailResponseDto } from '@/shared/model/orvalSchemas';
+
+export const runtime = 'edge';
 
 function getWebBaseUrl() {
   return (process.env.NEXT_PUBLIC_WEB_URL || 'https://doknot.xyz').replace(/\/+$/, '');
@@ -72,6 +75,7 @@ export default async function Page({ params }: { params: Promise<{ lookId: strin
   const { lookId: sharePath } = await params;
   const cookieStore = await cookies();
   const isLoggedIn = !!cookieStore.get('accessToken');
+  const currentUserId = await getAccessTokenUserId();
 
   const initialShareDetail = await getSharesDetailApi(serverKy, sharePath).catch(() => null);
   if (!initialShareDetail) {
@@ -87,6 +91,7 @@ export default async function Page({ params }: { params: Promise<{ lookId: strin
         initialShareDetail={initialShareDetail}
         initialComments={initialComments}
         isLoggedIn={isLoggedIn}
+        currentUserId={currentUserId}
       />
       <BottomNav />
     </div>

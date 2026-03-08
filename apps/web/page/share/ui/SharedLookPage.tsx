@@ -24,6 +24,7 @@ interface SharedLookPageProps {
   initialShareDetail?: ShareLinkDetailResponseDto | null;
   initialComments?: CommentResponseDto[];
   isLoggedIn?: boolean;
+  currentUserId?: string | null;
 }
 
 export function SharedLookPage({
@@ -31,6 +32,7 @@ export function SharedLookPage({
   initialShareDetail = null,
   initialComments = [],
   isLoggedIn = false,
+  currentUserId = null,
 }: SharedLookPageProps) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -47,8 +49,6 @@ export function SharedLookPage({
   const [showLinkCreator, setShowLinkCreator] = useState(false);
   const [sharedLinks, setSharedLinks] = useState<SharedLink[]>([]);
   const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
-
-  const currentUser = { id: 'current-user-id', name: '나' };
 
   const requireLogin = () => {
     if (!isLoggedIn) {
@@ -395,7 +395,7 @@ export function SharedLookPage({
                     <ImageWithFallback
                       src={item.imageUrl}
                       alt={item.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover object-center"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -494,7 +494,7 @@ export function SharedLookPage({
                       >
                         {formatDate(comment.createdAt)}
                       </p>
-                      {comment.userId === currentUser.id && (
+                      {currentUserId && comment.userId === currentUserId && (
                         <button
                           onClick={() => handleDeleteComment(comment.id)}
                           className="p-1 hover:bg-gray-100 transition-colors"

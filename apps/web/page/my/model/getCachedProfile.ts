@@ -1,7 +1,7 @@
 import { unstable_cache } from 'next/cache';
 import { cookies } from 'next/headers';
 
-import { getAccessTokenUserId } from '@/features/api/kyCookieConfig';
+import { getAccessTokenUserId } from '@/features/api/getEdgeCookieData';
 import { createKyWithCookie } from '@/features/api/serverKy';
 import { getUsersMeApi } from '@/shared/api/endpointTags/users';
 import { PROFILE_CACHE_TAG } from '@/shared/api/cacheTags';

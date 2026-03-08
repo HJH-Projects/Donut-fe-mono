@@ -1,7 +1,7 @@
 import { unstable_cache } from 'next/cache';
 import { cookies } from 'next/headers';
 
-import { getAccessTokenUserId } from '@/features/api/kyCookieConfig';
+import { getAccessTokenUserId } from '@/features/api/getEdgeCookieData';
 import { createKyWithCookie } from '@/features/api/serverKy';
 import { getLocationsApi, getLocationWeatherApi } from '@/shared/api/endpointTags/locations';
 import { getRecommendationsLookApi } from '@/shared/api/endpointTags/recommendations';
