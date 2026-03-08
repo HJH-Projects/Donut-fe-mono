@@ -11,4 +11,6 @@ export interface CreateShareLinkDto {
   lookId: string;
   /** 만료 일시 (미사용: 서버에서 생성 시점 기준 3시간으로 고정) */
   expiresAt?: string;
+  /** 공유 링크 별칭 (미입력 시 path를 별칭으로 사용) */
+  alias?: string;
 }

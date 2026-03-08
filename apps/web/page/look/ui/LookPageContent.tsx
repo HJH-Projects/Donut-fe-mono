@@ -2,6 +2,7 @@
 
 import { use } from 'react';
 import { Dialog } from '@base-ui/react/dialog';
+import { X } from 'lucide-react';
 import { LookForm } from '@/shared/ui/LookForm';
 import { useTranslation } from 'react-i18next';
 import { LookCountMeta } from './LookCountMeta';
@@ -54,6 +55,7 @@ export function LookContent({
     copiedLinkId,
     linkName,
     setLinkName,
+    isCreatingShareLink,
     isLoadingSharedLinks,
     handleToggleFavorite,
     handleCardClick,
@@ -90,7 +92,7 @@ export function LookContent({
             description={looks.length === 0 ? t('looks.emptyDescription') : t('looks.noResultsDescription')}
           />
         ) : (
-          <div className="px-6 flex flex-col gap-4">
+          <div className="px-6 pt-2 flex flex-col gap-4">
             {filteredLooks.map((look) => (
               <LookListCard
                 key={look.id}
@@ -141,6 +143,13 @@ export function LookContent({
             className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[400px] max-h-[85vh] flex flex-col overflow-hidden rounded-[24px]"
             aria-describedby={undefined}
           >
+            <button
+              onClick={() => closeGlobalDialog('look:add')}
+              className="absolute top-6 right-6 z-[60] p-1 hover:bg-gray-100 transition-colors rounded-md"
+              aria-label="닫기"
+            >
+              <X size={18} color="#000" strokeWidth={1.8} />
+            </button>
             <LookForm
               mode="add"
               closetItems={closetItems}
@@ -160,6 +169,16 @@ export function LookContent({
             className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[400px] max-h-[85vh] flex flex-col overflow-hidden rounded-[24px]"
             aria-describedby={undefined}
           >
+            <button
+              onClick={() => {
+                setShowEditDialog(false);
+                setSelectedLook(null);
+              }}
+              className="absolute top-6 right-6 z-[60] p-1 hover:bg-gray-100 transition-colors rounded-md"
+              aria-label="닫기"
+            >
+              <X size={18} color="#000" strokeWidth={1.8} />
+            </button>
             {selectedLook && (
               <LookForm
                 mode="edit"
@@ -186,6 +205,7 @@ export function LookContent({
         confirmLabel={t('profile.confirm')}
         onLinkNameChange={setLinkName}
         onCreateLink={handleCreateLink}
+        isCreating={isCreatingShareLink}
       />
 
       <LookShareDialog

@@ -3,4 +3,5 @@ export type SharedLink = {
   name: string;
   url: string;
   createdAt: Date;
+  isExpired: boolean;
 };

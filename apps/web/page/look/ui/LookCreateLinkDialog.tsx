@@ -2,6 +2,7 @@
 
 import { Dialog } from '@base-ui/react/dialog';
 import { Link2, X } from 'lucide-react';
+import Spinner from '@/shared/ui/Spinner';
 import type { Look } from '../model/useLooks';
 import { closeGlobalDialog, useGlobalDialogOpen } from '@/shared/model/globalDialogStore';
 
@@ -12,6 +13,7 @@ type LookCreateLinkDialogProps = {
   placeholder: string;
   cancelLabel: string;
   confirmLabel: string;
+  isCreating: boolean;
   onLinkNameChange: (value: string) => void;
   onCreateLink: () => void;
 };
@@ -23,6 +25,7 @@ export function LookCreateLinkDialog({
   placeholder,
   cancelLabel,
   confirmLabel,
+  isCreating,
   onLinkNameChange,
   onCreateLink,
 }: LookCreateLinkDialogProps) {
@@ -64,16 +67,27 @@ export function LookCreateLinkDialog({
               <div className="shrink-0 p-6 pt-4 flex gap-3">
                 <button
                   onClick={() => closeGlobalDialog('look:createLink')}
-                  className="flex-1 px-5 py-3 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors rounded-xl border-[1.5px] border-[#E5E5E5] text-sm font-semibold text-black"
+                  disabled={isCreating}
+                  className="flex-1 px-5 py-3 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors rounded-xl border-[1.5px] border-[#E5E5E5] text-sm font-semibold text-black disabled:opacity-60"
                 >
                   {cancelLabel}
                 </button>
                 <button
                   onClick={onCreateLink}
-                  className="flex-1 px-5 py-3 flex items-center justify-center gap-2 text-white hover:opacity-90 transition-opacity rounded-xl bg-black text-sm font-semibold"
+                  disabled={isCreating}
+                  className="flex-1 px-5 py-3 flex items-center justify-center gap-2 text-white hover:opacity-90 transition-opacity rounded-xl bg-black text-sm font-semibold disabled:opacity-60"
                 >
-                  <Link2 size={16} strokeWidth={2} />
-                  {confirmLabel}
+                  {isCreating ? (
+                    <>
+                      <Spinner size="sm" className="text-white" />
+                      생성 중...
+                    </>
+                  ) : (
+                    <>
+                      <Link2 size={16} strokeWidth={2} />
+                      {confirmLabel}
+                    </>
+                  )}
                 </button>
               </div>
             </>

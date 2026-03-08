@@ -4,12 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ClothesListItemResponseDto, LookResponseDto } from '@/shared/model/orvalSchemas';
 import { useToast } from '@/shared/model/useToast';
 import { deleteSharesApi, getSharesApi, postSharesApi } from '@/shared/api/endpointTags/shares';
+import { toApiError } from '@/shared/api/error';
 import { clientKy } from '@/features/api/clientKy';
 import { useLooks, type Look, type LookItem } from './useLooks';
 import type { SharedLink } from '../ui/lookShare.types';
 import {
   closeGlobalDialog,
   openGlobalDialog,
+  replaceGlobalDialog,
   useGlobalDialogOpen,
 } from '@/shared/model/globalDialogStore';
 
@@ -77,7 +79,9 @@ export function useLookContentData({
   const showCreateLinkDialog = useGlobalDialogOpen('look:createLink');
   const [isSavingLook, setIsSavingLook] = useState(false);
   const [isDeletingLook, setIsDeletingLook] = useState(false);
+  const [isCreatingShareLink, setIsCreatingShareLink] = useState(false);
   const [isLoadingSharedLinks, setIsLoadingSharedLinks] = useState(false);
+  const [loadedShareLookId, setLoadedShareLookId] = useState<string | null>(null);
 
   const [selectedLook, setSelectedLook] = useState<Look | null>(null);
   const [sharedLinks, setSharedLinks] = useState<SharedLink[]>([]);
@@ -191,7 +195,7 @@ export function useLookContentData({
               objectType: 'feed',
               content: {
                 title: lookName,
-                description: '룩을 확인해보세요.',
+                description: '친구가 공유한 룩이 도착했어요. 지금 확인해보세요.',
                 imageUrl,
                 link: {
                   mobileWebUrl: shareUrl,
@@ -200,7 +204,7 @@ export function useLookContentData({
               },
               buttons: [
                 {
-                  title: '룩 보기',
+                  title: '룩 보러가기',
                   link: {
                     mobileWebUrl: shareUrl,
                     webUrl: shareUrl,
@@ -211,12 +215,12 @@ export function useLookContentData({
           } else {
             window.Kakao.Share?.sendDefault({
               objectType: 'text',
-              text: `${lookName}\n${shareUrl}`,
+              text: `${lookName}\n친구가 공유한 룩이 도착했어요. 지금 확인해보세요.\n${shareUrl}`,
               link: {
                 mobileWebUrl: shareUrl,
                 webUrl: shareUrl,
               },
-              buttonTitle: '룩 보기',
+              buttonTitle: '룩 보러가기',
             });
           }
           return true;
@@ -230,17 +234,30 @@ export function useLookContentData({
   );
 
   const loadSharedLinks = useCallback(
-    async (lookId: string) => {
+    async (lookId: string, lookName?: string) => {
       setIsLoadingSharedLinks(true);
       try {
         const list = await getSharesApi(clientKy);
-        const mapped = list
-          .filter((link) => link.lookId === lookId)
+        const normalizedLookId = String(lookId);
+        const byLookId = list.filter((link) => {
+          const candidate =
+            (link as { lookId?: string }).lookId ??
+            (link as { look?: { id?: string } }).look?.id;
+          return candidate ? String(candidate) === normalizedLookId : false;
+        });
+        const byLookName =
+          byLookId.length === 0 && lookName
+            ? list.filter((link) => link.lookName === lookName)
+            : [];
+        const source = byLookId.length > 0 ? byLookId : byLookName.length > 0 ? byLookName : list;
+
+        const mapped = source
           .map((link) => ({
             id: link.id,
-            name: link.lookName || '공유 링크',
+            name: link.alias || link.lookName || '공유 링크',
             url: `${getShareBaseUrl()}/share/${link.path}`,
             createdAt: new Date(link.createdAt),
+            isExpired: Boolean(link.isExpired),
           }))
           .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         setSharedLinks(mapped);
@@ -252,13 +269,23 @@ export function useLookContentData({
   );
 
   useEffect(() => {
-    if (!showShareDialog || !selectedLook) return;
-    loadSharedLinks(selectedLook.id).catch(() => {
+    if (!showShareDialog) {
+      setIsLoadingSharedLinks(false);
+      setLoadedShareLookId(null);
+      return;
+    }
+    const lookId = selectedLook?.id;
+    if (!lookId) return;
+    if (loadedShareLookId === lookId) return;
+
+    setLoadedShareLookId(lookId);
+    loadSharedLinks(lookId, selectedLook.name).catch(() => {
       toast.error('공유 링크 목록을 불러오지 못했습니다.');
     });
-  }, [showShareDialog, selectedLook, loadSharedLinks, toast]);
+  }, [showShareDialog, selectedLook?.id, selectedLook?.name, loadedShareLookId, loadSharedLinks, toast]);
 
   const handleToggleFavorite = (id: string) => {
+    setSelectedLook((prev) => (prev && prev.id === id ? { ...prev, isFavorite: !prev.isFavorite } : prev));
     toggleFavorite(id);
   };
 
@@ -353,13 +380,33 @@ export function useLookContentData({
   const handleCreateLink = async () => {
     if (!selectedLook) return;
 
+    setIsCreatingShareLink(true);
     try {
-      await postSharesApi(clientKy, { lookId: selectedLook.id });
-      await loadSharedLinks(selectedLook.id);
+      const alias = linkName.trim() || `${selectedLook.name} 링크`;
+      const created = await postSharesApi(clientKy, {
+        lookId: selectedLook.id,
+        alias,
+      });
+
+      const createdLink: SharedLink = {
+        id: created.id,
+        name: created.alias || alias,
+        url: `${getShareBaseUrl()}/share/${created.path}`,
+        createdAt: new Date(),
+        isExpired: false,
+      };
+      setSharedLinks((prev) => [createdLink, ...prev.filter((item) => item.id !== createdLink.id)]);
+
       setLinkName('');
-      closeGlobalDialog('look:createLink');
-    } catch {
-      toast.error('공유 링크 생성에 실패했습니다. 다시 시도해주세요.');
+      replaceGlobalDialog('look:share');
+
+      loadSharedLinks(selectedLook.id, selectedLook.name).catch(() => {
+        // 생성은 성공했으므로 목록 재조회 실패는 조용히 무시
+      });
+    } catch (e) {
+      toast.apiError(await toApiError(e), '공유 링크 생성에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsCreatingShareLink(false);
     }
   };
 
@@ -393,20 +440,24 @@ export function useLookContentData({
     }
   };
 
-  const handleDeleteLink = (linkId: string) => {
+  const handleDeleteLink = async (linkId: string) => {
     if (!selectedLook) return;
-    if (!confirm('링크를 삭제하시겠습니까?')) return;
 
-    deleteSharesApi(clientKy, linkId)
-      .then(async () => {
-        await loadSharedLinks(selectedLook.id);
-        if (selectedLink?.id === linkId) {
-          setSelectedLink(null);
-        }
-      })
-      .catch(() => {
-        toast.error('링크 삭제에 실패했습니다. 다시 시도해주세요.');
+    const previousLinks = sharedLinks;
+    setSharedLinks((prev) => prev.filter((link) => link.id !== linkId));
+    if (selectedLink?.id === linkId) {
+      setSelectedLink(null);
+    }
+
+    try {
+      await deleteSharesApi(clientKy, linkId);
+      loadSharedLinks(selectedLook.id, selectedLook.name).catch(() => {
+        // 삭제는 성공했으므로 백그라운드 동기화 실패는 조용히 무시
       });
+    } catch {
+      setSharedLinks(previousLinks);
+      toast.error('링크 삭제에 실패했습니다. 다시 시도해주세요.');
+    }
   };
 
   const handleCopyLink = (url: string, linkId: string) => {
@@ -493,6 +544,7 @@ export function useLookContentData({
     copiedLinkId,
     linkName,
     setLinkName,
+    isCreatingShareLink,
     isLoadingSharedLinks,
 
     handleToggleFavorite,

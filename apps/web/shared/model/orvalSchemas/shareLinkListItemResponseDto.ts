@@ -12,6 +12,7 @@ export interface ShareLinkListItemResponseDto {
   /** @nullable */
   lookName: string | null;
   path: string;
+  alias: string;
   isActive: boolean;
   isExpired: boolean;
   /** @nullable */

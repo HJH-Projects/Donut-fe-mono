@@ -10,6 +10,7 @@ export interface ShareLinkResponseDto {
   id: string;
   lookId: string;
   path: string;
+  alias: string;
   isActive: boolean;
   /** @nullable */
   expiresAt: string | null;

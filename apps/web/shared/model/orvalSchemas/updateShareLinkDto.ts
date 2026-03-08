@@ -11,4 +11,6 @@ export interface UpdateShareLinkDto {
   isActive?: boolean;
   /** 만료 일시 */
   expiresAt?: string;
+  /** 공유 링크 별칭 (빈 문자열이면 path로 fallback) */
+  alias?: string;
 }

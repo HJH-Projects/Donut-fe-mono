@@ -8,6 +8,7 @@
 
 export interface ShareLinkUpdateResponseDto {
   id: string;
+  alias: string;
   isActive: boolean;
   /** @nullable */
   expiresAt: string | null;

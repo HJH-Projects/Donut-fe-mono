@@ -10,6 +10,7 @@ import type { ShareLookDto } from './shareLookDto';
 export interface ShareLinkDetailResponseDto {
   id: string;
   path: string;
+  alias: string;
   isActive: boolean;
   /** @nullable */
   expiresAt: string | null;

@@ -92,7 +92,7 @@ export function LookShareDialog({
                     <div className="space-y-3">
                       {sharedLinks.map((link) => (
                         <div key={link.id} className="relative">
-                          {selectedLink?.id === link.id && (
+                          {selectedLink?.id === link.id && !link.isExpired && (
                             <div className="absolute -top-2 right-2 z-50">
                               <div className="w-6 h-6 flex items-center justify-center bg-black rounded-[var(--radius-sm)]">
                                 <Check size={14} color="#FFFFFF" strokeWidth={2.5} />
@@ -101,32 +101,59 @@ export function LookShareDialog({
                           )}
 
                           <div
-                            onClick={() => onSelectLink(selectedLink?.id === link.id ? null : link)}
-                            className="p-3 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors rounded-xl"
-                            style={{ border: selectedLink?.id === link.id ? '2px solid #000' : '1px solid #E5E5E5' }}
+                            onClick={() => {
+                              if (link.isExpired) return;
+                              onSelectLink(selectedLink?.id === link.id ? null : link);
+                            }}
+                            className={`p-3 transition-colors rounded-xl relative ${
+                              link.isExpired ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-gray-100'
+                            }`}
+                            style={{
+                              backgroundColor: '#F9FAFB',
+                              border: selectedLink?.id === link.id ? '2px solid #000' : '1px solid #E5E5E5',
+                              opacity: link.isExpired ? 0.72 : 1,
+                            }}
                           >
                             <div className="flex items-start justify-between gap-2 mb-2">
                               <div className="flex-1 min-w-0">
-                                <p className="text-[#000] mb-1 text-sm font-semibold">{link.name}</p>
-                                <p className="text-[#666] truncate text-[11px] font-normal" title={link.url}>
+                                <p
+                                  className={`mb-1 text-sm font-semibold relative z-10 text-[#000] ${
+                                    link.isExpired ? 'line-through' : ''
+                                  }`}
+                                >
+                                  {link.name}
+                                </p>
+                                <p
+                                  className="truncate text-[11px] font-normal relative z-10 text-[#666]"
+                                  title={link.url}
+                                >
                                   {link.url}
                                 </p>
                               </div>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onDeleteLink(link.id);
-                                  if (selectedLink?.id === link.id) {
-                                    onSelectLink(null);
-                                  }
-                                }}
-                                className="p-1.5 hover:bg-gray-200 transition-colors shrink-0 rounded-md"
-                                title="링크 삭제"
-                              >
-                                <Trash2 size={14} color="#666" strokeWidth={1.5} />
-                              </button>
+                              <div className="flex items-center gap-2 shrink-0 relative z-10">
+                                {link.isExpired && (
+                                  <span className="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-[#E5E7EB] text-[#374151]">
+                                    만료
+                                  </span>
+                                )}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDeleteLink(link.id);
+                                    if (selectedLink?.id === link.id) {
+                                      onSelectLink(null);
+                                    }
+                                  }}
+                                  className="p-1.5 hover:bg-gray-200 transition-colors rounded-md"
+                                  title="링크 삭제"
+                                >
+                                  <Trash2 size={14} color="#333333" strokeWidth={1.5} />
+                                </button>
+                              </div>
                             </div>
-                            <p className="text-[#999] text-[11px] font-normal">{formatDate(link.createdAt)}</p>
+                            <p className="text-[11px] font-normal relative z-10 text-[#666]">
+                              {formatDate(link.createdAt)}
+                            </p>
                           </div>
                         </div>
                       ))}
