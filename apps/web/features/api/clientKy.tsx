@@ -3,6 +3,7 @@ import ky from 'ky';
 // TODO: 환경변수 설정 필요 (예: process.env.NEXT_PUBLIC_API_URL)
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 const RETRY_HEADER = 'x-auth-retried';
+const DEFAULT_TIMEOUT_MS = 30_000;
 
 const isAuthMaintenanceRequest = (request: Request) => {
   try {
@@ -15,6 +16,7 @@ const isAuthMaintenanceRequest = (request: Request) => {
 
 export const clientKy = ky.create({
   prefixUrl: API_URL,
+  timeout: DEFAULT_TIMEOUT_MS,
   // 쿠키 기반 인증이므로 credentials: 'include' 필수
   // same-origin인 경우 브라우저가 자동으로 쿠키를 보내지만,
   // API 도메인이 다를 경우를 대비해 명시적으로 설정

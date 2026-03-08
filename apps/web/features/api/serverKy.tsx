@@ -3,6 +3,7 @@ import { getAccessTokenCookieHeader } from './kyCookieConfig';
 
 
 const API_SOURCE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const DEFAULT_TIMEOUT_MS = 30_000;
 
 /**
  * Server Actions 등 캐시 밖에서 사용하는 ky 인스턴스.
@@ -10,6 +11,7 @@ const API_SOURCE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080
  */
 export const serverKy = ky.create({
   prefixUrl: API_SOURCE_URL,
+  timeout: DEFAULT_TIMEOUT_MS,
   hooks: {
     beforeRequest: [
       async (request) => {
@@ -29,6 +31,7 @@ export const serverKy = ky.create({
 export const createKyWithCookie = (accessTokenCookie: string) => {
   return ky.create({
     prefixUrl: API_SOURCE_URL,
+    timeout: DEFAULT_TIMEOUT_MS,
     headers: accessTokenCookie ? { Cookie: accessTokenCookie } : undefined,
   });
 };
