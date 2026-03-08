@@ -31,7 +31,7 @@ export function LookListCard({
       onPointerDown={onPointerDown}
       onPointerUp={onPointerUp}
       onPointerLeave={onPointerLeave}
-      className="cursor-pointer transition-all relative rounded-2xl p-4 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04),0_1px_3px_rgba(0,0,0,0.06)]"
+      className="cursor-pointer transition-all relative rounded-2xl p-4 bg-white shadow-[0_-2px_8px_rgba(0,0,0,0.04),0_6px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04)]"
     >
       <div className="absolute bottom-4 right-4 flex items-center gap-1 z-10">
         <button

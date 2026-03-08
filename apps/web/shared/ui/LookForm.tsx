@@ -307,7 +307,7 @@ export function LookForm({
                       <ImageWithFallback
                         src={item.imageUrl}
                         alt={item.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover object-center"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
@@ -434,7 +434,7 @@ export function LookForm({
                       <ImageWithFallback
                         src={item.imageUrl}
                         alt={item.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover object-center"
                       />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center p-2">

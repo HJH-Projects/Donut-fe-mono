@@ -68,7 +68,7 @@ export function LookDetailDialog({
                           <ImageWithFallback
                             src={item.imageUrl || clothesImageMap.get(item.id) || ''}
                             alt={item.name}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover object-center"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">

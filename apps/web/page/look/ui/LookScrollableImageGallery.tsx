@@ -49,26 +49,28 @@ export function LookScrollableImageGallery({ items, lookId }: LookScrollableImag
   if (items.length === 0) return null;
 
   return (
-    <div className="py-3 relative pb-2">
+    <div className="relative">
       <div
         ref={scrollRef}
         onScroll={checkScrollButtons}
-        className="overflow-x-auto overflow-y-hidden scrollbar-hide"
+        className="h-[96px] overflow-x-auto overflow-y-visible scrollbar-hide"
       >
-        <div className="flex items-center gap-2 px-4">
+        <div className="h-full flex items-center gap-2 px-4">
           {items.map((item) => (
             <div key={item.id} className="shrink-0">
-              <div className="w-16 h-16 bg-gray-100 overflow-hidden shadow-sm rounded-full">
+              <div className="w-[72px] h-[72px] bg-gray-100 overflow-hidden rounded-full ring-[0.7px] ring-black/12 ring-offset-1 ring-offset-white">
                 {item.imageUrl ? (
                   <ImageWithFallback
                     src={item.imageUrl}
                     alt={item.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-center"
                   />
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center">
                     <p className="text-[#000] mb-1 text-[11px] font-semibold">{item.category}</p>
-                    <p className="text-[#666] text-center px-2 text-[9px] font-normal">{item.name}</p>
+                    <p className="text-[#666] text-center px-2 text-[9px] font-normal">
+                      {item.name}
+                    </p>
                   </div>
                 )}
               </div>

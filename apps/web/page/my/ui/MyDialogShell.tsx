@@ -1,6 +1,7 @@
 'use client';
 
 import { Dialog } from '@base-ui/react/dialog';
+import { X } from 'lucide-react';
 
 type MyDialogShellProps = {
   open: boolean;
@@ -22,6 +23,13 @@ export function MyDialogShell({ open, onOpenChange, title, children }: MyDialogS
           }}
           aria-describedby={undefined}
         >
+          <Dialog.Close
+            className="absolute top-8 right-8 p-1 hover:bg-gray-100 transition-colors rounded-md"
+            aria-label="닫기"
+          >
+            <X size={18} color="#000" strokeWidth={1.8} />
+          </Dialog.Close>
+
           <h2
             className="text-black mb-8"
             style={{

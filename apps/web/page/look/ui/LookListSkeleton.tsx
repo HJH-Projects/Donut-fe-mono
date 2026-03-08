@@ -7,18 +7,18 @@ export function LookListSkeleton() {
       </div>
 
       <div className="flex-1 overflow-y-auto pb-24">
-        <div className="px-6 flex flex-col gap-4">
+        <div className="px-6 pt-2 flex flex-col gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
-              className="p-4 bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04),0_1px_3px_rgba(0,0,0,0.06)]"
+              className="p-4 bg-white rounded-2xl shadow-[0_-2px_8px_rgba(0,0,0,0.04),0_6px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04)]"
             >
               {/* 이미지 갤러리 placeholder */}
               <div className="py-3 flex gap-2 px-4">
                 {Array.from({ length: 3 }).map((_, j) => (
                   <div
                     key={j}
-                    className="w-16 h-16 bg-gray-100 skeleton-shimmer shrink-0 rounded-full"
+                    className="w-[72px] h-[72px] bg-gray-100 skeleton-shimmer shrink-0 rounded-full"
                   />
                 ))}
               </div>

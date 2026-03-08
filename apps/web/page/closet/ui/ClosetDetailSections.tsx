@@ -47,7 +47,7 @@ export function ClosetDetailImageSection({
     <div className="relative">
       <div className="w-full aspect-square bg-gray-100 overflow-hidden rounded-2xl">
         {selectedItem.imageUrl ? (
-          <img src={selectedItem.imageUrl} alt={selectedItem.name} className="w-full h-full object-cover" />
+          <img src={selectedItem.imageUrl} alt={selectedItem.name} className="w-full h-full object-cover object-center" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <p className="text-[#999] text-[11px] font-medium">
@@ -60,7 +60,6 @@ export function ClosetDetailImageSection({
         type="button"
         onClick={() => {
           onToggleFavorite(selectedItem.id, selectedItem.isFavorite);
-          setSelectedItem((prev) => (prev ? { ...prev, isFavorite: !prev.isFavorite } : prev));
         }}
         className="absolute top-2 right-2 p-1.5 bg-white/90 backdrop-blur-sm hover:bg-white transition-all rounded-xl"
       >

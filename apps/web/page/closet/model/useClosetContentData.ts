@@ -60,9 +60,18 @@ export function useClosetContentData({
   const needsClientFetch = initialMappedClothes.length === 0;
   const [fetchedClothes, setFetchedClothes] = useState<ClothingItem[] | null>(null);
   const [hasBootstrappedFetch, setHasBootstrappedFetch] = useState(false);
-  const clothes = needsClientFetch
+  const [favoriteOverrides, setFavoriteOverrides] = useState<Record<string, boolean>>({});
+  const baseClothes = needsClientFetch
     ? (fetchedClothes ?? initialMappedClothes)
     : initialMappedClothes;
+  const clothes = useMemo(
+    () =>
+      baseClothes.map((item) => {
+        const nextFavorite = favoriteOverrides[item.id];
+        return nextFavorite === undefined ? item : { ...item, isFavorite: nextFavorite };
+      }),
+    [baseClothes, favoriteOverrides],
+  );
 
   useEffect(() => {
     if (!needsClientFetch || hasBootstrappedFetch) return;
@@ -76,6 +85,23 @@ export function useClosetContentData({
       })
       .finally(() => setHasBootstrappedFetch(true));
   }, [needsClientFetch, hasBootstrappedFetch, toast]);
+
+  useEffect(() => {
+    setFavoriteOverrides((prev) => {
+      const next = { ...prev };
+      let changed = false;
+
+      for (const [id, optimisticValue] of Object.entries(prev)) {
+        const serverItem = baseClothes.find((item) => item.id === id);
+        if (!serverItem || serverItem.isFavorite === optimisticValue) {
+          delete next[id];
+          changed = true;
+        }
+      }
+
+      return changed ? next : prev;
+    });
+  }, [baseClothes]);
 
   const runClothesMutation = useCallback(
     async (action: () => Promise<unknown>, errorMessage: string) => {
@@ -134,6 +160,10 @@ export function useClosetContentData({
 
   const toggleFavorite = useCallback(
     async (id: string, isFavorite: boolean) => {
+      const nextFavorite = !isFavorite;
+      setFavoriteOverrides((prev) => ({ ...prev, [id]: nextFavorite }));
+      setSelectedItem((prev) => (prev && prev.id === id ? { ...prev, isFavorite: nextFavorite } : prev));
+
       try {
         await runClothesMutation(
           () =>
@@ -142,7 +172,10 @@ export function useClosetContentData({
               : postClothesFavoriteApi(clientKy, id),
           '즐겨찾기 처리에 실패했습니다.',
         );
-      } catch {}
+      } catch {
+        setFavoriteOverrides((prev) => ({ ...prev, [id]: isFavorite }));
+        setSelectedItem((prev) => (prev && prev.id === id ? { ...prev, isFavorite } : prev));
+      }
     },
     [runClothesMutation],
   );

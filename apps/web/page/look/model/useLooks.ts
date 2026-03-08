@@ -60,8 +60,17 @@ export function useLooks({ initialLooks = [], skipBootstrap = false }: UseLooksO
   const [fetchedLooks, setFetchedLooks] = useState<Look[] | null>(null);
   const [hasBootstrappedFetch, setHasBootstrappedFetch] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
+  const [favoriteOverrides, setFavoriteOverrides] = useState<Record<string, boolean>>({});
 
-  const looks = needsClientFetch ? (fetchedLooks ?? initialMappedLooks) : initialMappedLooks;
+  const baseLooks = needsClientFetch ? (fetchedLooks ?? initialMappedLooks) : initialMappedLooks;
+  const looks = useMemo(
+    () =>
+      baseLooks.map((look) => {
+        const nextFavorite = favoriteOverrides[look.id];
+        return nextFavorite === undefined ? look : { ...look, isFavorite: nextFavorite };
+      }),
+    [baseLooks, favoriteOverrides],
+  );
   const isBootstrapped = !needsClientFetch || hasBootstrappedFetch;
 
   useEffect(() => {
@@ -77,6 +86,23 @@ export function useLooks({ initialLooks = [], skipBootstrap = false }: UseLooksO
       })
       .finally(() => setHasBootstrappedFetch(true));
   }, [needsClientFetch, hasBootstrappedFetch]);
+
+  useEffect(() => {
+    setFavoriteOverrides((prev) => {
+      const next = { ...prev };
+      let changed = false;
+
+      for (const [id, optimisticValue] of Object.entries(prev)) {
+        const serverLook = baseLooks.find((look) => look.id === id);
+        if (!serverLook || serverLook.isFavorite === optimisticValue) {
+          delete next[id];
+          changed = true;
+        }
+      }
+
+      return changed ? next : prev;
+    });
+  }, [baseLooks]);
 
   const addLook = async (lookData: Partial<Look>) => {
     try {
@@ -132,6 +158,8 @@ export function useLooks({ initialLooks = [], skipBootstrap = false }: UseLooksO
   const toggleFavorite = async (id: string) => {
     const target = looks.find((look) => look.id === id);
     if (!target) return;
+    const nextFavorite = !target.isFavorite;
+    setFavoriteOverrides((prev) => ({ ...prev, [id]: nextFavorite }));
 
     try {
       if (target.isFavorite) {
@@ -142,6 +170,7 @@ export function useLooks({ initialLooks = [], skipBootstrap = false }: UseLooksO
       await invalidateLooks();
       router.refresh();
     } catch (e) {
+      setFavoriteOverrides((prev) => ({ ...prev, [id]: target.isFavorite }));
       toast.apiError(await toApiError(e), '룩 좋아요 처리에 실패했습니다.');
     }
   };

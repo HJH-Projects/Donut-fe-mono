@@ -1,6 +1,7 @@
 'use client';
 
 import { Dialog } from '@base-ui/react/dialog';
+import { X } from 'lucide-react';
 import Spinner from '@/shared/ui/Spinner';
 import { closeGlobalDialog, useGlobalDialogOpen } from '@/shared/model/globalDialogStore';
 
@@ -28,6 +29,14 @@ export function LookDeleteConfirmDialog({
           className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-[70] w-[90%] max-w-[340px] p-8 rounded-[var(--radius-xl)]"
           aria-describedby={undefined}
         >
+          <button
+            onClick={() => closeGlobalDialog('look:deleteConfirm')}
+            className="absolute top-8 right-8 p-1 hover:bg-gray-100 transition-colors rounded-md"
+            aria-label="닫기"
+          >
+            <X size={18} color="#000" strokeWidth={1.8} />
+          </button>
+
           <h2 className="text-black mb-3 text-[20px] font-bold">룩을 삭제할까요?</h2>
           <p className="text-gray-500 mb-8 text-sm font-normal">삭제된 룩은 복구할 수 없습니다.</p>
           <div className="flex gap-3">

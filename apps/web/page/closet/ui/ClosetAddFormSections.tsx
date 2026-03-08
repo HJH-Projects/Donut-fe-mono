@@ -39,7 +39,7 @@ export function AddImagePreviewSection({
       <div
         className="w-full aspect-square bg-gray-100 overflow-hidden relative rounded-2xl"
       >
-        <img src={imageUrl} alt="preview" className="w-full h-full object-cover" />
+        <img src={imageUrl} alt="preview" className="w-full h-full object-cover object-center" />
         {isProcessing && <AddProcessingOverlay text={processingText} />}
       </div>
       {!isProcessing && hasPendingFile && <RemoveBackgroundButton onClick={onRefresh} text={refreshText} />}

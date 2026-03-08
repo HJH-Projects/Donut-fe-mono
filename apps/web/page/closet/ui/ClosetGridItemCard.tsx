@@ -24,12 +24,14 @@ export function ClosetGridItemCard({
         className="aspect-square bg-gray-100 overflow-hidden relative cursor-pointer rounded-2xl"
       >
         {item.imageUrl ? (
-          <ImageWithFallback src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+          <ImageWithFallback
+            src={item.imageUrl}
+            alt={item.name}
+            className="w-full h-full object-cover object-center"
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <p className="text-[#999] text-[11px] font-medium">
-              {noImageLabel}
-            </p>
+            <p className="text-[#999] text-[11px] font-medium">{noImageLabel}</p>
           </div>
         )}
 
@@ -50,9 +52,7 @@ export function ClosetGridItemCard({
       </div>
 
       <div className="mt-2">
-        <p className="text-black truncate text-[13px] font-semibold">
-          {item.name}
-        </p>
+        <p className="text-black truncate text-[13px] font-semibold">{item.name}</p>
         <p className="text-[#555555] truncate text-[11px] font-normal">
           {item.category2 || item.category1}
         </p>
