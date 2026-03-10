@@ -17,19 +17,22 @@ const parseIncomingIsUnread = (raw: string): boolean => {
   return true;
 };
 
-export function BellAction() {
+export function BellAction({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const syncUnreadCount = useCallback(async () => {
+    if (!isLoggedIn) return;
     try {
       const result = await getNotificationsUnreadCountApi(clientKy);
       setUnreadCount(result.unreadCount);
     } catch {
       // 헤더 배지 동기화 실패는 조용히 무시
     }
-  }, []);
+  }, [isLoggedIn]);
 
   useEffect(() => {
+    if (!isLoggedIn) return;
+
     const syncTimer = window.setTimeout(() => {
       void syncUnreadCount();
     }, 0);
@@ -71,7 +74,9 @@ export function BellAction() {
       document.removeEventListener('visibilitychange', onVisible);
       ws?.close();
     };
-  }, [syncUnreadCount]);
+  }, [isLoggedIn, syncUnreadCount]);
+
+  const visibleUnreadCount = isLoggedIn ? unreadCount : 0;
 
   return (
     <Link
@@ -80,12 +85,12 @@ export function BellAction() {
       aria-label="알림"
     >
       <Bell size={22} color="#000" strokeWidth={2} />
-      {unreadCount > 0 && (
+      {visibleUnreadCount > 0 && (
         <span
           className="absolute right-0 top-0 min-w-[18px] h-[18px] px-1.5 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-semibold"
           style={{ boxShadow: '0 0 0 1.5px white' }}
         >
-          {unreadCount > 99 ? '99+' : unreadCount}
+          {visibleUnreadCount > 99 ? '99+' : visibleUnreadCount}
         </span>
       )}
     </Link>

@@ -62,7 +62,7 @@ const HomePage = ({
       <div className="shrink-0 relative">
         {header}
         <div className="absolute right-6 top-1/2 -translate-y-1/2">
-          <BellAction />
+          <BellAction isLoggedIn={isLoggedIn} />
         </div>
       </div>
 
