@@ -181,6 +181,16 @@ export function useLookContentData({
   const shareViaKakao = useCallback(
     async (shareUrl: string, lookName: string, imageUrl?: string) => {
       const appKey = process.env.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY?.trim();
+      console.log(
+        'Attempting to share via Kakao with appKey:',
+        !!appKey,
+        'shareUrl:',
+        shareUrl,
+        'lookName:',
+        lookName,
+        'imageUrl:',
+        imageUrl,
+      );
       if (!appKey) return false;
 
       try {
@@ -225,9 +235,11 @@ export function useLookContentData({
           }
           return true;
         }
-      } catch {
+      } catch (e) {
+        console.log('Kakao sharing failed', e);
         return false;
       }
+      console.log('Kakao SDK not available');
       return false;
     },
     [loadKakaoSdk],
@@ -241,8 +253,7 @@ export function useLookContentData({
         const normalizedLookId = String(lookId);
         const byLookId = list.filter((link) => {
           const candidate =
-            (link as { lookId?: string }).lookId ??
-            (link as { look?: { id?: string } }).look?.id;
+            (link as { lookId?: string }).lookId ?? (link as { look?: { id?: string } }).look?.id;
           return candidate ? String(candidate) === normalizedLookId : false;
         });
         const byLookName =
@@ -282,10 +293,19 @@ export function useLookContentData({
     loadSharedLinks(lookId, selectedLook.name).catch(() => {
       toast.error('공유 링크 목록을 불러오지 못했습니다.');
     });
-  }, [showShareDialog, selectedLook?.id, selectedLook?.name, loadedShareLookId, loadSharedLinks, toast]);
+  }, [
+    showShareDialog,
+    selectedLook?.id,
+    selectedLook?.name,
+    loadedShareLookId,
+    loadSharedLinks,
+    toast,
+  ]);
 
   const handleToggleFavorite = (id: string) => {
-    setSelectedLook((prev) => (prev && prev.id === id ? { ...prev, isFavorite: !prev.isFavorite } : prev));
+    setSelectedLook((prev) =>
+      prev && prev.id === id ? { ...prev, isFavorite: !prev.isFavorite } : prev,
+    );
     toggleFavorite(id);
   };
 
@@ -302,7 +322,10 @@ export function useLookContentData({
 
   const handleCardClick = (e: React.MouseEvent, look: Look) => {
     const target = e.target as HTMLElement;
-    if (target.closest('[data-navigation-buttons]') || target.closest('button[data-scroll-button]')) {
+    if (
+      target.closest('[data-navigation-buttons]') ||
+      target.closest('button[data-scroll-button]')
+    ) {
       return;
     }
     handleLookClick(look);
@@ -421,9 +444,12 @@ export function useLookContentData({
       if (shareUrl.includes('://localhost') || shareUrl.includes('://127.0.0.1')) {
         toast.info('현재 localhost 링크입니다. 다른 기기에서는 열리지 않을 수 있습니다.');
       }
+      console.log('Sharing via Kakao with URL:', shareUrl);
       const firstImageUrl =
-        selectedLook.items.find((item) => item.imageUrl || clothesImageMap.get(item.id))?.imageUrl ||
+        selectedLook.items.find((item) => item.imageUrl || clothesImageMap.get(item.id))
+          ?.imageUrl ||
         selectedLook.items.map((item) => clothesImageMap.get(item.id)).find(Boolean);
+      console.log('First image URL for Kakao sharing:', firstImageUrl);
       const didShare = await shareViaKakao(shareUrl, selectedLook.name, firstImageUrl);
 
       if (!didShare) {
