@@ -1,7 +1,78 @@
+'use client';
+
 import Link from 'next/link';
 import { Bell } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { clientKy } from '@/features/api/clientKy';
+import { getNotificationsUnreadCountApi } from '@/shared/api/endpointTags/notifications';
+
+const parseIncomingIsUnread = (raw: string): boolean => {
+  try {
+    const parsed = JSON.parse(raw);
+    const payload = parsed?.data ?? parsed?.payload ?? parsed?.notification ?? parsed;
+    if (typeof payload?.isRead === 'boolean') return !payload.isRead;
+  } catch {
+    return true;
+  }
+  return true;
+};
 
 export function BellAction() {
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const syncUnreadCount = useCallback(async () => {
+    try {
+      const result = await getNotificationsUnreadCountApi(clientKy);
+      setUnreadCount(result.unreadCount);
+    } catch {
+      // 헤더 배지 동기화 실패는 조용히 무시
+    }
+  }, []);
+
+  useEffect(() => {
+    const syncTimer = window.setTimeout(() => {
+      void syncUnreadCount();
+    }, 0);
+    const pollingTimer = window.setInterval(() => {
+      void syncUnreadCount();
+    }, 10_000);
+
+    const wsBase = process.env.NEXT_PUBLIC_API_URL?.trim()?.replace(/^http/, 'ws');
+    if (!wsBase) return;
+
+    let ws: WebSocket | null = null;
+    try {
+      ws = new WebSocket(`${wsBase.replace(/\/+$/, '')}/notifications`);
+    } catch {
+      ws = null;
+    }
+
+    if (ws) {
+      ws.onopen = () => {
+        syncUnreadCount();
+      };
+      ws.onmessage = (event) => {
+        if (parseIncomingIsUnread(event.data)) {
+          setUnreadCount((prev) => prev + 1);
+        }
+      };
+    }
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        syncUnreadCount();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      window.clearTimeout(syncTimer);
+      window.clearInterval(pollingTimer);
+      document.removeEventListener('visibilitychange', onVisible);
+      ws?.close();
+    };
+  }, [syncUnreadCount]);
+
   return (
     <Link
       href="/notifications?recent=true"
@@ -9,10 +80,14 @@ export function BellAction() {
       aria-label="알림"
     >
       <Bell size={22} color="#000" strokeWidth={2} />
-      <span
-        className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500"
-        style={{ boxShadow: '0 0 0 1.5px white' }}
-      />
+      {unreadCount > 0 && (
+        <span
+          className="absolute right-0 top-0 min-w-[18px] h-[18px] px-1.5 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-semibold"
+          style={{ boxShadow: '0 0 0 1.5px white' }}
+        >
+          {unreadCount > 99 ? '99+' : unreadCount}
+        </span>
+      )}
     </Link>
   );
 }
