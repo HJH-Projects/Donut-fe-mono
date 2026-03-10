@@ -17,6 +17,7 @@ export type GlobalDialogKey =
   | 'my:settings'
   | 'my:language'
   | 'my:gender'
+  | 'my:logoutConfirm'
   | 'share:links'
   | null;
 

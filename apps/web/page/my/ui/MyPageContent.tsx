@@ -9,6 +9,7 @@ import { openGlobalDialog } from '@/shared/model/globalDialogStore';
 import { useMyContentData } from '../model/useMyContentData';
 import { MyGenderDialog } from './MyGenderDialog';
 import { MyLanguageDialog } from './MyLanguageDialog';
+import { MyLogoutConfirmDialog } from './MyLogoutConfirmDialog';
 import { MyMenuSection } from './MyMenuSection';
 import { MyNicknameDialog } from './MyNicknameDialog';
 import { MyProfileCard } from './MyProfileCard';
@@ -35,7 +36,7 @@ export function MyPageContent({ initialProfile = null, initialGender = 'MALE' }:
     handleOpenNicknameDialog,
     handleSaveNickname,
     handleResetNickname,
-    handleLogout,
+    handleLogoutConfirm,
     handleLanguageChange,
     handleTemperatureUnitChange,
     handleGenderChange,
@@ -101,7 +102,7 @@ export function MyPageContent({ initialProfile = null, initialGender = 'MALE' }:
         />
 
         <button
-          onClick={handleLogout}
+          onClick={() => openGlobalDialog('my:logoutConfirm')}
           disabled={isLoggingOut}
           className="w-full px-6 py-5 flex items-center justify-center gap-3 transition-all hover:opacity-80 disabled:opacity-60 mt-4"
           style={{
@@ -168,6 +169,15 @@ export function MyPageContent({ initialProfile = null, initialGender = 'MALE' }:
         confirmLabel={t('profile.confirm')}
         gender={gender}
         onChangeGender={handleGenderChange}
+      />
+
+      <MyLogoutConfirmDialog
+        title={t('profile.logout')}
+        description={t('profile.logoutConfirm')}
+        cancelLabel={t('common.cancel')}
+        confirmLabel={t('profile.logout')}
+        isLoggingOut={isLoggingOut}
+        onConfirm={handleLogoutConfirm}
       />
     </div>
   );

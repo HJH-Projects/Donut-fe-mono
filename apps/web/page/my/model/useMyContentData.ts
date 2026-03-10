@@ -95,15 +95,14 @@ export function useMyContentData({
     }
   }, [resetNickname]);
 
-  const handleLogout = useCallback(async () => {
-    if (!confirm(t('profile.logoutConfirm'))) return;
-
+  const handleLogoutConfirm = useCallback(async () => {
     setIsLoggingOut(true);
     try {
       await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
       });
+      closeGlobalDialog('my:logoutConfirm');
       router.push('/');
     } catch {
       toast.error(t('profile.logoutFailed') || '로그아웃에 실패했습니다.');
@@ -169,7 +168,7 @@ export function useMyContentData({
     handleOpenNicknameDialog,
     handleSaveNickname,
     handleResetNickname,
-    handleLogout,
+    handleLogoutConfirm,
     handleLanguageChange,
     handleTemperatureUnitChange,
     handleGenderChange,
