@@ -25,7 +25,7 @@ export default async function Page() {
         <PageHeader
           title="공지사항"
           titleHref="/announcements"
-          left={<HeaderBackLink href="/my" />}
+          left={<HeaderBackLink href="/my" disableHover />}
         />
       }
     />

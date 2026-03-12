@@ -61,40 +61,18 @@ export function NotificationsPage({
             return (
               <div
                 key={notification.id}
-                className="transition-all relative"
+                className="transition-all"
                 style={{
                   backgroundColor: '#FFFFFF',
                   border: '1px solid #E5E5E5',
                   borderRadius: 'var(--radius-lg)',
+                  overflow: 'hidden',
                 }}
               >
-                {notification.detail && (
-                  <div className="absolute -top-3 right-6 z-50">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleOpen(notification.id);
-                      }}
-                      className="w-6 h-6 flex items-center justify-center"
-                      style={{
-                        backgroundColor: isOpen ? '#000' : '#F5F5F5',
-                        borderRadius: 'var(--radius-sm)',
-                        transition: 'all 0.2s',
-                      }}
-                    >
-                      {isOpen ? (
-                        <Minus size={14} color="#FFFFFF" strokeWidth={2.5} />
-                      ) : (
-                        <Plus size={14} color="#000" strokeWidth={2.5} />
-                      )}
-                    </button>
-                  </div>
-                )}
-
                 <button
                   onClick={() => notification.detail && toggleOpen(notification.id)}
                   disabled={!notification.detail}
-                  className={`w-full px-6 py-5 flex items-start gap-4 text-left ${notification.detail ? 'hover:bg-gray-50 cursor-pointer' : 'cursor-default'} transition-colors`}
+                  className={`w-full px-6 py-5 flex items-center justify-between gap-4 text-left ${notification.detail ? 'hover:bg-gray-50 cursor-pointer' : 'cursor-default'} transition-colors`}
                 >
                   <div className="flex flex-col gap-2 flex-1 min-w-0">
                     <div className="flex items-center gap-3">
@@ -128,6 +106,22 @@ export function NotificationsPage({
                       {notification.message}
                     </p>
                   </div>
+                  {notification.detail && (
+                    <div
+                      className="shrink-0 w-6 h-6 flex items-center justify-center"
+                      style={{
+                        backgroundColor: isOpen ? '#000' : '#F5F5F5',
+                        borderRadius: 'var(--radius-sm)',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      {isOpen ? (
+                        <Minus size={14} color="#FFFFFF" strokeWidth={2.5} />
+                      ) : (
+                        <Plus size={14} color="#000" strokeWidth={2.5} />
+                      )}
+                    </div>
+                  )}
 
                 </button>
 

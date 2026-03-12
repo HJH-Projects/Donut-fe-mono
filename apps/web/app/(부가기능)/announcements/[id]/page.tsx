@@ -27,7 +27,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <PageHeader
           title="공지사항"
           titleHref={`/announcements/${id}`}
-          left={<HeaderBackLink href="/announcements" />}
+          left={<HeaderBackLink href="/announcements" disableHover />}
         />
       }
     />
