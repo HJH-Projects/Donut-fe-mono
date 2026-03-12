@@ -9,6 +9,7 @@ import {
   getNotificationsApi,
   getNotificationsUnreadCountApi,
   patchNotificationsReadApi,
+  patchNotificationsReadAllApi,
 } from '@/shared/api/endpointTags/notifications';
 import { clientKy } from '@/features/api/clientKy';
 import { useToast } from '@/shared/model/useToast';
@@ -78,6 +79,7 @@ export function useNotificationsData({
   const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
   const [openId, setOpenId] = useState<string | null>(null);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [isMarkingAllRead, setIsMarkingAllRead] = useState(false);
   const [isSocketConnected, setIsSocketConnected] = useState(false);
 
   const visibleItems = useMemo(
@@ -139,6 +141,26 @@ export function useNotificationsData({
     }
   }, [isFetchingMore, isRecentView, nextCursor, toast]);
 
+  const markAllAsRead = useCallback(async () => {
+    if (isMarkingAllRead || unreadCount <= 0) return;
+
+    const previousItems = items;
+    const previousUnreadCount = unreadCount;
+    setIsMarkingAllRead(true);
+    setItems((prev) => prev.map((item) => ({ ...item, isRead: true })));
+    setUnreadCount(0);
+
+    try {
+      await patchNotificationsReadAllApi(clientKy);
+    } catch {
+      setItems(previousItems);
+      setUnreadCount(previousUnreadCount);
+      toast.error('전체 읽음 처리에 실패했습니다.');
+    } finally {
+      setIsMarkingAllRead(false);
+    }
+  }, [isMarkingAllRead, unreadCount, items, toast]);
+
   useEffect(() => {
     const wsBase = process.env.NEXT_PUBLIC_API_URL?.trim()?.replace(/^http/, 'ws');
     if (!wsBase) return;
@@ -197,9 +219,11 @@ export function useNotificationsData({
     unreadCount,
     openId,
     isFetchingMore,
+    isMarkingAllRead,
     isSocketConnected,
     hasMore: !isRecentView && !!nextCursor,
     toggleOpen,
     fetchNextPage,
+    markAllAsRead,
   };
 }

@@ -28,9 +28,10 @@ export function NotificationsPage({
     openId,
     hasMore,
     isFetchingMore,
-    isSocketConnected,
+    isMarkingAllRead,
     toggleOpen,
     fetchNextPage,
+    markAllAsRead,
   } = useNotificationsData({
     initialItems: initialNotifications,
     initialNextCursor,
@@ -48,9 +49,13 @@ export function NotificationsPage({
       <div className="flex-1 px-6">
         <div className="mb-3 px-1 flex items-center justify-between">
           <p className="text-[12px] text-[#666] font-medium">읽지 않음 {unreadCount}</p>
-          <p className="text-[12px] text-[#999] font-medium">
-            {isSocketConnected ? '실시간 연결됨' : '동기화 모드'}
-          </p>
+          <button
+            onClick={markAllAsRead}
+            disabled={isMarkingAllRead || unreadCount <= 0}
+            className="text-[12px] text-[#666] font-semibold cursor-pointer hover:text-[#333] hover:underline hover:underline-offset-2 transition-colors disabled:opacity-50 disabled:no-underline disabled:cursor-default"
+          >
+            {isMarkingAllRead ? '처리 중...' : '모두 읽기'}
+          </button>
         </div>
 
         <div className="space-y-3">
