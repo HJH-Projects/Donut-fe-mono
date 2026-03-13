@@ -10,6 +10,7 @@ import type {
   LookDeleteResponseDto,
   LookFavoriteResponseDto,
   LookResponseDto,
+  LookTagUsageResponseDto,
   LooksControllerCreate400,
   LooksControllerCreate401,
   LooksControllerFavorite400,
@@ -20,6 +21,8 @@ import type {
   LooksControllerFindOne400,
   LooksControllerFindOne401,
   LooksControllerFindOne404,
+  LooksControllerFindTags400,
+  LooksControllerFindTags401,
   LooksControllerRemove400,
   LooksControllerRemove401,
   LooksControllerRemove404,
@@ -140,6 +143,60 @@ export const looksControllerFindAll = async ( options?: RequestInit): Promise<lo
   
   const data: looksControllerFindAllResponse['data'] = body ? JSON.parse(body) : {}
   return { data, status: res.status, headers: res.headers } as looksControllerFindAllResponse
+}
+
+
+/**
+ * 사용자가 룩에 사용한 태그를 빈도순으로 집계해 반환합니다.
+ * @summary 내 룩 태그 목록 조회
+ */
+export type looksControllerFindTagsResponse200 = {
+  data: LookTagUsageResponseDto[]
+  status: 200
+}
+
+export type looksControllerFindTagsResponse400 = {
+  data: LooksControllerFindTags400
+  status: 400
+}
+
+export type looksControllerFindTagsResponse401 = {
+  data: LooksControllerFindTags401
+  status: 401
+}
+    
+export type looksControllerFindTagsResponseSuccess = (looksControllerFindTagsResponse200) & {
+  headers: Headers;
+};
+export type looksControllerFindTagsResponseError = (looksControllerFindTagsResponse400 | looksControllerFindTagsResponse401) & {
+  headers: Headers;
+};
+
+export type looksControllerFindTagsResponse = (looksControllerFindTagsResponseSuccess | looksControllerFindTagsResponseError)
+
+export const getLooksControllerFindTagsUrl = () => {
+
+
+  
+
+  return `/looks/tags`
+}
+
+export const looksControllerFindTags = async ( options?: RequestInit): Promise<looksControllerFindTagsResponse> => {
+  
+  const res = await fetch(getLooksControllerFindTagsUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+)
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  
+  const data: looksControllerFindTagsResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as looksControllerFindTagsResponse
 }
 
 

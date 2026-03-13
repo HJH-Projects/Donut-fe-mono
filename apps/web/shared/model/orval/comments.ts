@@ -7,6 +7,7 @@
  */
 import type {
   CommentDeleteResponseDto,
+  CommentLikeToggleResponseDto,
   CommentResponseDto,
   CommentsControllerCreate400,
   CommentsControllerCreate401,
@@ -16,6 +17,9 @@ import type {
   CommentsControllerRemove400,
   CommentsControllerRemove401,
   CommentsControllerRemove404,
+  CommentsControllerToggleLike400,
+  CommentsControllerToggleLike401,
+  CommentsControllerToggleLike404,
   CreateCommentDto
 } from '../orvalSchemas';
 
@@ -133,6 +137,67 @@ export const commentsControllerFindAll = async (path: string, options?: RequestI
   
   const data: commentsControllerFindAllResponse['data'] = body ? JSON.parse(body) : {}
   return { data, status: res.status, headers: res.headers } as commentsControllerFindAllResponse
+}
+
+
+/**
+ * 댓글 좋아요를 토글하고 현재 상태와 좋아요 수를 반환합니다.
+ * @summary 댓글 좋아요 토글
+ */
+export type commentsControllerToggleLikeResponse200 = {
+  data: CommentLikeToggleResponseDto
+  status: 200
+}
+
+export type commentsControllerToggleLikeResponse400 = {
+  data: CommentsControllerToggleLike400
+  status: 400
+}
+
+export type commentsControllerToggleLikeResponse401 = {
+  data: CommentsControllerToggleLike401
+  status: 401
+}
+
+export type commentsControllerToggleLikeResponse404 = {
+  data: CommentsControllerToggleLike404
+  status: 404
+}
+    
+export type commentsControllerToggleLikeResponseSuccess = (commentsControllerToggleLikeResponse200) & {
+  headers: Headers;
+};
+export type commentsControllerToggleLikeResponseError = (commentsControllerToggleLikeResponse400 | commentsControllerToggleLikeResponse401 | commentsControllerToggleLikeResponse404) & {
+  headers: Headers;
+};
+
+export type commentsControllerToggleLikeResponse = (commentsControllerToggleLikeResponseSuccess | commentsControllerToggleLikeResponseError)
+
+export const getCommentsControllerToggleLikeUrl = (path: string,
+    id: string,) => {
+
+
+  
+
+  return `/shares/${path}/comments/${id}/like`
+}
+
+export const commentsControllerToggleLike = async (path: string,
+    id: string, options?: RequestInit): Promise<commentsControllerToggleLikeResponse> => {
+  
+  const res = await fetch(getCommentsControllerToggleLikeUrl(path,id),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+)
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+  
+  const data: commentsControllerToggleLikeResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as commentsControllerToggleLikeResponse
 }
 
 

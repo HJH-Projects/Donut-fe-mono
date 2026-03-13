@@ -14,5 +14,7 @@ export interface CommentResponseDto {
   parentCommentId: string | null;
   createdAt?: string;
   user: CommentUserDto;
+  likeCount: number;
+  isLiked: boolean;
   replies?: CommentResponseDto[];
 }
