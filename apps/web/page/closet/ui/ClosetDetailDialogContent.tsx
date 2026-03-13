@@ -113,7 +113,7 @@ export function ClosetDetailDialogContent({
                 isDetailLoading={isDetailLoading}
                 toggleArrayValue={toggleArrayValue}
                 label={t('closet.season')}
-                emptyText="미설정"
+                emptyText={t('common.notSet')}
               />
 
               <ClosetDetailColorSection
@@ -123,7 +123,7 @@ export function ClosetDetailDialogContent({
                 isDetailLoading={isDetailLoading}
                 toggleArrayValue={toggleArrayValue}
                 label={t('closet.color')}
-                emptyText="미설정"
+                emptyText={t('common.notSet')}
               />
 
               <ClosetDetailMaterialSection
@@ -133,7 +133,7 @@ export function ClosetDetailDialogContent({
                 isDetailLoading={isDetailLoading}
                 toggleArrayValue={toggleArrayValue}
                 label={t('closet.material')}
-                emptyText="미설정"
+                emptyText={t('common.notSet')}
               />
 
               <ClosetDetailBrandSection
@@ -144,7 +144,7 @@ export function ClosetDetailDialogContent({
                 toggleArrayValue={toggleArrayValue}
                 label={t('closet.brand')}
                 placeholder={t('closet.brandPlaceholder')}
-                emptyText="미설정"
+                emptyText={t('common.notSet')}
               />
 
               <ClosetDetailSizeSection
@@ -154,7 +154,7 @@ export function ClosetDetailDialogContent({
                 isDetailLoading={isDetailLoading}
                 toggleArrayValue={toggleArrayValue}
                 label={t('closet.size')}
-                emptyText="미설정"
+                emptyText={t('common.notSet')}
               />
 
               <ClosetDetailMemoSection
@@ -165,7 +165,7 @@ export function ClosetDetailDialogContent({
                 toggleArrayValue={toggleArrayValue}
                 label={t('closet.memo')}
                 placeholder={t('closet.enterMemo')}
-                emptyText="미설정"
+                emptyText={t('common.notSet')}
               />
             </div>
           </div>

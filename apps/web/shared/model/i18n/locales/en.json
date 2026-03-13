@@ -25,7 +25,8 @@
     "searchLocation": "Search place (e.g., Gangnam Station)",
     "tapToSelectLocation": "Tap the map to select a location",
     "noSearchResults": "No search results",
-    "currentLocation": "Current location"
+    "currentLocation": "Current location",
+    "locationSettingsAria": "Location settings"
   },
   "closet": {
     "title": "Closet",
@@ -363,14 +364,59 @@
   },
   "announcements": {
     "title": "Announcements",
-    "new": "NEW"
+    "new": "NEW",
+    "empty": "No announcements available.",
+    "notFound": "Announcement not found.",
+    "images": "Images",
+    "imageAlt": "{{title}} image {{index}}"
   },
   "faq": {
-    "title": "FAQ"
+    "title": "FAQ",
+    "items": {
+      "1": {
+        "q": "Q. What is DONUT?",
+        "a": "DONUT is a <strong>weather-based clothing recommendation web app</strong> that analyzes real-time weather data and suggests outfits best suited to current conditions and temperature. It helps you solve \"What should I wear today?\" with data-driven guidance."
+      },
+      "2": {
+        "q": "Q. Is it paid? Does it cost anything?",
+        "a": "All services are <strong>free</strong> to use. You can freely use weather-based styling recommendations without any payment."
+      },
+      "3": {
+        "q": "Q. What makes it different from other services?",
+        "a": "Unlike general fashion curation, DONUT prioritizes <strong>real-time weather factors such as temperature, humidity, and precipitation</strong>. It offers practical guidance to keep you comfortable outdoors while helping complete stylish looks. Through login, you can register and combine your own clothes for personalized outfit management."
+      },
+      "4": {
+        "q": "Q. Do you provide account integration?",
+        "a": "For convenience, we support <strong>major social account sign-ins (SSO) such as Kakao, Naver, and Apple</strong>. However, account integration is not currently provided."
+      },
+      "5": {
+        "q": "Q. I forgot my password.",
+        "a": "DONUT uses social login (Google, Apple, Kakao), so account and password management should be handled through each provider's support center."
+      },
+      "6": {
+        "q": "Q. How can I delete my account?",
+        "a": "You can withdraw anytime from the <strong>Account Management</strong> menu in My Page. Upon withdrawal, saved closet data and created looks are permanently deleted."
+      },
+      "7": {
+        "q": "Q. What if I find an error (bug) while using the service?",
+        "a": "We apologize for the inconvenience. Please send the issue details or a screenshot to our support email, and we will review and resolve it quickly.<br /><strong>Support email</strong>: <supportMail>support@doknot.xyz</supportMail>"
+      },
+      "8": {
+        "q": "Q. I have an idea to suggest!",
+        "a": "Your feedback greatly helps improve the service. Feel free to share ideas or feature suggestions via support email anytime.<br />You can also submit feedback through the following Google Form: <googleForm><strong>Google Form</strong></googleForm>"
+      }
+    }
   },
   "notifications": {
     "title": "Notifications",
     "markAllRead": "Mark All Read",
+    "processing": "Processing...",
+    "unreadCount": "Unread {{count}}",
+    "loadMore": "Load more notifications",
+    "loadingMore": "Loading...",
+    "markReadFailed": "Failed to mark notification as read.",
+    "markAllReadFailed": "Failed to mark all as read.",
+    "loadMoreFailed": "Failed to load more notifications.",
     "today": "Today",
     "thisWeek": "This Week",
     "older": "Older"
@@ -386,11 +432,13 @@
     "postComment": "Post Comment",
     "deleteComment": "Delete Comment",
     "deleteCommentConfirm": "Are you sure you want to delete this comment?",
-    "commentRequired": "Please enter a comment"
+    "commentRequired": "Please enter a comment",
+    "commentLikeAria": "Like comment"
   },
   "common": {
     "cancel": "Cancel",
     "close": "Close",
+    "confirm": "Confirm",
     "save": "Save",
     "delete": "Delete",
     "edit": "Edit",
@@ -398,6 +446,7 @@
     "search": "Search",
     "loading": "Loading...",
     "error": "An error occurred",
-    "noData": "No data"
+    "noData": "No data",
+    "notSet": "Not set"
   }
 }

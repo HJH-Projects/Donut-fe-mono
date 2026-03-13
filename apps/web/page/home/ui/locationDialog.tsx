@@ -196,7 +196,7 @@ const LocationDialog = ({
       const remaining = locations.filter((loc) => loc.id !== deletingId);
       setLocations(remaining);
       if (selectedLocation?.id === deletingId) {
-        const systemDefault = remaining.find((loc) => loc.alias === '서울(기본)') ?? remaining[0] ?? null;
+        const systemDefault = remaining.find((loc) => loc.isDefault) ?? remaining[0] ?? null;
         if (systemDefault) {
           onSelectLocation(systemDefault);
         } else {
@@ -273,7 +273,10 @@ const LocationDialog = ({
 
   return (
     <Dialog.Root>
-      <Dialog.Trigger className="mt-1 hover:opacity-70 transition-opacity" aria-label="지역 설정">
+      <Dialog.Trigger
+        className="mt-1 hover:opacity-70 transition-opacity"
+        aria-label={t('home.locationSettingsAria')}
+      >
         <Settings size={14} color="#555555" strokeWidth={1.5} />
       </Dialog.Trigger>
       <Dialog.Portal>
@@ -288,7 +291,7 @@ const LocationDialog = ({
           {renderContent()}
           <Dialog.Close
             className="absolute top-4 right-4 text-[#555555] hover:opacity-70 transition-opacity"
-            aria-label="닫기"
+            aria-label={t('common.close')}
             style={{ fontFamily: FONT, fontSize: '24px' }}
             onClick={resetAll}
           >

@@ -3,6 +3,7 @@
 import { ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ReactNode } from "react";
+import { useTranslation } from 'react-i18next';
 import { ImageWithFallback } from '@/shared/ui/ImageWithFallback';
 
 type AnnouncementListItem = {
@@ -18,6 +19,7 @@ interface AnnouncementsPageProps {
 }
 
 export function AnnouncementsPage({ initialAnnouncements = [], header }: AnnouncementsPageProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const announcements = initialAnnouncements;
 
@@ -28,7 +30,7 @@ export function AnnouncementsPage({ initialAnnouncements = [], header }: Announc
       <div className="flex-1 px-6">
         {announcements.length === 0 ? (
           <div className="h-full flex items-center justify-center">
-            <p className="text-[#999999] text-[14px] font-medium">등록된 공지사항이 없습니다.</p>
+            <p className="text-[#999999] text-[14px] font-medium">{t('announcements.empty')}</p>
           </div>
         ) : (
           <div className="space-y-3">

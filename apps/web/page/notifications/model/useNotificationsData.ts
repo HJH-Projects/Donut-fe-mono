@@ -13,6 +13,7 @@ import {
 } from '@/shared/api/endpointTags/notifications';
 import { clientKy } from '@/features/api/clientKy';
 import { useToast } from '@/shared/model/useToast';
+import { useTranslation } from 'react-i18next';
 
 export type NotificationViewItem = {
   id: string;
@@ -73,6 +74,7 @@ export function useNotificationsData({
   initialUnreadCount,
   isRecentView,
 }: UseNotificationsDataOptions) {
+  const { t } = useTranslation();
   const toast = useToast();
   const [items, setItems] = useState<NotificationViewItem[]>(() => initialItems.map(mapDtoToView));
   const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor ?? null);
@@ -109,10 +111,10 @@ export function useNotificationsData({
       } catch {
         setItems((prev) => prev.map((item) => (item.id === id ? { ...item, isRead: false } : item)));
         setUnreadCount((prev) => prev + 1);
-        toast.error('알림 읽음 처리에 실패했습니다.');
+        toast.error(t('notifications.markReadFailed'));
       }
     },
-    [items, toast],
+    [items, toast, t],
   );
 
   const toggleOpen = useCallback(
@@ -135,11 +137,11 @@ export function useNotificationsData({
       setItems((prev) => [...prev, ...mapped.filter((item) => !prev.some((p) => p.id === item.id))]);
       setNextCursor(result.nextCursor ?? null);
     } catch {
-      toast.error('알림을 더 불러오지 못했습니다.');
+      toast.error(t('notifications.loadMoreFailed'));
     } finally {
       setIsFetchingMore(false);
     }
-  }, [isFetchingMore, isRecentView, nextCursor, toast]);
+  }, [isFetchingMore, isRecentView, nextCursor, toast, t]);
 
   const markAllAsRead = useCallback(async () => {
     if (isMarkingAllRead || unreadCount <= 0) return;
@@ -155,11 +157,11 @@ export function useNotificationsData({
     } catch {
       setItems(previousItems);
       setUnreadCount(previousUnreadCount);
-      toast.error('전체 읽음 처리에 실패했습니다.');
+      toast.error(t('notifications.markAllReadFailed'));
     } finally {
       setIsMarkingAllRead(false);
     }
-  }, [isMarkingAllRead, unreadCount, items, toast]);
+  }, [isMarkingAllRead, unreadCount, items, toast, t]);
 
   useEffect(() => {
     const wsBase = process.env.NEXT_PUBLIC_API_URL?.trim()?.replace(/^http/, 'ws');

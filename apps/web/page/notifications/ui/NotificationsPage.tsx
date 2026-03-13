@@ -4,6 +4,7 @@ import { Plus, Minus } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import type { NotificationResponseDto } from '@/shared/model/orvalSchemas';
 import { useNotificationsData } from '../model/useNotificationsData';
 
@@ -20,6 +21,7 @@ export function NotificationsPage({
   initialUnreadCount = 0,
   header,
 }: NotificationsPageProps) {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const isRecentView = searchParams.get('recent') === 'true';
   const {
@@ -38,6 +40,7 @@ export function NotificationsPage({
     initialUnreadCount,
     isRecentView,
   });
+  const canMarkAllRead = !isMarkingAllRead && unreadCount > 0;
 
   return (
     <div
@@ -48,13 +51,19 @@ export function NotificationsPage({
 
       <div className="flex-1 px-6">
         <div className="mb-3 px-1 flex items-center justify-between">
-          <p className="text-[12px] text-[#666] font-medium">읽지 않음 {unreadCount}</p>
+          <p className="text-[12px] text-[#666] font-medium">
+            {t('notifications.unreadCount', { count: unreadCount })}
+          </p>
           <button
             onClick={markAllAsRead}
-            disabled={isMarkingAllRead || unreadCount <= 0}
-            className="text-[12px] text-[#666] font-semibold cursor-pointer hover:text-[#333] hover:underline hover:underline-offset-2 transition-colors disabled:opacity-50 disabled:no-underline disabled:cursor-default"
+            disabled={!canMarkAllRead}
+            className={`text-[12px] text-[#666] font-semibold transition-colors ${
+              canMarkAllRead
+                ? 'cursor-pointer hover:text-[#333] hover:underline hover:underline-offset-2'
+                : 'cursor-default opacity-50'
+            }`}
           >
-            {isMarkingAllRead ? '처리 중...' : '모두 읽기'}
+            {isMarkingAllRead ? t('notifications.processing') : t('notifications.markAllRead')}
           </button>
         </div>
 
@@ -188,7 +197,7 @@ export function NotificationsPage({
               disabled={isFetchingMore}
               className="w-full py-3 text-[13px] font-semibold text-[#333] border border-[#E5E5E5] rounded-xl disabled:opacity-60"
             >
-              {isFetchingMore ? '불러오는 중...' : '알림 더보기'}
+              {isFetchingMore ? t('notifications.loadingMore') : t('notifications.loadMore')}
             </button>
           </div>
         )}

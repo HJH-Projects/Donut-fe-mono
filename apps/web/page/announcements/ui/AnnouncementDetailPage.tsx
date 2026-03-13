@@ -1,6 +1,7 @@
 'use client';
 
 import { type ReactNode } from "react";
+import { useTranslation } from 'react-i18next';
 import { ImageWithFallback } from '@/shared/ui/ImageWithFallback';
 
 type AnnouncementDetail = {
@@ -17,6 +18,7 @@ interface AnnouncementDetailPageProps {
 }
 
 export function AnnouncementDetailPage({ initialAnnouncement = null, header }: AnnouncementDetailPageProps) {
+  const { t } = useTranslation();
   const announcement = initialAnnouncement;
 
   if (!announcement) {
@@ -30,7 +32,7 @@ export function AnnouncementDetailPage({ initialAnnouncement = null, header }: A
             color: "#737373",
           }}
         >
-          공지사항을 찾을 수 없습니다.
+          {t('announcements.notFound')}
         </p>
       </div>
     );
@@ -89,7 +91,7 @@ export function AnnouncementDetailPage({ initialAnnouncement = null, header }: A
                 fontWeight: 600,
               }}
             >
-              이미지
+              {t('announcements.images')}
             </h3>
             <div className="overflow-x-auto pb-1">
               <div className="flex items-center gap-3 w-max">
@@ -101,7 +103,10 @@ export function AnnouncementDetailPage({ initialAnnouncement = null, header }: A
                   >
                     <ImageWithFallback
                       src={imageUrl}
-                      alt={`${announcement.title} 이미지 ${index + 1}`}
+                      alt={t('announcements.imageAlt', {
+                        title: announcement.title,
+                        index: index + 1,
+                      })}
                       className="w-full h-full object-cover object-center"
                     />
                   </div>

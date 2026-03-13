@@ -299,8 +299,9 @@ const LocationItem = ({
   onUpdateAlias,
   onRequestDelete,
 }: LocationItemProps) => {
+  const { t } = useTranslation();
   if (mode === 'edit') {
-    if (loc.alias === '서울(기본)') {
+    if (loc.isDefault) {
       return (
         <button
           className="w-full flex items-center gap-2 px-4 py-3 pointer-events-none"
@@ -339,7 +340,7 @@ const LocationItem = ({
             disabled={!canSubmit}
             className="inline-flex items-center justify-center w-5 h-5 hover:opacity-70 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={onUpdateAlias}
-            aria-label="확인"
+            aria-label={t('common.confirm')}
           >
             {isUpdatingAlias ? (
               <Spinner size="sm" className="inline-flex text-[#555555]" />
@@ -351,7 +352,7 @@ const LocationItem = ({
             className="hover:opacity-70 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
             disabled={isUpdatingAlias}
             onClick={() => onRequestDelete(loc.id!)}
-            aria-label="삭제"
+            aria-label={t('common.delete')}
           >
             <Trash2 size={16} color="#ef4444" strokeWidth={1.5} />
           </button>
