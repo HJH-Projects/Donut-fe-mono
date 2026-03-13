@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { ImageWithFallback } from '@/shared/ui/ImageWithFallback';
 import { useTranslation } from 'react-i18next';
@@ -31,7 +31,23 @@ type LookFormProps = {
   isSaving?: boolean;
 };
 
-const CATEGORIES = ['상의', '하의', '아우터', '신발', '악세사리'];
+const LOOK_CATEGORY_CODES = [
+  'TOP',
+  'BOTTOM',
+  'OUTER',
+  'DRESS_SKIRT',
+  'SHOES',
+  'ACCESSORY',
+] as const;
+const LOOK_CATEGORY_LABEL_KEY: Record<string, string> = {
+  ALL: 'all',
+  TOP: 'top',
+  BOTTOM: 'bottom',
+  OUTER: 'outer',
+  DRESS_SKIRT: 'dress_skirt',
+  SHOES: 'shoes',
+  ACCESSORY: 'accessory',
+};
 const COMMON_TAGS = [
   '캐주얼',
   '포멀',
@@ -63,10 +79,20 @@ export function LookForm({
   const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.tags || []);
   const [customTag, setCustomTag] = useState('');
   const [selectedItems, setSelectedItems] = useState<LookItem[]>(initialData?.items || []);
-  const [activeCategory, setActiveCategory] = useState<string>('전체');
+  const [activeCategory, setActiveCategory] = useState<string>('ALL');
+
+  const mainFormContainerRef = useRef<HTMLDivElement>(null);
+  const categorysContainerRef = useRef<HTMLDivElement>(null);
+  const commonTagsContainerRef = useRef<HTMLDivElement>(null);
+  const selectedTagsContainerRef = useRef<HTMLDivElement>(null);
+
+  const getCategoryLabel = (category: string) => {
+    const key = LOOK_CATEGORY_LABEL_KEY[category];
+    return key ? t(`closet.categoryLabels.${key}`) : category;
+  };
 
   const filteredItems =
-    activeCategory === '전체'
+    activeCategory === 'ALL'
       ? closetItems
       : closetItems.filter((item) => item.category === activeCategory);
 
@@ -124,6 +150,47 @@ export function LookForm({
 
   const isFormValid = !!lookName.trim() && selectedTags.length > 0 && selectedItems.length > 0;
 
+  useEffect(() => {
+    const categorysContainer = categorysContainerRef.current;
+    if (!categorysContainer) return;
+    const handleWheel = (e: globalThis.WheelEvent) => {
+      if (e.deltaY === 0) return;
+      e.preventDefault();
+      categorysContainer.scrollLeft += e.deltaY;
+    };
+    categorysContainer.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      categorysContainer.removeEventListener('wheel', handleWheel);
+    };
+  }, []);
+
+  useEffect(() => {
+    const commonTagsContainer = commonTagsContainerRef.current;
+    if (!commonTagsContainer) return;
+    const handleWheel = (e: globalThis.WheelEvent) => {
+      if (e.deltaY === 0) return;
+      e.preventDefault();
+      commonTagsContainer.scrollLeft += e.deltaY;
+    };
+    commonTagsContainer.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      commonTagsContainer.removeEventListener('wheel', handleWheel);
+    };
+  }, []);
+
+  useEffect(() => {
+    const selectedTagsContainer = selectedTagsContainerRef.current;
+    if (!selectedTagsContainer) return;
+    const handleWheel = (e: globalThis.WheelEvent) => {
+      if (e.deltaY === 0) return;
+      e.preventDefault();
+      selectedTagsContainer.scrollLeft += e.deltaY;
+    };
+    selectedTagsContainer.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      selectedTagsContainer.removeEventListener('wheel', handleWheel);
+    };
+  }, [selectedTags.length]);
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* 헤더 */}
@@ -141,7 +208,10 @@ export function LookForm({
       </div>
 
       {/* 폼 내용 */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
+      <div
+        ref={mainFormContainerRef}
+        className="flex-1 min-h-0 overflow-y-auto px-6 py-4 overscroll-y-contain"
+      >
         {/* 룩 이름 입력 */}
         <div className="mb-6">
           <label
@@ -183,25 +253,30 @@ export function LookForm({
           >
             {t('looks.tags')}
           </label>
-          <div className="flex flex-wrap gap-2 mb-3">
-            {COMMON_TAGS.map((tag) => (
-              <button
-                key={tag}
-                onClick={() => handleToggleTag(tag)}
-                className={`px-3 py-1.5 transition-all ${
-                  selectedTags.includes(tag) ? 'text-white' : 'text-black bg-gray-100'
-                }`}
-                style={{
-                  borderRadius: '999px',
-                  backgroundColor: selectedTags.includes(tag) ? '#000' : undefined,
-                  fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                  fontSize: '12px',
-                  fontWeight: 500,
-                }}
-              >
-                #{tag}
-              </button>
-            ))}
+          <div
+            ref={commonTagsContainerRef}
+            className="mb-3 overflow-x-auto scrollbar-hide scroll-smooth overscroll-x-contain"
+          >
+            <div className="flex w-max min-w-full gap-2 pb-1">
+              {COMMON_TAGS.map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => handleToggleTag(tag)}
+                  className={`px-3 py-1.5 shrink-0 transition-all ${
+                    selectedTags.includes(tag) ? 'text-white' : 'text-black bg-gray-100'
+                  }`}
+                  style={{
+                    borderRadius: '999px',
+                    backgroundColor: selectedTags.includes(tag) ? '#000' : undefined,
+                    fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                    fontSize: '12px',
+                    fontWeight: 500,
+                  }}
+                >
+                  #{tag}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* 커스텀 태그 입력 */}
@@ -255,25 +330,31 @@ export function LookForm({
               >
                 {t('looks.selectedTags')}
               </p>
-              <div className="flex flex-wrap gap-1.5">
-                {selectedTags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-3 py-1 text-white inline-flex items-center gap-1"
-                    style={{
-                      borderRadius: '999px',
-                      backgroundColor: '#000',
-                      fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                      fontSize: '11px',
-                      fontWeight: 500,
-                    }}
-                  >
-                    #{tag}
-                    <button onClick={() => handleRemoveTag(tag)} className="hover:opacity-70">
-                      <X size={12} strokeWidth={2} />
-                    </button>
-                  </span>
-                ))}
+
+              <div
+                ref={selectedTagsContainerRef}
+                className="overflow-x-auto scrollbar-hide scroll-smooth overscroll-x-contain"
+              >
+                <div className="flex w-max min-w-full gap-1.5 pb-1">
+                  {selectedTags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-3 py-1 text-white inline-flex items-center gap-1 shrink-0"
+                      style={{
+                        borderRadius: '999px',
+                        backgroundColor: '#000',
+                        fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                        fontSize: '11px',
+                        fontWeight: 500,
+                      }}
+                    >
+                      #{tag}
+                      <button onClick={() => handleRemoveTag(tag)} className="hover:opacity-70">
+                        <X size={12} strokeWidth={2} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -319,7 +400,7 @@ export function LookForm({
                             fontWeight: 500,
                           }}
                         >
-                          {item.category}
+                          {getCategoryLabel(item.category)}
                         </span>
                       </div>
                     )}
@@ -343,7 +424,7 @@ export function LookForm({
                         fontWeight: 400,
                       }}
                     >
-                      {item.category}
+                      {getCategoryLabel(item.category)}
                     </p>
                   </div>
                   <button
@@ -373,42 +454,46 @@ export function LookForm({
           </label>
 
           {/* 카테고리 탭 */}
-          <div className="flex gap-2 mb-3 overflow-x-auto scrollbar-hide pb-2">
-            <button
-              onClick={() => setActiveCategory('전체')}
-              className={`px-4 py-2 shrink-0 transition-all ${
-                activeCategory === '전체' ? 'text-white' : 'text-black bg-gray-100'
-              }`}
-              style={{
-                borderRadius: '999px',
-                backgroundColor: activeCategory === '전체' ? '#000' : undefined,
-                fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                fontSize: '12px',
-                fontWeight: 600,
-              }}
+          <div>
+            <div
+              ref={categorysContainerRef}
+              className="flex gap-2 mb-3 overflow-x-scroll scrollbar-hide pb-2 scroll-smooth overscroll-x-contain"
             >
-              전체
-            </button>
-            {CATEGORIES.map((cat) => (
               <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
+                onClick={() => setActiveCategory('ALL')}
                 className={`px-4 py-2 shrink-0 transition-all ${
-                  activeCategory === cat ? 'text-white' : 'text-black bg-gray-100'
+                  activeCategory === 'ALL' ? 'text-white' : 'text-black bg-gray-100'
                 }`}
                 style={{
                   borderRadius: '999px',
-                  backgroundColor: activeCategory === cat ? '#000' : undefined,
+                  backgroundColor: activeCategory === 'ALL' ? '#000' : undefined,
                   fontFamily: "var(--font-inter), 'Inter', sans-serif",
                   fontSize: '12px',
                   fontWeight: 600,
                 }}
               >
-                {cat}
+                {getCategoryLabel('ALL')}
               </button>
-            ))}
+              {LOOK_CATEGORY_CODES.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={`px-4 py-2 shrink-0 transition-all ${
+                    activeCategory === cat ? 'text-white' : 'text-black bg-gray-100'
+                  }`}
+                  style={{
+                    borderRadius: '999px',
+                    backgroundColor: activeCategory === cat ? '#000' : undefined,
+                    fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                    fontSize: '12px',
+                    fontWeight: 600,
+                  }}
+                >
+                  {getCategoryLabel(cat)}
+                </button>
+              ))}
+            </div>
           </div>
-
           {/* 아이템 그리드 */}
           <div className="grid grid-cols-3 gap-3">
             {filteredItems.map((item) => {
@@ -446,7 +531,7 @@ export function LookForm({
                             fontWeight: 600,
                           }}
                         >
-                          {item.category}
+                          {getCategoryLabel(item.category)}
                         </p>
                         <p
                           className="text-[#666] text-center"
@@ -499,7 +584,7 @@ export function LookForm({
                   fontWeight: 400,
                 }}
               >
-                {activeCategory}에 해당하는 아이템이 없습니다
+                {t('looks.noItemsInCategory', { category: getCategoryLabel(activeCategory) })}
               </p>
             </div>
           )}

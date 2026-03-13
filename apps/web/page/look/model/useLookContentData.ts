@@ -48,15 +48,6 @@ declare global {
   }
 }
 
-const CATEGORY_GROUP_MAP: Record<string, string> = {
-  TOP: '상의',
-  BOTTOM: '하의',
-  OUTER: '아우터',
-  DRESS_SKIRT: '드레스/스커트',
-  SHOES: '신발',
-  ACCESSORY: '악세사리',
-};
-
 type UseLookContentDataOptions = {
   initialLooks: LookResponseDto[];
   initialClothes: ClothesListItemResponseDto[];
@@ -107,7 +98,7 @@ export function useLookContentData({
       initialClothes.map((item) => ({
         id: item.id,
         name: item.alias,
-        category1: CATEGORY_GROUP_MAP[item.category] || '전체',
+        category1: item.category,
         imageUrl: item.cardImage?.webpUrl ?? '',
       })),
     [initialClothes],

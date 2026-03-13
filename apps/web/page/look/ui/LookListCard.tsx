@@ -1,6 +1,7 @@
 'use client';
 
 import { Heart, Share2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { Look } from '../model/useLooks';
 import { LookScrollableImageGallery } from './LookScrollableImageGallery';
 
@@ -25,6 +26,8 @@ export function LookListCard({
   onToggleFavorite,
   onOpenShare,
 }: LookListCardProps) {
+  const { t } = useTranslation();
+
   return (
     <div
       onClick={(e) => onClick(e, look)}
@@ -73,7 +76,9 @@ export function LookListCard({
             </span>
           ))}
         </div>
-        <p className="text-[#999] text-[11px] font-normal">아이템 {look.items.length}개</p>
+        <p className="text-[#999] text-[11px] font-normal">
+          {t('looks.cardItemsCount', { count: look.items.length })}
+        </p>
       </div>
     </div>
   );
