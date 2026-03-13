@@ -228,7 +228,7 @@ export function LookForm({
             type="text"
             value={lookName}
             onChange={(e) => setLookName(e.target.value)}
-            placeholder="예: 출근룩, 데이트룩"
+            placeholder={t('looks.lookNamePlaceholder')}
             className="w-full px-4 py-3 bg-white text-black placeholder-gray-400"
             style={{
               borderRadius: '12px',
@@ -291,7 +291,7 @@ export function LookForm({
                   handleAddCustomTag();
                 }
               }}
-              placeholder={t('closet.enterTagPlaceholder')}
+              placeholder={t('looks.enterTagPlaceholder')}
               className="flex-1 min-w-0 px-4 py-2 bg-white text-black placeholder-gray-400"
               style={{
                 borderRadius: '12px',

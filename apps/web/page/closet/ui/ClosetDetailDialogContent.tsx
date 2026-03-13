@@ -93,7 +93,7 @@ export function ClosetDetailDialogContent({
                 isDetailLoading={isDetailLoading}
                 toggleArrayValue={toggleArrayValue}
                 label={t('closet.alias')}
-                placeholder="예: 기본 화이트 티셔츠"
+                placeholder={t('closet.aliasPlaceholder')}
               />
 
               <ClosetDetailCategorySection
@@ -143,7 +143,7 @@ export function ClosetDetailDialogContent({
                 isDetailLoading={isDetailLoading}
                 toggleArrayValue={toggleArrayValue}
                 label={t('closet.brand')}
-                placeholder="예: 유니클로"
+                placeholder={t('closet.brandPlaceholder')}
                 emptyText="미설정"
               />
 
@@ -164,7 +164,7 @@ export function ClosetDetailDialogContent({
                 isDetailLoading={isDetailLoading}
                 toggleArrayValue={toggleArrayValue}
                 label={t('closet.memo')}
-                placeholder="예: 데일리로 자주 입는 기본템"
+                placeholder={t('closet.enterMemo')}
                 emptyText="미설정"
               />
             </div>
