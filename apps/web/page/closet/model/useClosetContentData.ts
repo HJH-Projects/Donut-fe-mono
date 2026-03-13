@@ -30,10 +30,12 @@ import type {
 } from '@/shared/model/orvalSchemas';
 import { useToast } from '@/shared/model/useToast';
 import { mapDetailToClothingItem, mapEnrichToForm } from '../ui/closet.mapper';
+import { SUBCATEGORY_TO_API } from '../ui/closet.constants';
 import {
   CATEGORY_REVERSE_MAP,
   EMPTY_CLOTHING_FORM,
   dtoToClothingItem,
+  isClosetMainCategory,
 } from './closetContent.primitives';
 import {
   closeGlobalDialog,
@@ -117,15 +119,18 @@ export function useClosetContentData({
     [router, toast],
   );
 
+  const toApiCategory = (category1: string) =>
+    isClosetMainCategory(category1) ? CATEGORY_REVERSE_MAP[category1] : 'TOP';
+
   const addClothing = async (item: ClothingItem, uploadDraftId: string) => {
     await runClothesMutation(
       () =>
         postClothesApi(clientKy, {
           title: item.name,
-          category: CATEGORY_REVERSE_MAP[item.category1] || 'TOP',
+          category: toApiCategory(item.category1),
           color: item.color.length ? (item.color as CreateClothesDtoColorItem[]) : undefined,
           draftId: uploadDraftId,
-          subCategory: (item.category2 as CreateClothesDtoSubCategory) || undefined,
+          subCategory: (SUBCATEGORY_TO_API[item.subCategory] as CreateClothesDtoSubCategory) || undefined,
           season: item.season.length ? (item.season as CreateClothesDtoSeasonItem[]) : undefined,
           brand: item.brand || undefined,
           size: (item.size as CreateClothesDtoSize) || undefined,
@@ -141,9 +146,9 @@ export function useClosetContentData({
       () =>
         patchClothesApi(clientKy, item.id, {
           title: item.name,
-          category: CATEGORY_REVERSE_MAP[item.category1] || 'TOP',
+          category: toApiCategory(item.category1),
           color: item.color.length ? (item.color as UpdateClothesDtoColorItem[]) : undefined,
-          subCategory: (item.category2 as UpdateClothesDtoSubCategory) || undefined,
+          subCategory: (SUBCATEGORY_TO_API[item.subCategory] as UpdateClothesDtoSubCategory) || undefined,
           season: item.season.length ? (item.season as UpdateClothesDtoSeasonItem[]) : undefined,
           brand: item.brand || undefined,
           size: (item.size as UpdateClothesDtoSize) || undefined,
@@ -157,6 +162,10 @@ export function useClosetContentData({
   const removeClothing = async (id: string) => {
     await runClothesMutation(() => deleteClothesApi(clientKy, id), '옷을 삭제하는 데 실패했습니다.');
   };
+
+  const [selectedItem, setSelectedItem] = useState<ClothingItem | null>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [isEditingImage, setIsEditingImage] = useState(false);
 
   const toggleFavorite = useCallback(
     async (id: string, isFavorite: boolean) => {
@@ -198,10 +207,6 @@ export function useClosetContentData({
   const [hasPendingFile, setHasPendingFile] = useState(false);
   const [draftId, setDraftId] = useState<string | null>(null);
   const [bgPreviewUrl, setBgPreviewUrl] = useState<string | null>(null);
-
-  const [selectedItem, setSelectedItem] = useState<ClothingItem | null>(null);
-  const [editMode, setEditMode] = useState(false);
-  const [isEditingImage, setIsEditingImage] = useState(false);
 
   const resetAddFormState = () => {
     setIsProcessing(false);
@@ -321,7 +326,7 @@ export function useClosetContentData({
       id: Date.now().toString(),
       name: newClothing.name || '',
       category1: newClothing.category1 || '상의',
-      category2: newClothing.category2 || '',
+      subCategory: newClothing.subCategory || '',
       season: newClothing.season || [],
       color: newClothing.color || [],
       brand: newClothing.brand || '',
@@ -386,7 +391,7 @@ export function useClosetContentData({
     setNewClothing({
       name: selectedItem.name,
       category1: selectedItem.category1,
-      category2: selectedItem.category2,
+      subCategory: selectedItem.subCategory,
       season: selectedItem.season,
       color: selectedItem.color,
       brand: selectedItem.brand,

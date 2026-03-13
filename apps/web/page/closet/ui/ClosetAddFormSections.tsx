@@ -1,7 +1,9 @@
 'use client';
 
 import type { Dispatch, SetStateAction } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ClothingItem } from '../model/clothing.types';
+import { getCategoryLabel, toOptionLabelKey, toSubCategoryLabelKey } from './closetCategoryLabel';
 import { CATEGORIES, COLORS, MATERIALS, SEASONS } from './closet.constants';
 import {
   AddProcessingOverlay,
@@ -56,6 +58,8 @@ export function AddCategoryPrimarySection({
   setNewClothing,
   isProcessing,
 }: AddCategoryPrimarySectionProps) {
+  const { t } = useTranslation();
+
   if (isProcessing) {
     return <OptionSkeletonRow widths={[70, 80, 90, 100, 110]} />;
   }
@@ -72,7 +76,7 @@ export function AddCategoryPrimarySection({
               setNewClothing({
                 ...newClothing,
                 category1: cat,
-                category2: '',
+                subCategory: '',
               })
             }
             className="px-3 py-1.5 transition-all rounded-2xl border-[1.5px] border-[#E5E5E5] text-[12px] font-medium"
@@ -81,7 +85,7 @@ export function AddCategoryPrimarySection({
               color: newClothing.category1 === cat ? '#fff' : '#000',
             }}
           >
-            {cat}
+            {getCategoryLabel(cat, t)}
           </button>
         ))}
     </div>
@@ -97,6 +101,8 @@ export function AddCategorySecondarySection({
   setNewClothing,
   isProcessing,
 }: AddCategorySecondarySectionProps) {
+  const { t } = useTranslation();
+
   if (!newClothing.category1) return null;
 
   const categories = CATEGORIES[newClothing.category1 as keyof typeof CATEGORIES];
@@ -115,16 +121,18 @@ export function AddCategorySecondarySection({
           onClick={() =>
             setNewClothing({
               ...newClothing,
-              category2: newClothing.category2 === subCat ? '' : subCat,
+              subCategory: newClothing.subCategory === subCat ? '' : subCat,
             })
           }
           className="px-3 py-1.5 transition-all rounded-2xl border-[1.5px] border-[#E5E5E5] text-[12px] font-medium"
           style={{
-            backgroundColor: newClothing.category2 === subCat ? '#000' : '#fff',
-            color: newClothing.category2 === subCat ? '#fff' : '#000',
+            backgroundColor: newClothing.subCategory === subCat ? '#000' : '#fff',
+            color: newClothing.subCategory === subCat ? '#fff' : '#000',
           }}
         >
-          {subCat}
+          {t(`closet.subCategoryLabels.${toSubCategoryLabelKey(subCat)}`, {
+            defaultValue: subCat,
+          })}
         </button>
       ))}
     </div>
@@ -142,6 +150,8 @@ export function AddSeasonSection({
   isProcessing,
   toggleArrayValue,
 }: AddSeasonSectionProps) {
+  const { t } = useTranslation();
+
   if (isProcessing) return <OptionSkeletonRow widths={[70, 80, 90, 100, 110]} />;
 
   return (
@@ -162,7 +172,7 @@ export function AddSeasonSection({
             color: newClothing.season?.includes(season) ? '#fff' : '#000',
           }}
         >
-          {season}
+          {t(`closet.seasonLabels.${toOptionLabelKey(season)}`, { defaultValue: season })}
         </button>
       ))}
     </div>
@@ -180,6 +190,8 @@ export function AddColorSection({
   isProcessing,
   toggleArrayValue,
 }: AddColorSectionProps) {
+  const { t } = useTranslation();
+
   if (isProcessing) return <OptionSkeletonRow widths={[70, 75, 80, 85, 90, 95]} />;
 
   return (
@@ -217,7 +229,7 @@ export function AddColorSection({
             }}
           />
           <span className="text-[11px] font-medium" style={{ color: newClothing.color?.includes(color.name) ? '#fff' : '#000' }}>
-            {color.name}
+            {t(`closet.colorLabels.${toOptionLabelKey(color.name)}`, { defaultValue: color.name })}
           </span>
         </button>
       ))}
@@ -234,6 +246,8 @@ export function AddMaterialSection({
   setNewClothing,
   isProcessing,
 }: AddMaterialSectionProps) {
+  const { t } = useTranslation();
+
   if (isProcessing) return <OptionSkeletonRow widths={[66, 74, 82, 90, 98, 106]} />;
 
   return (
@@ -254,7 +268,7 @@ export function AddMaterialSection({
             color: newClothing.material === material ? '#fff' : '#000',
           }}
         >
-          {material}
+          {t(`closet.materialLabels.${toOptionLabelKey(material)}`, { defaultValue: material })}
         </button>
       ))}
     </div>

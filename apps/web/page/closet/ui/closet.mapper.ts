@@ -5,8 +5,9 @@ import {
   CATEGORY_ALIASES,
   CATEGORY_FROM_API,
   COLORS,
-  MATERIALS,
+  MATERIAL_CODES,
   SEASONS,
+  SUBCATEGORY_FROM_API,
 } from './closet.constants';
 
 function toArray(value?: string[] | string): string[] {
@@ -15,27 +16,31 @@ function toArray(value?: string[] | string): string[] {
 }
 
 export function mapEnrichToForm(enrich: EnrichClothesResponseDtoData, prev: Partial<ClothingItem>) {
-  const mappedCategory = CATEGORY_ALIASES[enrich.mainCategory] ?? prev.category1 ?? '상의';
+  const mappedCategory =
+    CATEGORY_ALIASES[enrich.mainCategory as keyof typeof CATEGORY_ALIASES] ??
+    prev.category1 ??
+    '상의';
   const allowedSubCategories = Array.from(
     CATEGORIES[mappedCategory as keyof typeof CATEGORIES] ?? [],
   ) as string[];
-  const mappedSubCategory = toArray(enrich.subCategory).find((sub) =>
-    allowedSubCategories.includes(sub),
+  const mappedSubCategory = toArray(enrich.subCategory)
+    .map((sub) => SUBCATEGORY_FROM_API[sub as keyof typeof SUBCATEGORY_FROM_API] ?? sub)
+    .find((sub) => allowedSubCategories.includes(sub));
+  const mappedColors = toArray(enrich.color)
+    .filter((color) =>
+      COLORS.some((option) => option.name === color as typeof option.name),
   );
-  const mappedColors = toArray(enrich.color).filter((color) =>
-    COLORS.some((option) => option.name === color),
+  const mappedSeasons = toArray(enrich.season)
+    .filter((season) =>
+      SEASONS.includes(season as (typeof SEASONS)[number]),
   );
-  const mappedSeasons = toArray(enrich.season).filter((season) =>
-    (SEASONS as readonly string[]).includes(season),
-  );
-  const mappedMaterial = toArray(enrich.material).find((material) =>
-    (MATERIALS as readonly string[]).includes(material),
-  );
+  const mappedMaterial = toArray(enrich.material)
+    .find((material) => MATERIAL_CODES.includes(material as (typeof MATERIAL_CODES)[number]));
 
   return {
     ...prev,
     category1: mappedCategory,
-    category2: mappedSubCategory ?? '',
+    subCategory: mappedSubCategory ?? '',
     color: mappedColors,
     season: mappedSeasons,
     material: mappedMaterial ?? '',
@@ -47,7 +52,7 @@ export function mapDetailToClothingItem(detail: ClothesResponseDto, fallback: Cl
     ...fallback,
     name: detail.title,
     category1: CATEGORY_FROM_API[detail.category] ?? fallback.category1,
-    category2: detail.subCategory ?? '',
+    subCategory: detail.subCategory ? SUBCATEGORY_FROM_API[detail.subCategory] ?? '' : '',
     season: (detail.season ?? []) as string[],
     color: (detail.color ?? []) as string[],
     brand: detail.brand ?? '',

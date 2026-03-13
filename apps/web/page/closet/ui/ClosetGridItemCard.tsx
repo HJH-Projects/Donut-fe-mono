@@ -1,8 +1,10 @@
 'use client';
 
 import { Heart } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { ImageWithFallback } from '@/shared/ui/ImageWithFallback';
 import type { ClothingItem } from '../model/clothing.types';
+import { toSubCategoryLabelKey } from './closetCategoryLabel';
 
 type ClosetGridItemCardProps = {
   item: ClothingItem;
@@ -17,6 +19,8 @@ export function ClosetGridItemCard({
   onItemClick,
   onToggleFavorite,
 }: ClosetGridItemCardProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="relative">
       <div
@@ -54,7 +58,11 @@ export function ClosetGridItemCard({
       <div className="mt-2">
         <p className="text-black truncate text-[13px] font-semibold">{item.name}</p>
         <p className="text-[#555555] truncate text-[11px] font-normal">
-          {item.category2 || item.category1}
+          {item.subCategory
+            ? t(`closet.subCategoryLabels.${toSubCategoryLabelKey(item.subCategory)}`, {
+                defaultValue: item.subCategory,
+              })
+            : ''}
         </p>
       </div>
     </div>

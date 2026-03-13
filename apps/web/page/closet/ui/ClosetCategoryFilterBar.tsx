@@ -2,6 +2,8 @@
 
 import { Heart } from 'lucide-react';
 import { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { getCategoryLabel } from './closetCategoryLabel';
 
 type ClosetCategoryFilterBarProps = {
   categories: string[];
@@ -18,6 +20,7 @@ export function ClosetCategoryFilterBar({
   showFavoriteOnly,
   onToggleFavoriteOnly,
 }: ClosetCategoryFilterBarProps) {
+  const { t } = useTranslation();
   const categoryScrollRef = useRef<HTMLDivElement>(null);
 
   const handleCategoryWheel = (e: React.WheelEvent<HTMLDivElement>) => {
@@ -62,7 +65,7 @@ export function ClosetCategoryFilterBar({
               color: selectedCategory === category ? '#fff' : '#000',
             }}
           >
-            {category}
+            {getCategoryLabel(category, t)}
           </button>
         ))}
       </div>

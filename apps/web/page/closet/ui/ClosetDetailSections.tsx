@@ -2,7 +2,9 @@
 
 import { Edit2, Heart, Trash2, Upload } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ClothingItem } from '../model/clothing.types';
+import { getCategoryLabel, toOptionLabelKey, toSubCategoryLabelKey } from './closetCategoryLabel';
 import { LoadingButtonContent } from './ClosetDialogLoadingUi';
 import {
   BrandReadonlySection,
@@ -26,7 +28,6 @@ type DetailFieldBaseProps = {
 
 type ClosetDetailImageSectionProps = {
   selectedItem: ClothingItem;
-  setSelectedItem: Dispatch<SetStateAction<ClothingItem | null>>;
   editMode: boolean;
   onToggleFavorite: (id: string, isFavorite: boolean) => void;
   onStartImageEdit: () => void;
@@ -36,7 +37,6 @@ type ClosetDetailImageSectionProps = {
 
 export function ClosetDetailImageSection({
   selectedItem,
-  setSelectedItem,
   editMode,
   onToggleFavorite,
   onStartImageEdit,
@@ -135,6 +135,8 @@ export function ClosetDetailCategorySection({
   label,
   subcategoryLabel,
 }: ClosetDetailCategorySectionProps) {
+  const { t } = useTranslation();
+
   return (
     <div>
       <ClosetFormLabel text={label} required={editMode} />
@@ -151,7 +153,7 @@ export function ClosetDetailCategorySection({
                     setSelectedItem({
                       ...selectedItem,
                       category1: cat,
-                      category2: '',
+                      subCategory: '',
                     })
                   }
                   className="px-3 py-1.5 transition-all rounded-2xl border-[1.5px] border-[#E5E5E5] text-[12px] font-medium"
@@ -160,7 +162,7 @@ export function ClosetDetailCategorySection({
                     color: selectedItem.category1 === cat ? '#fff' : '#000',
                   }}
                 >
-                  {cat}
+                  {getCategoryLabel(cat, t)}
                 </button>
               ))}
           </div>
@@ -176,16 +178,18 @@ export function ClosetDetailCategorySection({
                       onClick={() =>
                         setSelectedItem({
                           ...selectedItem,
-                          category2: selectedItem.category2 === subCat ? '' : subCat,
+                          subCategory: selectedItem.subCategory === subCat ? '' : subCat,
                         })
                       }
                       className="px-3 py-1.5 transition-all rounded-2xl border-[1.5px] border-[#E5E5E5] text-[12px] font-medium"
                       style={{
-                        backgroundColor: selectedItem.category2 === subCat ? '#000' : '#fff',
-                        color: selectedItem.category2 === subCat ? '#fff' : '#000',
+                        backgroundColor: selectedItem.subCategory === subCat ? '#000' : '#fff',
+                        color: selectedItem.subCategory === subCat ? '#fff' : '#000',
                       }}
                     >
-                      {subCat}
+                      {t(`closet.subCategoryLabels.${toSubCategoryLabelKey(subCat)}`, {
+                        defaultValue: subCat,
+                      })}
                     </button>
                   ))}
                 </div>
@@ -195,7 +199,7 @@ export function ClosetDetailCategorySection({
       ) : (
         <CategoryReadonlySection
           category1={selectedItem.category1}
-          category2={selectedItem.category2}
+          subCategory={selectedItem.subCategory}
           isLoading={isDetailLoading}
         />
       )}
@@ -217,6 +221,8 @@ export function ClosetDetailSeasonSection({
   label,
   emptyText,
 }: ClosetDetailSeasonSectionProps) {
+  const { t } = useTranslation();
+
   return (
     <div>
       <ClosetFormLabel text={label} />
@@ -238,7 +244,7 @@ export function ClosetDetailSeasonSection({
                 color: selectedItem.season?.includes(season) ? '#fff' : '#000',
               }}
             >
-              {season}
+              {t(`closet.seasonLabels.${toOptionLabelKey(season)}`, { defaultValue: season })}
             </button>
           ))}
         </div>
@@ -267,6 +273,8 @@ export function ClosetDetailColorSection({
   label,
   emptyText,
 }: ClosetDetailColorSectionProps) {
+  const { t } = useTranslation();
+
   return (
     <div>
       <ClosetFormLabel text={label} />
@@ -305,7 +313,7 @@ export function ClosetDetailColorSection({
                 }}
               />
               <span className="text-[11px] font-medium" style={{ color: selectedItem.color?.includes(color.name) ? '#fff' : '#000' }}>
-                {color.name}
+                {t(`closet.colorLabels.${toOptionLabelKey(color.name)}`, { defaultValue: color.name })}
               </span>
             </button>
           ))}
@@ -330,6 +338,8 @@ export function ClosetDetailMaterialSection({
   label,
   emptyText,
 }: ClosetDetailMaterialSectionProps) {
+  const { t } = useTranslation();
+
   return (
     <div>
       <ClosetFormLabel text={label} />
@@ -351,7 +361,7 @@ export function ClosetDetailMaterialSection({
                 color: selectedItem.material === material ? '#fff' : '#000',
               }}
             >
-              {material}
+              {t(`closet.materialLabels.${toOptionLabelKey(material)}`, { defaultValue: material })}
             </button>
           ))}
         </div>

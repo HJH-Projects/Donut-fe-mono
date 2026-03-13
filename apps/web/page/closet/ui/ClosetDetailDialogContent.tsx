@@ -79,7 +79,6 @@ export function ClosetDetailDialogContent({
             <div className="space-y-4">
               <ClosetDetailImageSection
                 selectedItem={selectedItem}
-                setSelectedItem={setSelectedItem}
                 editMode={editMode}
                 onToggleFavorite={handleToggleFavorite}
                 onStartImageEdit={handleStartImageEdit}

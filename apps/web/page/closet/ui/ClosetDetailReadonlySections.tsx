@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
+import { getCategoryLabel, toOptionLabelKey, toSubCategoryLabelKey } from './closetCategoryLabel';
 import { COLORS } from './closet.constants';
 import {
   DetailInlineSkeleton,
@@ -9,23 +11,27 @@ import {
 
 type CategoryReadonlySectionProps = {
   category1: string;
-  category2: string;
+  subCategory: string;
   isLoading: boolean;
 };
 
 export function CategoryReadonlySection({
   category1,
-  category2,
+  subCategory,
   isLoading,
 }: CategoryReadonlySectionProps) {
+  const { t } = useTranslation();
+
   return (
     <>
-      <p className="text-sm font-normal">{category1}</p>
+      <p className="text-sm font-normal">{getCategoryLabel(category1, t)}</p>
       {isLoading ? (
         <DetailInlineSkeleton width="120px" height="18px" className="mt-1" />
-      ) : category2 ? (
+      ) : subCategory ? (
         <p className="text-[#666] mt-1 text-[13px] font-normal">
-          {category2}
+          {t(`closet.subCategoryLabels.${toSubCategoryLabelKey(subCategory)}`, {
+            defaultValue: subCategory,
+          })}
         </p>
       ) : null}
     </>
@@ -43,6 +49,8 @@ export function SeasonReadonlySection({
   isLoading,
   emptyText,
 }: SeasonReadonlySectionProps) {
+  const { t } = useTranslation();
+
   if (isLoading) {
     return <OptionSkeletonRow widths={[66, 80, 94]} height={30} />;
   }
@@ -55,7 +63,7 @@ export function SeasonReadonlySection({
             key={s}
             className="px-3 py-1 rounded-2xl bg-[#F3F3F3] text-[12px] font-medium"
           >
-            {s}
+            {t(`closet.seasonLabels.${toOptionLabelKey(s)}`, { defaultValue: s })}
           </span>
         ))}
       </div>
@@ -80,6 +88,8 @@ export function ColorReadonlySection({
   isLoading,
   emptyText,
 }: ColorReadonlySectionProps) {
+  const { t } = useTranslation();
+
   if (isLoading) {
     return <OptionSkeletonRow widths={[68, 78, 88, 98]} height={30} />;
   }
@@ -113,7 +123,7 @@ export function ColorReadonlySection({
                 />
               )}
               <span className="text-[11px] font-medium">
-                {c}
+                {t(`closet.colorLabels.${toOptionLabelKey(c)}`, { defaultValue: c })}
               </span>
             </div>
           );
@@ -140,9 +150,15 @@ export function MaterialReadonlySection({
   isLoading,
   emptyText,
 }: MaterialReadonlySectionProps) {
+  const { t } = useTranslation();
+
   if (isLoading) return <DetailInlineSkeleton width="100px" />;
   if (material) {
-    return <p className="text-sm font-normal">{material}</p>;
+    return (
+      <p className="text-sm font-normal">
+        {t(`closet.materialLabels.${toOptionLabelKey(material)}`, { defaultValue: material })}
+      </p>
+    );
   }
 
   return <p className="text-[#999] text-[13px] font-normal">{emptyText}</p>;

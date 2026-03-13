@@ -4,7 +4,7 @@ export type ClothingItem = {
   id: string;
   name: string;
   category1: string;
-  category2: string;
+  subCategory: string;
   season: string[];
   color: string[];
   brand: string;
