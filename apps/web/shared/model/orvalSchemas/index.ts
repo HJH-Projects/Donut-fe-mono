@@ -70,6 +70,7 @@ export * from './clothesImageVariantDto';
 export * from './clothesImageVariantsResponseDto';
 export * from './clothesListItemResponseDto';
 export * from './clothesListItemResponseDtoCategory';
+export * from './clothesListItemResponseDtoSubCategory';
 export * from './clothesPreviewResponseDto';
 export * from './clothesResponseDto';
 export * from './clothesResponseDtoCategory';

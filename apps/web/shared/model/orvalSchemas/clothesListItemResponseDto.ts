@@ -7,11 +7,14 @@
  */
 import type { ClothesImageVariantDto } from './clothesImageVariantDto';
 import type { ClothesListItemResponseDtoCategory } from './clothesListItemResponseDtoCategory';
+import type { ClothesListItemResponseDtoSubCategory } from './clothesListItemResponseDtoSubCategory';
 
 export interface ClothesListItemResponseDto {
   id: string;
   alias: string;
   category: ClothesListItemResponseDtoCategory;
+  /** @nullable */
+  subCategory?: ClothesListItemResponseDtoSubCategory;
   isLiked: boolean;
   /** 카드 UI용 파생본 (webp/jpeg) */
   cardImage?: ClothesImageVariantDto;

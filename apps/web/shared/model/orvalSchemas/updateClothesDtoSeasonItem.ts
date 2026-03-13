@@ -10,9 +10,9 @@ export type UpdateClothesDtoSeasonItem = typeof UpdateClothesDtoSeasonItem[keyof
 
 
 export const UpdateClothesDtoSeasonItem = {
-  봄: '봄',
-  여름: '여름',
-  가을: '가을',
-  겨울: '겨울',
-  사계절: '사계절',
+  SPRING: 'SPRING',
+  SUMMER: 'SUMMER',
+  FALL: 'FALL',
+  WINTER: 'WINTER',
+  ALL: 'ALL',
 } as const;

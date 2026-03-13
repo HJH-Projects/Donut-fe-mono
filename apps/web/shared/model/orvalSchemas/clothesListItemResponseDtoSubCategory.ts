@@ -6,10 +6,13 @@
  * OpenAPI spec version: 1.0
  */
 
-export type ClothesResponseDtoSubCategory = typeof ClothesResponseDtoSubCategory[keyof typeof ClothesResponseDtoSubCategory];
+/**
+ * @nullable
+ */
+export type ClothesListItemResponseDtoSubCategory = typeof ClothesListItemResponseDtoSubCategory[keyof typeof ClothesListItemResponseDtoSubCategory] | null;
 
 
-export const ClothesResponseDtoSubCategory = {
+export const ClothesListItemResponseDtoSubCategory = {
   SWEATSHIRT: 'SWEATSHIRT',
   HOODIE: 'HOODIE',
   SHIRT_BLOUSE: 'SHIRT_BLOUSE',
