@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Share2, Trash2, Link2, Copy, X, Crown } from 'lucide-react';
+import { Share2, Trash2, Link2, Copy, X, Crown, Heart } from 'lucide-react';
 import { ImageWithFallback } from '@/shared/ui/ImageWithFallback';
 import { useTranslation } from 'react-i18next';
 import type { CommentResponseDto, ShareLinkDetailResponseDto } from '@/shared/model/orvalSchemas';
@@ -38,7 +38,7 @@ export function SharedLookPage({
   const router = useRouter();
   const toast = useToast();
 
-  const { look, comments, addComment, deleteComment } = useShareDetail({
+  const { look, comments, addComment, deleteComment, toggleCommentLike } = useShareDetail({
     sharePath,
     initialShareDetail,
     initialComments,
@@ -139,6 +139,11 @@ export function SharedLookPage({
 
   const handleDeleteComment = async (commentId: string) => {
     await deleteComment(commentId);
+  };
+
+  const handleToggleCommentLike = async (commentId: string) => {
+    if (requireLogin()) return;
+    await toggleCommentLike(commentId);
   };
 
   const closeShareDialog = () => {
@@ -470,9 +475,9 @@ export function SharedLookPage({
                 return (
                 <div
                   key={comment.id}
-                  className="py-3"
+                  className="py-3 relative"
                 >
-                  <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center mb-1">
                     <div className="flex items-center gap-2">
                       {isOwnerComment && (
                         <Crown size={12} color="#F59E0B" strokeWidth={2.3} />
@@ -488,30 +493,9 @@ export function SharedLookPage({
                         {comment.author}
                       </p>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <p
-                        className="text-[#999]"
-                        style={{
-                          fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                          fontSize: '11px',
-                          fontWeight: 400,
-                        }}
-                      >
-                        {formatDate(comment.createdAt)}
-                      </p>
-                      {currentUserId && comment.userId === currentUserId && (
-                        <button
-                          onClick={() => handleDeleteComment(comment.id)}
-                          className="w-7 h-7 inline-flex items-center justify-center hover:bg-gray-100 transition-colors"
-                          style={{ borderRadius: '6px' }}
-                        >
-                          <Trash2 size={14} color="#999" strokeWidth={1.5} />
-                        </button>
-                      )}
-                    </div>
                   </div>
                   <p
-                    className="text-[#111827]"
+                    className="text-[#111827] pr-12"
                     style={{
                       fontFamily: "var(--font-inter), 'Inter', sans-serif",
                       fontSize: '14px',
@@ -521,6 +505,66 @@ export function SharedLookPage({
                   >
                     {comment.content}
                   </p>
+                  <div className="mt-0.5 pr-12 flex items-center gap-1">
+                    <p
+                      className="text-[#999]"
+                      style={{
+                        fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                        fontSize: '11px',
+                        fontWeight: 400,
+                      }}
+                    >
+                      {formatDate(comment.createdAt)}
+                    </p>
+                    {currentUserId && comment.userId === currentUserId && (
+                      <>
+                        <span
+                          className="text-[#6B7280]"
+                          style={{
+                            fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                            fontSize: '12px',
+                            fontWeight: 400,
+                            lineHeight: '1',
+                          }}
+                          aria-hidden="true"
+                        >
+                          ·
+                        </span>
+                        <button
+                          onClick={() => handleDeleteComment(comment.id)}
+                          className="text-[11px] text-[#999] font-normal cursor-pointer hover:text-[#333] hover:underline hover:underline-offset-2 transition-colors"
+                          style={{ fontFamily: "var(--font-inter), 'Inter', sans-serif" }}
+                        >
+                          {t('sharedLook.deleteComment')}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleCommentLike(comment.id)}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 inline-flex flex-col items-center gap-0.5 px-2 py-1 hover:bg-gray-100 transition-colors"
+                    style={{ borderRadius: '8px' }}
+                    aria-label={t('sharedLook.commentLikeAria')}
+                  >
+                    <Heart
+                      size={16}
+                      color={comment.isLiked ? '#000' : '#9CA3AF'}
+                      fill={comment.isLiked ? '#000' : 'none'}
+                      strokeWidth={1.8}
+                    />
+                    <span
+                      className="text-[#6B7280]"
+                      style={{
+                        fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        lineHeight: '1',
+                      }}
+                    >
+                      {comment.likeCount}
+                    </span>
+                  </button>
                 </div>
                 );
               })

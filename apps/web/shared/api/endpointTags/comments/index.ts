@@ -31,3 +31,14 @@ export const deleteShareCommentApi = (
     .delete(`shares/${path}/comments/${id}`, options)
     .then((res) => res.json<S.CommentDeleteResponseDto>());
 };
+
+export const postShareCommentLikeToggleApi = (
+  ky: KyInstance,
+  path: string,
+  id: string,
+  options?: ApiRequestOptions,
+) => {
+  return ky
+    .post(`shares/${path}/comments/${id}/like`, options)
+    .then((res) => res.json<S.CommentLikeToggleResponseDto>());
+};

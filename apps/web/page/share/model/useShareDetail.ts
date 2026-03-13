@@ -6,6 +6,7 @@ import {
   postShareCommentsApi,
   getShareCommentsApi,
   deleteShareCommentApi,
+  postShareCommentLikeToggleApi,
 } from '@/shared/api/endpointTags/comments';
 import { getSharesDetailApi } from '@/shared/api/endpointTags/shares';
 import { clientKy } from '@/features/api/clientKy';
@@ -32,6 +33,8 @@ export type Comment = {
   author: string;
   content: string;
   createdAt: Date;
+  likeCount: number;
+  isLiked: boolean;
 };
 
 function mapShareDetailToLocal(detail: ShareLinkDetailResponseDto): Look {
@@ -56,6 +59,8 @@ function mapApiCommentToLocal(c: CommentResponseDto): Comment {
     author: c.user?.nickname ?? '익명',
     content: c.content,
     createdAt: new Date(c.createdAt || Date.now()),
+    likeCount: c.likeCount ?? 0,
+    isLiked: c.isLiked ?? false,
   };
 }
 
@@ -106,6 +111,8 @@ export function useShareDetail({
       author: '나',
       content,
       createdAt: new Date(),
+      likeCount: 0,
+      isLiked: false,
     };
     setComments((prev) => [...prev, comment]);
 
@@ -126,6 +133,39 @@ export function useShareDetail({
     }
   };
 
+  const toggleCommentLike = async (commentId: string) => {
+    const current = comments.find((c) => c.id === commentId);
+    if (!current) return;
+
+    const optimisticLiked = !current.isLiked;
+    const optimisticCount = Math.max(0, current.likeCount + (optimisticLiked ? 1 : -1));
+
+    setComments((prev) =>
+      prev.map((c) =>
+        c.id === commentId ? { ...c, isLiked: optimisticLiked, likeCount: optimisticCount } : c,
+      ),
+    );
+
+    try {
+      const result = await postShareCommentLikeToggleApi(clientKy, sharePath, commentId);
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === commentId
+            ? { ...c, isLiked: result.isLiked, likeCount: result.likeCount }
+            : c,
+        ),
+      );
+    } catch {
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === commentId
+            ? { ...c, isLiked: current.isLiked, likeCount: current.likeCount }
+            : c,
+        ),
+      );
+    }
+  };
+
   return {
     look,
     comments,
@@ -133,5 +173,6 @@ export function useShareDetail({
     error,
     addComment,
     deleteComment,
+    toggleCommentLike,
   };
 }
