@@ -7,6 +7,7 @@ import { serverKy } from '@/features/api/serverKy';
 import { getAccessTokenUserId } from '@/features/api/getEdgeCookieData';
 import { getSharesDetailApi } from '@/shared/api/endpointTags/shares';
 import { getShareCommentsApi } from '@/shared/api/endpointTags/comments';
+import { getUsersMeApi } from '@/shared/api/endpointTags/users';
 import type { ShareLinkDetailResponseDto } from '@/shared/model/orvalSchemas';
 
 export const runtime = 'edge';
@@ -76,6 +77,11 @@ export default async function Page({ params }: { params: Promise<{ lookId: strin
   const cookieStore = await cookies();
   const isLoggedIn = !!cookieStore.get('accessToken');
   const currentUserId = await getAccessTokenUserId();
+  const currentUserNickname = isLoggedIn
+    ? await getUsersMeApi(serverKy)
+        .then((me) => me.nickname)
+        .catch(() => null)
+    : null;
 
   const initialShareDetail = await getSharesDetailApi(serverKy, sharePath).catch(() => null);
   if (!initialShareDetail) {
@@ -92,6 +98,7 @@ export default async function Page({ params }: { params: Promise<{ lookId: strin
         initialComments={initialComments}
         isLoggedIn={isLoggedIn}
         currentUserId={currentUserId}
+        currentUserNickname={currentUserNickname}
       />
       <BottomNav />
     </div>

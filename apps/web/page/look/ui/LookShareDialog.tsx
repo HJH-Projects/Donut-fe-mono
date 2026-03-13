@@ -1,7 +1,7 @@
 'use client';
 
 import { Dialog } from '@base-ui/react/dialog';
-import { Check, Copy, Link2, Share2, Trash2, X } from 'lucide-react';
+import { Copy, Link2, Share2, Trash2, X } from 'lucide-react';
 import Spinner from '@/shared/ui/Spinner';
 import type { Look } from '../model/useLooks';
 import type { SharedLink } from './lookShare.types';
@@ -92,14 +92,6 @@ export function LookShareDialog({
                     <div className="space-y-3">
                       {sharedLinks.map((link) => (
                         <div key={link.id} className="relative">
-                          {selectedLink?.id === link.id && !link.isExpired && (
-                            <div className="absolute -top-2 right-2 z-50">
-                              <div className="w-6 h-6 flex items-center justify-center bg-black rounded-[var(--radius-sm)]">
-                                <Check size={14} color="#FFFFFF" strokeWidth={2.5} />
-                              </div>
-                            </div>
-                          )}
-
                           <div
                             onClick={() => {
                               if (link.isExpired) return;
@@ -131,29 +123,34 @@ export function LookShareDialog({
                                 </p>
                               </div>
                               <div className="flex items-center gap-2 shrink-0 relative z-10">
+                                {selectedLink?.id === link.id && !link.isExpired && (
+                                  <span className="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-black text-white">
+                                    선택됨
+                                  </span>
+                                )}
                                 {link.isExpired && (
                                   <span className="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-[#E5E7EB] text-[#374151]">
                                     만료
                                   </span>
                                 )}
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onDeleteLink(link.id);
-                                    if (selectedLink?.id === link.id) {
-                                      onSelectLink(null);
-                                    }
-                                  }}
-                                  className="p-1.5 hover:bg-gray-200 transition-colors rounded-md"
-                                  title="링크 삭제"
-                                >
-                                  <Trash2 size={14} color="#333333" strokeWidth={1.5} />
-                                </button>
                               </div>
                             </div>
                             <p className="text-[11px] font-normal relative z-10 text-[#666]">
                               {formatDate(link.createdAt)}
                             </p>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDeleteLink(link.id);
+                                if (selectedLink?.id === link.id) {
+                                  onSelectLink(null);
+                                }
+                              }}
+                              className="absolute right-2 bottom-2 p-1.5 hover:bg-gray-200 transition-colors rounded-md z-20"
+                              title="링크 삭제"
+                            >
+                              <Trash2 size={14} color="#333333" strokeWidth={1.5} />
+                            </button>
                           </div>
                         </div>
                       ))}

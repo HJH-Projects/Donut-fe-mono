@@ -68,12 +68,16 @@ interface UseShareDetailOptions {
   sharePath: string;
   initialShareDetail?: ShareLinkDetailResponseDto | null;
   initialComments?: CommentResponseDto[];
+  currentUserId?: string | null;
+  currentUserNickname?: string | null;
 }
 
 export function useShareDetail({
   sharePath,
   initialShareDetail = null,
   initialComments = [],
+  currentUserId = null,
+  currentUserNickname = null,
 }: UseShareDetailOptions) {
   const [look, setLook] = useState<Look | null>(
     initialShareDetail ? mapShareDetailToLocal(initialShareDetail) : null,
@@ -105,10 +109,11 @@ export function useShareDetail({
   }, [isBootstrapped, sharePath]);
 
   const addComment = async (content: string) => {
+    const tempId = `temp-${Date.now()}`;
     const comment: Comment = {
-      id: Date.now().toString(),
-      userId: 'current-user-id',
-      author: '나',
+      id: tempId,
+      userId: currentUserId ?? '',
+      author: currentUserNickname?.trim() || '익명',
       content,
       createdAt: new Date(),
       likeCount: 0,
@@ -117,7 +122,9 @@ export function useShareDetail({
     setComments((prev) => [...prev, comment]);
 
     try {
-      await postShareCommentsApi(clientKy, sharePath, { content });
+      const created = await postShareCommentsApi(clientKy, sharePath, { content });
+      const createdLocal = mapApiCommentToLocal(created);
+      setComments((prev) => prev.map((c) => (c.id === tempId ? createdLocal : c)));
     } catch {
       /* 오프라인 시 로컬 상태만 업데이트 */
     }

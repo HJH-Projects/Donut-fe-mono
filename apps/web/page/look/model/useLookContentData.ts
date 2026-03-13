@@ -529,6 +529,18 @@ export function useLookContentData({
     return `${year}-${month}-${day}`;
   };
 
+  const setShareDialogOpen = (open: boolean) => {
+    if (open) {
+      setSelectedLink(null);
+      setCopiedLinkId(null);
+      openGlobalDialog('look:share');
+      return;
+    }
+    closeGlobalDialog('look:share');
+    setSelectedLink(null);
+    setCopiedLinkId(null);
+  };
+
   return {
     looks,
     filteredLooks,
@@ -544,8 +556,7 @@ export function useLookContentData({
     setShowDetailDialog: (open: boolean) =>
       open ? openGlobalDialog('look:detail') : closeGlobalDialog('look:detail'),
     showShareDialog,
-    setShowShareDialog: (open: boolean) =>
-      open ? openGlobalDialog('look:share') : closeGlobalDialog('look:share'),
+    setShowShareDialog: setShareDialogOpen,
     showDeleteConfirmDialog,
     setShowDeleteConfirmDialog: (open: boolean) =>
       open ? openGlobalDialog('look:deleteConfirm') : closeGlobalDialog('look:deleteConfirm'),

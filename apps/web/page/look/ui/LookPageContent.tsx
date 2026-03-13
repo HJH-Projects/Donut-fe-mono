@@ -47,6 +47,7 @@ export function LookContent({
     showEditDialog,
     setShowEditDialog,
     setShowDetailDialog,
+    setShowShareDialog,
     isSavingLook,
     isDeletingLook,
     sharedLinks,
@@ -108,7 +109,7 @@ export function LookContent({
                 onToggleFavorite={handleToggleFavorite}
                 onOpenShare={(targetLook) => {
                   setSelectedLook(targetLook);
-                  openGlobalDialog('look:share');
+                  setShowShareDialog(true);
                 }}
               />
             ))}

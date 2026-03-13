@@ -25,6 +25,7 @@ interface SharedLookPageProps {
   initialComments?: CommentResponseDto[];
   isLoggedIn?: boolean;
   currentUserId?: string | null;
+  currentUserNickname?: string | null;
 }
 
 export function SharedLookPage({
@@ -33,6 +34,7 @@ export function SharedLookPage({
   initialComments = [],
   isLoggedIn = false,
   currentUserId = null,
+  currentUserNickname = null,
 }: SharedLookPageProps) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -42,6 +44,8 @@ export function SharedLookPage({
     sharePath,
     initialShareDetail,
     initialComments,
+    currentUserId,
+    currentUserNickname,
   });
 
   const [newComment, setNewComment] = useState({ content: '' });
