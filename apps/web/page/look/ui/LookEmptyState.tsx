@@ -23,8 +23,8 @@ export function LookEmptyState({
         type="button"
         onClick={onAddClick}
         aria-label={addFirstLabel}
-        className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4 hover:bg-gray-200 transition-colors"
-      >
+        className="w-16 h-16 rounded-full bg-[#F3F4F6] flex items-center justify-center mb-4 hover:bg-[#E5E7EB] transition-colors"
+        >
         <Plus size={28} color="#999" strokeWidth={1.5} />
       </button>
       <p className="text-black mb-1 text-base font-semibold">{title}</p>

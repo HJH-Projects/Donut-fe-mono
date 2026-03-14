@@ -48,7 +48,7 @@ export function LookCreateLinkDialog({
             <>
               <div className="shrink-0 p-6 pb-4 flex items-start justify-between">
                 <h2 className="text-black text-[20px] font-semibold">{selectedLook.name}</h2>
-                <button onClick={() => closeGlobalDialog('look:createLink')} className="p-1.5 hover:bg-gray-100 transition-colors rounded-lg">
+                <button onClick={() => closeGlobalDialog('look:createLink')} className="p-1.5 hover:bg-[#F3F4F6] transition-colors rounded-lg">
                   <X size={20} color="#000" strokeWidth={1.5} />
                 </button>
               </div>
@@ -59,7 +59,7 @@ export function LookCreateLinkDialog({
                   type="text"
                   value={linkName}
                   onChange={(e) => onLinkNameChange(e.target.value)}
-                  className="w-full px-4 py-3 text-black mb-4 rounded-xl bg-[#F5F5F5] text-sm font-normal border border-[#E5E5E5]"
+                  className="w-full px-4 py-3 text-black mb-4 rounded-xl bg-[#F9FAFB] text-sm font-normal border border-[#E5E5E5]"
                   placeholder={placeholder}
                 />
               </div>
@@ -68,7 +68,7 @@ export function LookCreateLinkDialog({
                 <button
                   onClick={() => closeGlobalDialog('look:createLink')}
                   disabled={isCreating}
-                  className="flex-1 px-5 py-3 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors rounded-xl border-[1.5px] border-[#E5E5E5] text-sm font-semibold text-black disabled:opacity-60"
+                  className="flex-1 px-5 py-3 flex items-center justify-center gap-2 hover:bg-[#F3F4F6] transition-colors rounded-xl border-[1.5px] border-[#E5E5E5] text-sm font-semibold text-black disabled:opacity-60"
                 >
                   {cancelLabel}
                 </button>

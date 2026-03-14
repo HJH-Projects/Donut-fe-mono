@@ -31,7 +31,7 @@ export function LookDeleteConfirmDialog({
         >
           <button
             onClick={() => closeGlobalDialog('look:deleteConfirm')}
-            className="absolute top-8 right-8 p-1 hover:bg-gray-100 transition-colors rounded-md"
+            className="absolute top-8 right-8 p-1 hover:bg-[#F3F4F6] transition-colors rounded-md"
             aria-label="닫기"
           >
             <X size={18} color="#000" strokeWidth={1.8} />

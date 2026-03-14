@@ -67,7 +67,7 @@ export function LookShareDialog({
             <>
               <div className="flex items-center justify-between mb-4 p-6 pb-4">
                 <h2 className="text-black text-[18px] font-semibold">{title}</h2>
-                <button onClick={() => closeGlobalDialog('look:share')} className="p-1 hover:bg-gray-100 transition-colors rounded-md">
+                <button onClick={() => closeGlobalDialog('look:share')} className="p-1 hover:bg-[#F3F4F6] transition-colors rounded-md">
                   <X size={20} color="#000" strokeWidth={2} />
                 </button>
               </div>
@@ -98,7 +98,7 @@ export function LookShareDialog({
                               onSelectLink(selectedLink?.id === link.id ? null : link);
                             }}
                             className={`p-3 transition-colors rounded-xl relative ${
-                              link.isExpired ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-gray-100'
+                              link.isExpired ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-[#F3F4F6]'
                             }`}
                             style={{
                               backgroundColor: '#F9FAFB',
@@ -146,7 +146,7 @@ export function LookShareDialog({
                                   onSelectLink(null);
                                 }
                               }}
-                              className="absolute right-2 bottom-2 p-1.5 hover:bg-gray-200 transition-colors rounded-md z-20"
+                              className="absolute right-2 bottom-2 p-1.5 hover:bg-[#E5E7EB] transition-colors rounded-md z-20"
                               title="링크 삭제"
                             >
                               <Trash2 size={14} color="#333333" strokeWidth={1.5} />
@@ -164,7 +164,7 @@ export function LookShareDialog({
                   <div className="space-y-3">
                     <button
                       onClick={() => onCopyLink(selectedLink.url, selectedLink.id)}
-                      className="w-full px-5 py-3 text-black hover:opacity-90 transition-opacity flex items-center justify-center gap-2 rounded-xl bg-[#F5F5F5] text-sm font-semibold"
+                      className="w-full px-5 py-3 text-black hover:opacity-90 transition-opacity flex items-center justify-center gap-2 rounded-xl bg-[#F3F4F6] text-sm font-semibold"
                     >
                       <Copy size={16} color="#000" strokeWidth={2} />
                       {copiedLinkId === selectedLink.id ? copiedLabel : copyLinkLabel}

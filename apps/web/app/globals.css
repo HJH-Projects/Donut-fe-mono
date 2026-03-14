@@ -106,6 +106,7 @@ body {
 .skeleton-shimmer {
   position: relative;
   overflow: hidden;
+  background-color: var(--skeleton-bg, #f3f4f6);
 }
 
 .skeleton-shimmer::after {
@@ -124,7 +125,7 @@ body {
 
 /* Card active effect */
 .card-active {
-  background-color: #f3f4f6;
+  background-color: #f9fafb;
 }
 
 /* Toast */

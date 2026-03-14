@@ -27,7 +27,7 @@ export function LookFilterBar({
         >
           {t('looks.all')}
         </button>
-        <div className="w-px h-3 bg-[#D9D9D9]" />
+        <div className="w-px h-3 bg-[#E7CCA0]" />
         <button
           onClick={() => onShowFavoriteOnlyChange(true)}
           className={`transition-all flex items-center gap-1 text-[12px] whitespace-nowrap ${showFavoriteOnly ? 'font-semibold text-black' : 'font-medium text-[#999]'}`}
@@ -40,7 +40,7 @@ export function LookFilterBar({
           />
           {t('looks.favorite')}
         </button>
-        <div className="w-px h-3 bg-[#D9D9D9]" />
+        <div className="w-px h-3 bg-[#E7CCA0]" />
         <div className="relative w-full max-w-[170px] min-w-0">
           <Search
             size={12}
@@ -53,7 +53,7 @@ export function LookFilterBar({
             value={searchQuery}
             onChange={(e) => onSearchQueryChange(e.target.value)}
             placeholder={t('looks.searchPlaceholder')}
-            className="w-full pl-7 pr-2 py-1 transition-all rounded-full bg-[#F5F5F5] border border-transparent text-[12px] font-normal text-black outline-none focus:bg-white focus:border-[#E5E5E5]"
+            className="w-full pl-7 pr-2 py-1 transition-all rounded-full bg-[#F3F4F6] border border-transparent text-[12px] font-normal text-black outline-none focus:bg-white focus:border-[#E5E5E5]"
           />
         </div>
       </div>

@@ -42,7 +42,7 @@ export function LookListCard({
             e.stopPropagation();
             onToggleFavorite(look.id);
           }}
-          className="p-1.5 hover:bg-gray-50 transition-all rounded-lg"
+          className="p-1.5 hover:bg-[#F3F4F6] transition-all rounded-lg"
         >
           <Heart
             size={18}
@@ -56,7 +56,7 @@ export function LookListCard({
             e.stopPropagation();
             onOpenShare(look);
           }}
-          className="p-1.5 hover:bg-gray-50 transition-all rounded-lg"
+          className="p-1.5 hover:bg-[#F3F4F6] transition-all rounded-lg"
         >
           <Share2 size={18} color="#000" strokeWidth={1.5} />
         </button>
