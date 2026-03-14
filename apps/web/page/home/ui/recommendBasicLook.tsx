@@ -1,6 +1,7 @@
 'use client';
 
 import { Lightbulb } from 'lucide-react';
+import Image from 'next/image';
 import type { HomeRecommendation } from './home.types';
 
 interface RecommendBasicLookProps {
@@ -32,10 +33,12 @@ const RecommendBasicLook = ({ isLoading, recommendation, tips }: RecommendBasicL
             style={{ borderRadius: '32px' }}
           >
             {recommendation.imageUrl ? (
-              <img
+              <Image
                 src={recommendation.imageUrl}
                 alt={recommendation.description || '추천 코디'}
-                className="w-full h-full object-contain"
+                fill
+                sizes="(max-width: 500px) 100vw, 500px"
+                className="object-contain"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gray-50">
