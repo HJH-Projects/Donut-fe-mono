@@ -172,16 +172,6 @@ export function useLookContentData({
   const shareViaKakao = useCallback(
     async (shareUrl: string, lookName: string, imageUrl?: string) => {
       const appKey = process.env.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY?.trim();
-      console.log(
-        'Attempting to share via Kakao with appKey:',
-        !!appKey,
-        'shareUrl:',
-        shareUrl,
-        'lookName:',
-        lookName,
-        'imageUrl:',
-        imageUrl,
-      );
       if (!appKey) return false;
 
       try {
@@ -226,11 +216,9 @@ export function useLookContentData({
           }
           return true;
         }
-      } catch (e) {
-        console.log('Kakao sharing failed', e);
+      } catch {
         return false;
       }
-      console.log('Kakao SDK not available');
       return false;
     },
     [loadKakaoSdk],
@@ -435,12 +423,10 @@ export function useLookContentData({
       if (shareUrl.includes('://localhost') || shareUrl.includes('://127.0.0.1')) {
         toast.info('현재 localhost 링크입니다. 다른 기기에서는 열리지 않을 수 있습니다.');
       }
-      console.log('Sharing via Kakao with URL:', shareUrl);
       const firstImageUrl =
         selectedLook.items.find((item) => item.imageUrl || clothesImageMap.get(item.id))
           ?.imageUrl ||
         selectedLook.items.map((item) => clothesImageMap.get(item.id)).find(Boolean);
-      console.log('First image URL for Kakao sharing:', firstImageUrl);
       const didShare = await shareViaKakao(shareUrl, selectedLook.name, firstImageUrl);
 
       if (!didShare) {

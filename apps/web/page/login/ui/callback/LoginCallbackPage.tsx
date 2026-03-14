@@ -48,7 +48,7 @@ export const LoginCallbackPage = () => {
     window.addEventListener('error', onError);
 
     return () => clearTimeout(timer);
-  }, [status, error, errorMessage]);
+  }, [error, errorMessage, isSuccess]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-white">

@@ -1,16 +1,18 @@
 import { useEffect, useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { getUsersMeApi } from '@/shared/api/endpointTags/users';
 import { clientKy } from '@/features/api/clientKy';
 import { useToast } from '@/shared/model/useToast';
 
 export const useLoginPopup = () => {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get('next') || '/';
   const toast = useToast();
   const toastRef = useRef(toast);
-  toastRef.current = toast;
+
+  useEffect(() => {
+    toastRef.current = toast;
+  }, [toast]);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -38,7 +40,7 @@ export const useLoginPopup = () => {
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [router, nextPath]);
+  }, [nextPath]);
 
   const openPopup = (provider: 'google' | 'kakao') => {
     const width = 500;

@@ -5,8 +5,6 @@ import {
   useEffect,
   useRef,
   useCallback,
-  type Dispatch,
-  type SetStateAction,
 } from 'react';
 import { useRouter } from 'next/navigation';
 import type { WeatherResponseDto } from '@/shared/model/orvalSchemas';

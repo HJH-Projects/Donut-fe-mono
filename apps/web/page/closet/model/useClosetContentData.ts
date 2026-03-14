@@ -66,13 +66,24 @@ export function useClosetContentData({
   const baseClothes = needsClientFetch
     ? (fetchedClothes ?? initialMappedClothes)
     : initialMappedClothes;
+  const activeFavoriteOverrides = useMemo(() => {
+    const next: Record<string, boolean> = {};
+    for (const [id, optimisticValue] of Object.entries(favoriteOverrides)) {
+      const serverItem = baseClothes.find((item) => item.id === id);
+      if (serverItem && serverItem.isFavorite !== optimisticValue) {
+        next[id] = optimisticValue;
+      }
+    }
+    return next;
+  }, [baseClothes, favoriteOverrides]);
+
   const clothes = useMemo(
     () =>
       baseClothes.map((item) => {
-        const nextFavorite = favoriteOverrides[item.id];
+        const nextFavorite = activeFavoriteOverrides[item.id];
         return nextFavorite === undefined ? item : { ...item, isFavorite: nextFavorite };
       }),
-    [baseClothes, favoriteOverrides],
+    [activeFavoriteOverrides, baseClothes],
   );
 
   useEffect(() => {
@@ -87,23 +98,6 @@ export function useClosetContentData({
       })
       .finally(() => setHasBootstrappedFetch(true));
   }, [needsClientFetch, hasBootstrappedFetch, toast]);
-
-  useEffect(() => {
-    setFavoriteOverrides((prev) => {
-      const next = { ...prev };
-      let changed = false;
-
-      for (const [id, optimisticValue] of Object.entries(prev)) {
-        const serverItem = baseClothes.find((item) => item.id === id);
-        if (!serverItem || serverItem.isFavorite === optimisticValue) {
-          delete next[id];
-          changed = true;
-        }
-      }
-
-      return changed ? next : prev;
-    });
-  }, [baseClothes]);
 
   const runClothesMutation = useCallback(
     async (action: () => Promise<unknown>, errorMessage: string) => {

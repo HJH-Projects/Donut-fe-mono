@@ -63,13 +63,23 @@ export function useLooks({ initialLooks = [], skipBootstrap = false }: UseLooksO
   const [favoriteOverrides, setFavoriteOverrides] = useState<Record<string, boolean>>({});
 
   const baseLooks = needsClientFetch ? (fetchedLooks ?? initialMappedLooks) : initialMappedLooks;
+  const activeFavoriteOverrides = useMemo(() => {
+    const next: Record<string, boolean> = {};
+    for (const [id, optimisticValue] of Object.entries(favoriteOverrides)) {
+      const serverLook = baseLooks.find((look) => look.id === id);
+      if (serverLook && serverLook.isFavorite !== optimisticValue) {
+        next[id] = optimisticValue;
+      }
+    }
+    return next;
+  }, [baseLooks, favoriteOverrides]);
   const looks = useMemo(
     () =>
       baseLooks.map((look) => {
-        const nextFavorite = favoriteOverrides[look.id];
+        const nextFavorite = activeFavoriteOverrides[look.id];
         return nextFavorite === undefined ? look : { ...look, isFavorite: nextFavorite };
       }),
-    [baseLooks, favoriteOverrides],
+    [activeFavoriteOverrides, baseLooks],
   );
   const isBootstrapped = !needsClientFetch || hasBootstrappedFetch;
 
@@ -86,23 +96,6 @@ export function useLooks({ initialLooks = [], skipBootstrap = false }: UseLooksO
       })
       .finally(() => setHasBootstrappedFetch(true));
   }, [needsClientFetch, hasBootstrappedFetch]);
-
-  useEffect(() => {
-    setFavoriteOverrides((prev) => {
-      const next = { ...prev };
-      let changed = false;
-
-      for (const [id, optimisticValue] of Object.entries(prev)) {
-        const serverLook = baseLooks.find((look) => look.id === id);
-        if (!serverLook || serverLook.isFavorite === optimisticValue) {
-          delete next[id];
-          changed = true;
-        }
-      }
-
-      return changed ? next : prev;
-    });
-  }, [baseLooks]);
 
   const addLook = async (lookData: Partial<Look>) => {
     try {
