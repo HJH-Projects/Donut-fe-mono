@@ -1,6 +1,7 @@
 'use client';
 
 import { Edit2, Heart, Trash2, Upload } from 'lucide-react';
+import Image from 'next/image';
 import type { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ClothingItem } from '../model/clothing.types';
@@ -45,9 +46,15 @@ export function ClosetDetailImageSection({
 }: ClosetDetailImageSectionProps) {
   return (
     <div className="relative">
-      <div className="w-full aspect-square bg-gray-100 overflow-hidden rounded-2xl">
+      <div className="w-full aspect-square bg-gray-100 overflow-hidden rounded-2xl relative">
         {selectedItem.imageUrl ? (
-          <img src={selectedItem.imageUrl} alt={selectedItem.name} className="w-full h-full object-cover object-center" />
+          <Image
+            src={selectedItem.imageUrl}
+            alt={selectedItem.name}
+            fill
+            sizes="(max-width: 400px) 90vw, 400px"
+            className="object-cover object-center"
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <p className="text-[#999] text-[11px] font-medium">

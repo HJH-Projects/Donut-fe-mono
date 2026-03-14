@@ -1,29 +1,97 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 
-const ERROR_IMG_SRC =
-  'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODgiIGhlaWdodD0iODgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBvcGFjaXR5PSIuMyIgZmlsbD0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIzLjciPjxyZWN0IHg9IjE2IiB5PSIxNiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2IiByeD0iNiIvPjxwYXRoIGQ9Im0xNiA1OCAxNi0xOCAzMiAzMiIvPjxjaXJjbGUgY3g9IjUzIiBjeT0iMzUiIHI9IjciLz48L3N2Zz4KCg==';
+type ImageWithFallbackProps = {
+  src?: string;
+  alt?: string;
+  className?: string;
+  style?: React.CSSProperties;
+  onLoad?: React.ReactEventHandler<HTMLImageElement>;
+  onError?: React.ReactEventHandler<HTMLImageElement>;
+  loadingText?: string;
+  keepPlaceholderWhenNoSrc?: boolean;
+};
 
-export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElement>) {
-  const [didError, setDidError] = useState(false);
+const EMPTY_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 
-  const handleError = () => {
-    setDidError(true);
-  };
+export function ImageWithFallback(props: ImageWithFallbackProps) {
+  const {
+    src,
+    alt,
+    style,
+    className,
+    onLoad,
+    onError,
+    loadingText,
+    keepPlaceholderWhenNoSrc = false,
+  } =
+    props;
+  const rawSrc = typeof src === 'string' ? src : '';
+  const renderKey = rawSrc || '__empty__';
 
-  const { src, alt, style, className, ...rest } = props;
-
-  return didError ? (
-    <div
-      className={`inline-block bg-gray-100 text-center align-middle ${className ?? ''}`}
+  return (
+    <ImageWithFallbackInner
+      key={renderKey}
+      src={rawSrc}
+      alt={alt}
       style={style}
-    >
-      <div className="flex items-center justify-center w-full h-full">
-        <img src={ERROR_IMG_SRC} alt="Error loading image" {...rest} data-original-url={src} />
-      </div>
+      className={className}
+      onLoad={onLoad}
+      onError={onError}
+      loadingText={loadingText}
+      keepPlaceholderWhenNoSrc={keepPlaceholderWhenNoSrc}
+    />
+  );
+}
+
+function ImageWithFallbackInner({
+  src,
+  alt,
+  style,
+  className,
+  onLoad,
+  onError,
+  loadingText,
+  keepPlaceholderWhenNoSrc,
+}: Required<Pick<ImageWithFallbackProps, 'src' | 'keepPlaceholderWhenNoSrc'>> &
+  Omit<ImageWithFallbackProps, 'src' | 'keepPlaceholderWhenNoSrc'>) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const rawSrc = typeof src === 'string' ? src : '';
+  const safeSrc = rawSrc || EMPTY_PIXEL;
+  const hasRealSrc = rawSrc.length > 0;
+
+  if (!loadingText && !hasRealSrc) return null;
+
+  const showPlaceholder = Boolean(loadingText) && !isLoaded;
+
+  return (
+    <div className="relative w-full h-full overflow-hidden" style={style}>
+      <Image
+        src={safeSrc}
+        alt={alt || ''}
+        fill
+        sizes="100%"
+        className={className}
+        onLoad={(e) => {
+          if (!hasRealSrc && keepPlaceholderWhenNoSrc) {
+            onLoad?.(e);
+            return;
+          }
+          setIsLoaded(true);
+          onLoad?.(e);
+        }}
+        onError={(e) => {
+          setIsLoaded(true);
+          onError?.(e);
+        }}
+      />
+      {showPlaceholder && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <p className="text-[#999] text-[11px] font-medium">{loadingText}</p>
+        </div>
+      )}
     </div>
-  ) : (
-    <img src={src} alt={alt} className={className} style={style} {...rest} onError={handleError} />
   );
 }

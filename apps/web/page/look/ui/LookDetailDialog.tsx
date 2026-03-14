@@ -2,9 +2,9 @@
 
 import { Dialog } from '@base-ui/react/dialog';
 import { Edit2, Trash2, X } from 'lucide-react';
-import { ImageWithFallback } from '@/shared/ui/ImageWithFallback';
 import type { Look } from '../model/useLooks';
 import { closeGlobalDialog, useGlobalDialogOpen } from '@/shared/model/globalDialogStore';
+import { LookDetailGridImageItem } from './LookDetailGridImageItem';
 
 type LookDetailDialogProps = {
   selectedLook: Look | null;
@@ -53,7 +53,7 @@ export function LookDetailDialog({
                     ))}
                   </div>
                 </div>
-                <button onClick={() => closeGlobalDialog('look:detail')} className="p-1.5 hover:bg-gray-100 transition-colors rounded-lg">
+                <button onClick={() => closeGlobalDialog('look:detail')} className="p-1.5 hover:bg-[#F3F4F6] transition-colors rounded-lg">
                   <X size={20} color="#000" strokeWidth={1.5} />
                 </button>
               </div>
@@ -63,19 +63,10 @@ export function LookDetailDialog({
                 <div className="grid grid-cols-2 gap-3 pb-4">
                   {selectedLook.items.map((item) => (
                     <div key={item.id} className="flex flex-col gap-2">
-                      <div className="w-full aspect-square bg-gray-200 overflow-hidden rounded-[10px]">
-                        {item.imageUrl || clothesImageMap.get(item.id) ? (
-                          <ImageWithFallback
-                            src={item.imageUrl || clothesImageMap.get(item.id) || ''}
-                            alt={item.name}
-                            className="w-full h-full object-cover object-center"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <span className="text-[#999] text-[9px] font-medium">이미지</span>
-                          </div>
-                        )}
-                      </div>
+                      <LookDetailGridImageItem
+                        imageUrl={item.imageUrl || clothesImageMap.get(item.id) || ''}
+                        name={item.name}
+                      />
                       <div>
                         <p className="text-black mb-0.5 text-[13px] font-semibold">{item.name}</p>
                         <p className="text-[#666] text-[11px] font-normal">{item.category}</p>
@@ -88,7 +79,7 @@ export function LookDetailDialog({
               <div className="shrink-0 p-6 pt-4 flex gap-3">
                 <button
                   onClick={onDeleteClick}
-                  className="flex-1 px-5 py-3 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors rounded-xl border-[1.5px] border-[#E5E5E5] text-sm font-semibold text-black"
+                  className="flex-1 px-5 py-3 flex items-center justify-center gap-2 hover:bg-[#F3F4F6] transition-colors rounded-xl border-[1.5px] border-[#E5E5E5] text-sm font-semibold text-black"
                 >
                   <Trash2 size={16} strokeWidth={1.5} />
                   {deleteLabel}

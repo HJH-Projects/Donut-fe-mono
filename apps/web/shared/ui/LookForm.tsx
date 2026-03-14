@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { ImageWithFallback } from '@/shared/ui/ImageWithFallback';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +30,56 @@ type LookFormProps = {
   onCancel: () => void;
   isSaving?: boolean;
 };
+
+type LookFormItemImageProps = {
+  imageUrl?: string;
+  alt: string;
+  containerClassName: string;
+  imageClassName: string;
+  fallbackContent: ReactNode;
+};
+
+function LookFormItemImage({
+  imageUrl,
+  alt,
+  containerClassName,
+  imageClassName,
+  fallbackContent,
+}: LookFormItemImageProps) {
+  const renderKey = `${imageUrl || 'no-src'}:${alt}`;
+  return (
+    <LookFormItemImageInner
+      key={renderKey}
+      imageUrl={imageUrl}
+      alt={alt}
+      containerClassName={containerClassName}
+      imageClassName={imageClassName}
+      fallbackContent={fallbackContent}
+    />
+  );
+}
+
+function LookFormItemImageInner({
+  imageUrl,
+  alt,
+  containerClassName,
+  imageClassName,
+  fallbackContent,
+}: LookFormItemImageProps) {
+  const hasSrc = Boolean(imageUrl);
+
+  return (
+    <div className={`relative ${containerClassName}`}>
+      <div className="w-full h-full bg-white">
+        {hasSrc ? (
+          <ImageWithFallback src={imageUrl} alt={alt} className={imageClassName} />
+        ) : (
+          fallbackContent
+        )}
+      </div>
+    </div>
+  );
+}
 
 const LOOK_CATEGORY_CODES = [
   'TOP',
@@ -263,7 +313,7 @@ export function LookForm({
                   key={tag}
                   onClick={() => handleToggleTag(tag)}
                   className={`px-3 py-1.5 shrink-0 transition-all ${
-                    selectedTags.includes(tag) ? 'text-white' : 'text-black bg-gray-100'
+                    selectedTags.includes(tag) ? 'text-white' : 'text-black bg-[#F3F4F6]'
                   }`}
                   style={{
                     borderRadius: '999px',
@@ -319,7 +369,7 @@ export function LookForm({
 
           {/* 선택된 태그 표시 */}
           {selectedTags.length > 0 && (
-            <div className="mt-3 p-3 bg-gray-50" style={{ borderRadius: '12px' }}>
+            <div className="mt-3 p-3 bg-[#F9FAFB]" style={{ borderRadius: '12px' }}>
               <p
                 className="text-[#666] mb-2"
                 style={{
@@ -377,20 +427,15 @@ export function LookForm({
               {selectedItems.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center gap-2 p-2 bg-gray-50"
+                  className="flex items-center gap-2 p-2 bg-[#F9FAFB]"
                   style={{ borderRadius: '10px' }}
                 >
-                  <div
-                    className="w-10 h-10 bg-gray-200 shrink-0 overflow-hidden"
-                    style={{ borderRadius: '6px' }}
-                  >
-                    {item.imageUrl ? (
-                      <ImageWithFallback
-                        src={item.imageUrl}
-                        alt={item.name}
-                        className="w-full h-full object-cover object-center"
-                      />
-                    ) : (
+                  <LookFormItemImage
+                    imageUrl={item.imageUrl}
+                    alt={item.name}
+                    containerClassName="w-10 h-10 shrink-0 overflow-hidden rounded-[6px]"
+                    imageClassName="w-full h-full object-cover object-center"
+                    fallbackContent={
                       <div className="w-full h-full flex items-center justify-center">
                         <span
                           className="text-[#999]"
@@ -403,8 +448,8 @@ export function LookForm({
                           {getCategoryLabel(item.category)}
                         </span>
                       </div>
-                    )}
-                  </div>
+                    }
+                  />
                   <div className="flex-1 min-w-0">
                     <p
                       className="text-black truncate"
@@ -429,7 +474,7 @@ export function LookForm({
                   </div>
                   <button
                     onClick={() => handleRemoveItem(item.id)}
-                    className="p-0.5 hover:bg-gray-200 transition-colors shrink-0"
+                    className="p-0.5 hover:bg-[#E5E7EB] transition-colors shrink-0"
                     style={{ borderRadius: '4px' }}
                   >
                     <X size={14} color="#666" strokeWidth={1.5} />
@@ -462,7 +507,7 @@ export function LookForm({
               <button
                 onClick={() => setActiveCategory('ALL')}
                 className={`px-4 py-2 shrink-0 transition-all ${
-                  activeCategory === 'ALL' ? 'text-white' : 'text-black bg-gray-100'
+                  activeCategory === 'ALL' ? 'text-white' : 'text-black bg-[#F3F4F6]'
                 }`}
                 style={{
                   borderRadius: '999px',
@@ -479,7 +524,7 @@ export function LookForm({
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
                   className={`px-4 py-2 shrink-0 transition-all ${
-                    activeCategory === cat ? 'text-white' : 'text-black bg-gray-100'
+                    activeCategory === cat ? 'text-white' : 'text-black bg-[#F3F4F6]'
                   }`}
                   style={{
                     borderRadius: '999px',
@@ -511,41 +556,41 @@ export function LookForm({
                   }}
                 >
                   <div
-                    className={`w-full h-full bg-gray-100 transition-opacity ${
+                    className={`w-full h-full bg-white transition-opacity ${
                       isSelected ? 'opacity-75' : ''
                     }`}
                   >
-                    {item.imageUrl ? (
-                      <ImageWithFallback
-                        src={item.imageUrl}
-                        alt={item.name}
-                        className="w-full h-full object-cover object-center"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center p-2">
-                        <p
-                          className="text-[#000] mb-1"
-                          style={{
-                            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                            fontSize: '10px',
-                            fontWeight: 600,
-                          }}
-                        >
-                          {getCategoryLabel(item.category)}
-                        </p>
-                        <p
-                          className="text-[#666] text-center"
-                          style={{
-                            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                            fontSize: '9px',
-                            fontWeight: 400,
-                            lineHeight: '1.2',
-                          }}
-                        >
-                          {item.name}
-                        </p>
-                      </div>
-                    )}
+                    <LookFormItemImage
+                      imageUrl={item.imageUrl}
+                      alt={item.name}
+                      containerClassName="w-full h-full"
+                      imageClassName="w-full h-full object-cover object-center"
+                      fallbackContent={
+                        <div className="w-full h-full flex flex-col items-center justify-center p-2">
+                          <p
+                            className="text-[#000] mb-1"
+                            style={{
+                              fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                              fontSize: '10px',
+                              fontWeight: 600,
+                            }}
+                          >
+                            {getCategoryLabel(item.category)}
+                          </p>
+                          <p
+                            className="text-[#666] text-center"
+                            style={{
+                              fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                              fontSize: '9px',
+                              fontWeight: 400,
+                              lineHeight: '1.2',
+                            }}
+                          >
+                            {item.name}
+                          </p>
+                        </div>
+                      }
+                    />
                   </div>
                   {isSelected && (
                     <div
@@ -595,7 +640,7 @@ export function LookForm({
       <div className="shrink-0 px-6 pb-6 pt-3 flex gap-3">
         <button
           onClick={onCancel}
-          className="flex-1 px-5 py-3 hover:bg-gray-50 transition-colors"
+          className="flex-1 px-5 py-3 hover:bg-[#F3F4F6] transition-colors"
           style={{
             borderRadius: '12px',
             border: '1.5px solid #E5E5E5',

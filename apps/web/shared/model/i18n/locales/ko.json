@@ -75,6 +75,7 @@
     "enterTag": "태그 입력",
     "enterTagPlaceholder": "직접 입력...",
     "addTag": "추가",
+    "loadingImage": "이미지 로딩 중...",
     "noImage": "이미지 없음",
     "emptyTitle": "아직 등록된 옷이 없어요",
     "emptyDescription": "옷장에 첫 번째 아이템을 추가해보세요",

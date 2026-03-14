@@ -82,7 +82,7 @@ export function ClosetDetailDialogContent({
                 editMode={editMode}
                 onToggleFavorite={handleToggleFavorite}
                 onStartImageEdit={handleStartImageEdit}
-                noImageText={t('closet.noImage')}
+                noImageText={t('closet.loadingImage')}
                 changeImageText={t('closet.changeImage')}
               />
 

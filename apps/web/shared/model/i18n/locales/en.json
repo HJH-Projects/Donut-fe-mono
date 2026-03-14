@@ -75,6 +75,7 @@
     "enterTag": "Enter tag",
     "enterTagPlaceholder": "Type here...",
     "addTag": "Add",
+    "loadingImage": "Loading image...",
     "noImage": "No image",
     "emptyTitle": "No items yet",
     "emptyDescription": "Add your first item to the closet",

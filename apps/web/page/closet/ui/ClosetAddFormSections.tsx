@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import type { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ClothingItem } from '../model/clothing.types';
@@ -41,7 +42,13 @@ export function AddImagePreviewSection({
       <div
         className="w-full aspect-square bg-gray-100 overflow-hidden relative rounded-2xl"
       >
-        <img src={imageUrl} alt="preview" className="w-full h-full object-cover object-center" />
+        <Image
+          src={imageUrl}
+          alt="preview"
+          fill
+          sizes="(max-width: 400px) 90vw, 400px"
+          className="object-cover object-center"
+        />
         {isProcessing && <AddProcessingOverlay text={processingText} />}
       </div>
       {!isProcessing && hasPendingFile && <RemoveBackgroundButton onClick={onRefresh} text={refreshText} />}

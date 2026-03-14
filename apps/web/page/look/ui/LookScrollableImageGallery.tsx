@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { ImageWithFallback } from '@/shared/ui/ImageWithFallback';
 import type { LookItem } from '../model/useLooks';
+import { LookGalleryImageItem } from './LookGalleryImageItem';
 
 type LookScrollableImageGalleryProps = {
   items: LookItem[];
@@ -57,24 +57,7 @@ export function LookScrollableImageGallery({ items, lookId }: LookScrollableImag
       >
         <div className="h-full flex items-center gap-2 px-4">
           {items.map((item) => (
-            <div key={item.id} className="shrink-0">
-              <div className="w-[72px] h-[72px] bg-gray-100 overflow-hidden rounded-full ring-[0.7px] ring-black/12 ring-offset-1 ring-offset-white">
-                {item.imageUrl ? (
-                  <ImageWithFallback
-                    src={item.imageUrl}
-                    alt={item.name}
-                    className="w-full h-full object-cover object-center"
-                  />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center">
-                    <p className="text-[#000] mb-1 text-[11px] font-semibold">{item.category}</p>
-                    <p className="text-[#666] text-center px-2 text-[9px] font-normal">
-                      {item.name}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
+            <LookGalleryImageItem key={item.id} item={item} />
           ))}
         </div>
       </div>
@@ -108,11 +91,11 @@ export function LookScrollableImageGallery({ items, lookId }: LookScrollableImag
               e.stopPropagation();
             }}
             disabled={!canScrollLeft}
-            className="transition-all disabled:opacity-20 flex items-center justify-center active:bg-gray-200 w-9 h-9 rounded-full"
+            className="transition-all disabled:opacity-20 flex items-center justify-center active:bg-[#E5E7EB] w-9 h-9 rounded-full"
           >
             <ArrowLeft size={14} color="#000" strokeWidth={2} />
           </button>
-          <div className="w-px h-2.5 bg-[#D9D9D9]" />
+          <div className="w-px h-2.5 bg-[#E7CCA0]" />
           <button
             data-scroll-button
             onClick={(e) => {
@@ -133,7 +116,7 @@ export function LookScrollableImageGallery({ items, lookId }: LookScrollableImag
               e.stopPropagation();
             }}
             disabled={!canScrollRight}
-            className="transition-all disabled:opacity-20 flex items-center justify-center active:bg-gray-200 w-9 h-9 rounded-full"
+            className="transition-all disabled:opacity-20 flex items-center justify-center active:bg-[#E5E7EB] w-9 h-9 rounded-full"
           >
             <ArrowRight size={14} color="#000" strokeWidth={2} />
           </button>

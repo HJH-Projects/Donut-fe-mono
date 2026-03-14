@@ -38,7 +38,6 @@ export function ClosetListGridSection({
       ) : (
         <ClosetGridItems
           items={displayedClothes}
-          noImageLabel={t('closet.noImage')}
           onItemClick={onItemClick}
           onToggleFavorite={onToggleFavorite}
         />
