@@ -141,6 +141,12 @@ export function useLookContentData({
     return 'https://doknot.xyz';
   }, []);
 
+  const buildKakaoShareUrl = useCallback((shareUrl: string) => {
+    const url = new URL(shareUrl);
+    url.searchParams.set('openExternalBrowser', '1');
+    return url.toString();
+  }, []);
+
   const loadKakaoSdk = useCallback(
     () =>
       new Promise<void>((resolve, reject) => {
@@ -419,7 +425,7 @@ export function useLookContentData({
     }
 
     try {
-      const shareUrl = selectedLink.url;
+      const shareUrl = buildKakaoShareUrl(selectedLink.url);
       if (shareUrl.includes('://localhost') || shareUrl.includes('://127.0.0.1')) {
         toast.info('현재 localhost 링크입니다. 다른 기기에서는 열리지 않을 수 있습니다.');
       }
