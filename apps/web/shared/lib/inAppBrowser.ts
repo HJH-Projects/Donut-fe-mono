@@ -3,5 +3,5 @@ export function isKakaoTalkWebView(userAgent: string) {
 }
 
 export function buildKakaoExternalUrl(url: string) {
-  return `kakaotalk://web/openExternalApp?url=${encodeURIComponent(url)}`;
+  return `kakaotalk://web/openExternal?url=${encodeURIComponent(url)}`;
 }
