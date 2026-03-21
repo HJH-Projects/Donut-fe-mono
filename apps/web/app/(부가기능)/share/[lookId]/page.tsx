@@ -9,6 +9,7 @@ import { getSharesDetailApi } from '@/shared/api/endpointTags/shares';
 import { getShareCommentsApi } from '@/shared/api/endpointTags/comments';
 import { getUsersMeApi } from '@/shared/api/endpointTags/users';
 import type { ShareLinkDetailResponseDto } from '@/shared/model/orvalSchemas';
+import { OpenExternalBrowserGuard } from '@/shared/ui/OpenExternalBrowserGuard';
 
 export const runtime = 'edge';
 
@@ -72,8 +73,15 @@ export async function generateMetadata({
   };
 }
 
-export default async function Page({ params }: { params: Promise<{ lookId: string }> }) {
+export default async function Page({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ lookId: string }>;
+  searchParams: Promise<{ openExternalBrowser?: string }>;
+}) {
   const { lookId: sharePath } = await params;
+  const { openExternalBrowser } = await searchParams;
   const cookieStore = await cookies();
   const isLoggedIn = !!cookieStore.get('accessToken');
   const currentUserId = await getAccessTokenUserId();
@@ -92,6 +100,12 @@ export default async function Page({ params }: { params: Promise<{ lookId: strin
 
   return (
     <div className="relative min-h-screen bg-white">
+      {openExternalBrowser === '1' ? (
+        <OpenExternalBrowserGuard
+          title="브라우저에서 링크를 여는 중입니다"
+          description="카카오톡 웹뷰에서는 로그인과 인증이 불안정할 수 있어 외부 브라우저로 먼저 전환합니다."
+        />
+      ) : null}
       <SharedLookPage
         sharePath={sharePath}
         initialShareDetail={initialShareDetail}

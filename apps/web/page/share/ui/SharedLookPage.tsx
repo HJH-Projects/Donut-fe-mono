@@ -54,6 +54,14 @@ export function SharedLookPage({
   const [sharedLinks, setSharedLinks] = useState<SharedLink[]>([]);
   const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
 
+  const buildShareUrl = (options?: { openExternalBrowser?: boolean }) => {
+    const url = new URL(`/share/${sharePath}`, window.location.origin);
+    if (options?.openExternalBrowser) {
+      url.searchParams.set('openExternalBrowser', '1');
+    }
+    return url.toString();
+  };
+
   const requireLogin = () => {
     if (!isLoggedIn) {
       router.push(`/login?next=/share/${sharePath}`);
@@ -91,7 +99,7 @@ export function SharedLookPage({
 
   const handleCreateLink = () => {
     const linkId = Date.now().toString();
-    const url = `${window.location.origin}/share/${sharePath}`;
+    const url = buildShareUrl();
     const newLink: SharedLink = { id: linkId, url: url, createdAt: new Date() };
     setSharedLinks([newLink, ...sharedLinks]);
     setShowLinkCreator(true);
@@ -132,7 +140,9 @@ export function SharedLookPage({
   };
 
   const handleKakaoShare = () => {
-    toast.info('카카오톡 공유 기능은 Kakao SDK 연동이 필요합니다.');
+    const kakaoShareUrl = buildShareUrl({ openExternalBrowser: true });
+    handleCopyLink(kakaoShareUrl, 'kakao-share');
+    toast.success('카카오톡 공유용 링크를 복사했습니다.');
   };
 
   const handleDeleteLink = (linkId: string) => {
