@@ -37,13 +37,11 @@ export function OpenExternalBrowserGuard({
     }
   }, []);
 
-  const openExternalBrowser = useCallback((options?: { resetFallback?: boolean }) => {
+  const openExternalBrowser = useCallback(() => {
     if (!currentUrl) return;
 
     clearFallbackTimer();
-    if (options?.resetFallback !== false) {
-      setShowFallback(false);
-    }
+    setShowFallback(false);
     window.location.href = buildKakaoExternalUrl(currentUrl);
     fallbackTimerRef.current = window.setTimeout(() => {
       setShowFallback(true);
