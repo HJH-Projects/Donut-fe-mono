@@ -4,6 +4,10 @@ import { Dialog } from '@base-ui/react/dialog';
 import { useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Button } from '@/shared/ui/Button';
+import { IconButton } from '@/shared/ui/IconButton';
+import { Input } from '@/shared/ui/Input';
+import { Textarea } from '@/shared/ui/Textarea';
 import type { ClothingItem } from '../model/clothing.types';
 import { SIZES } from './closet.constants';
 import { ClosetAddDialog } from './ClosetAddDialog';
@@ -71,7 +75,7 @@ export function ClosetAddFormDialog({
 
           <div>
             <ClosetFormLabel text={t('closet.alias')} required />
-            <input
+            <Input
               type="text"
               value={newClothing.name}
               onChange={(e) =>
@@ -81,7 +85,7 @@ export function ClosetAddFormDialog({
                 })
               }
               placeholder={t('closet.aliasPlaceholder')}
-              className="w-full px-4 py-2.5 outline-none rounded-xl border-[1.5px] border-[#E5E5E5] text-[13px] font-normal"
+              className="py-2.5"
             />
           </div>
 
@@ -136,7 +140,7 @@ export function ClosetAddFormDialog({
 
           <div>
             <ClosetFormLabel text={t('closet.brand')} />
-            <input
+            <Input
               type="text"
               value={newClothing.brand}
               onChange={(e) =>
@@ -146,7 +150,7 @@ export function ClosetAddFormDialog({
                 })
               }
               placeholder={t('closet.brandPlaceholder')}
-              className="w-full px-4 py-2.5 outline-none rounded-xl border-[1.5px] border-[#E5E5E5] text-[13px] font-normal"
+              className="py-2.5"
             />
           </div>
 
@@ -177,7 +181,7 @@ export function ClosetAddFormDialog({
 
           <div>
             <ClosetFormLabel text={t('closet.memo')} />
-            <textarea
+            <Textarea
               value={newClothing.memo}
               onChange={(e) =>
                 setNewClothing({
@@ -187,19 +191,21 @@ export function ClosetAddFormDialog({
               }
               placeholder={t('closet.enterMemo')}
               rows={3}
-              className="w-full px-4 py-2.5 outline-none resize-none rounded-xl border-[1.5px] border-[#E5E5E5] text-[13px] font-normal"
+              className="py-2.5"
             />
           </div>
         </div>
       </div>
 
       <div className="shrink-0 flex gap-2 px-6 pb-6 pt-3 bg-white rounded-b-[24px]">
-        <button
+        <Button
           onClick={handleCancelAdd}
-          className="flex-1 px-4 py-3 hover:bg-gray-50 transition-colors rounded-[24px] border-[1.5px] border-[#E5E5E5] text-sm font-semibold"
+          variant="secondary"
+          size="xl"
+          className="flex-1 px-4"
         >
           {t('common.cancel')}
-        </button>
+        </Button>
         <AddRegisterButton
           onClick={handleSubmit}
           isSubmitting={isSubmitting}
@@ -209,12 +215,19 @@ export function ClosetAddFormDialog({
       </div>
 
       <Dialog.Close
-        className="absolute top-4 right-4 text-[#555555] text-2xl hover:opacity-70 transition-opacity"
+        render={
+          <IconButton
+            className="absolute top-4 right-4 text-2xl text-[#555555] hover:opacity-70"
+            tone="default"
+            size="sm"
+            aria-label="닫기"
+            onClick={handleCancelAdd}
+          >
+            ×
+          </IconButton>
+        }
         aria-label="닫기"
-        onClick={handleCancelAdd}
-      >
-        ×
-      </Dialog.Close>
+      />
     </ClosetAddDialog>
   );
 }

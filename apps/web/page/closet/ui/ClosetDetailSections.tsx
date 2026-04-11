@@ -4,6 +4,11 @@ import { Edit2, Heart, Trash2, Upload } from 'lucide-react';
 import Image from 'next/image';
 import type { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Button } from '@/shared/ui/Button';
+import { IconButton } from '@/shared/ui/IconButton';
+import { Input } from '@/shared/ui/Input';
+import { Text } from '@/shared/ui/Text';
+import { Textarea } from '@/shared/ui/Textarea';
 import type { ClothingItem } from '../model/clothing.types';
 import { getCategoryLabel, toOptionLabelKey, toSubCategoryLabelKey } from './closetCategoryLabel';
 import { LoadingButtonContent } from './ClosetDialogLoadingUi';
@@ -57,18 +62,19 @@ export function ClosetDetailImageSection({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <p className="text-[#999] text-[11px] font-medium">
+            <Text variant="meta" className="font-medium text-[#999]">
               {noImageText}
-            </p>
+            </Text>
           </div>
         )}
       </div>
-      <button
+      <IconButton
         type="button"
         onClick={() => {
           onToggleFavorite(selectedItem.id, selectedItem.isFavorite);
         }}
-        className="absolute top-2 right-2 p-1.5 bg-white/90 backdrop-blur-sm hover:bg-white transition-all rounded-xl"
+        className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm hover:bg-white rounded-xl"
+        tone="default"
       >
         <Heart
           size={18}
@@ -76,16 +82,18 @@ export function ClosetDetailImageSection({
           fill={selectedItem.isFavorite ? '#000' : 'none'}
           strokeWidth={1.5}
         />
-      </button>
+      </IconButton>
       {editMode && (
         <div className="mt-3 flex gap-2">
-          <button
+          <Button
             onClick={onStartImageEdit}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 hover:bg-gray-50 transition-colors rounded-xl border-[1.5px] border-[#E5E5E5] text-[13px] font-medium"
+            variant="secondary"
+            size="md"
+            className="flex-1 py-2.5 text-[13px] font-medium"
           >
             <Upload size={16} strokeWidth={1.5} />
             {changeImageText}
-          </button>
+          </Button>
         </div>
       )}
     </div>
@@ -108,7 +116,7 @@ export function ClosetDetailAliasSection({
     <div>
       <ClosetFormLabel text={label} required={editMode} />
       {editMode ? (
-        <input
+        <Input
           type="text"
           value={selectedItem.name}
           onChange={(e) =>
@@ -118,12 +126,12 @@ export function ClosetDetailAliasSection({
             })
           }
           placeholder={placeholder}
-          className="w-full px-4 py-2.5 outline-none rounded-xl border-[1.5px] border-[#E5E5E5] text-[13px] font-normal"
+          className="py-2.5"
         />
       ) : (
-        <p className="text-sm font-normal">
+        <Text variant="body">
           {selectedItem.name}
-        </p>
+        </Text>
       )}
     </div>
   );
@@ -402,7 +410,7 @@ export function ClosetDetailBrandSection({
     <div>
       <ClosetFormLabel text={label} />
       {editMode ? (
-        <input
+        <Input
           type="text"
           value={selectedItem.brand}
           onChange={(e) =>
@@ -412,7 +420,7 @@ export function ClosetDetailBrandSection({
             })
           }
           placeholder={placeholder}
-          className="w-full px-4 py-2.5 outline-none rounded-xl border-[1.5px] border-[#E5E5E5] text-[13px] font-normal"
+          className="py-2.5"
         />
       ) : (
         <BrandReadonlySection brand={selectedItem.brand} isLoading={isDetailLoading} emptyText={emptyText} />
@@ -485,7 +493,7 @@ export function ClosetDetailMemoSection({
     <div>
       <ClosetFormLabel text={label} />
       {editMode ? (
-        <textarea
+        <Textarea
           value={selectedItem.memo}
           onChange={(e) =>
             setSelectedItem({
@@ -495,7 +503,7 @@ export function ClosetDetailMemoSection({
           }
           placeholder={placeholder}
           rows={3}
-          className="w-full px-4 py-2.5 outline-none resize-none rounded-xl border-[1.5px] border-[#E5E5E5] text-[13px] font-normal"
+          className="py-2.5"
         />
       ) : (
         <MemoReadonlySection memo={selectedItem.memo} isLoading={isDetailLoading} emptyText={emptyText} />
@@ -535,36 +543,44 @@ export function ClosetDetailFooterSection({
     <div className="shrink-0 flex gap-2 px-6 pb-6 pt-3 bg-white rounded-b-[24px]">
       {!editMode ? (
         <>
-          <button
+          <Button
             onClick={() => setEditMode(true)}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 hover:bg-gray-50 transition-colors rounded-[24px] border-[1.5px] border-[#E5E5E5] text-sm font-semibold"
+            variant="secondary"
+            size="xl"
+            className="flex-1 px-4"
           >
             <Edit2 size={16} strokeWidth={2} />
             {editLabel}
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={onDeleteClick}
-            className="flex-1 flex items-center justify-center gap-2 text-white px-4 py-3 hover:opacity-90 transition-opacity rounded-[24px] bg-black text-sm font-semibold"
+            variant="solid"
+            size="xl"
+            className="flex-1 px-4"
           >
             <Trash2 size={16} strokeWidth={2} />
             {deleteLabel}
-          </button>
+          </Button>
         </>
       ) : (
         <>
-          <button
+          <Button
             onClick={onCancelDetail}
-            className="flex-1 px-4 py-3 hover:bg-gray-50 transition-colors rounded-[24px] border-[1.5px] border-[#E5E5E5] text-sm font-semibold"
+            variant="secondary"
+            size="xl"
+            className="flex-1 px-4"
           >
             {cancelLabel}
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={onUpdateClothing}
             disabled={isSavingClothing || !canSave}
-            className="flex-1 text-white px-4 py-3 hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center justify-center gap-2 rounded-[24px] bg-black text-sm font-semibold"
+            variant="solid"
+            size="xl"
+            className="flex-1 px-4 disabled:opacity-50"
           >
             {isSavingClothing ? <LoadingButtonContent text={saveLabel} /> : saveLabel}
-          </button>
+          </Button>
         </>
       )}
     </div>

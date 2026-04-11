@@ -1,11 +1,13 @@
 'use client';
 
-import { Dialog } from '@base-ui/react/dialog';
 import { Copy, Link2, Share2, Trash2, X } from 'lucide-react';
+import { Button } from '@/shared/ui/Button';
+import { DialogShell } from '@/shared/ui/DialogShell';
+import { IconButton } from '@/shared/ui/IconButton';
 import Spinner from '@/shared/ui/Spinner';
+import { closeGlobalDialog, openGlobalDialog, useGlobalDialogOpen } from '@/shared/model/globalDialogStore';
 import type { Look } from '../model/useLooks';
 import type { SharedLink } from './lookShare.types';
-import { closeGlobalDialog, openGlobalDialog, useGlobalDialogOpen } from '@/shared/model/globalDialogStore';
 
 type LookShareDialogProps = {
   selectedLook: Look | null;
@@ -51,147 +53,141 @@ export function LookShareDialog({
   const open = useGlobalDialogOpen('look:share');
 
   return (
-    <Dialog.Root
+    <DialogShell
       open={open}
       onOpenChange={(next) => {
         if (!next) closeGlobalDialog('look:share');
       }}
+      popupClassName="max-w-[400px] max-h-[80vh] overflow-hidden rounded-[24px] flex flex-col"
+      bodyClassName="flex flex-1 flex-col"
+      backdropClassName="bg-black/30"
+      showCloseButton={false}
     >
-      <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 bg-black/30 z-50" />
-        <Dialog.Popup
-          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[400px] max-h-[80vh] flex flex-col rounded-[24px]"
-          aria-describedby={undefined}
-        >
-          {selectedLook && (
-            <>
-              <div className="flex items-center justify-between mb-4 p-6 pb-4">
-                <h2 className="text-black text-[18px] font-semibold">{title}</h2>
-                <button onClick={() => closeGlobalDialog('look:share')} className="p-1 hover:bg-[#F3F4F6] transition-colors rounded-md">
-                  <X size={20} color="#000" strokeWidth={2} />
-                </button>
-              </div>
+      {selectedLook ? (
+        <>
+          <div className="mb-4 flex items-center justify-between p-6 pb-4">
+            <h2 className="text-[18px] font-semibold text-black">{title}</h2>
+            <IconButton onClick={() => closeGlobalDialog('look:share')} tone="subtle" size="sm">
+              <X size={20} color="#000" strokeWidth={2} />
+            </IconButton>
+          </div>
 
-              <div className="mb-4 px-6">
-                <p className="text-[#666] mb-3 text-[13px] font-medium">
-                  {generatedLinksLabel} ({sharedLinks.length})
-                </p>
-                <div className="max-h-[300px] overflow-y-auto pt-2">
-                  {isLoadingSharedLinks ? (
-                    <div className="flex items-center justify-center py-3">
-                      <div className="inline-flex items-center gap-2 text-[#666]">
-                        <Spinner size="sm" />
-                        <span className="text-[13px] font-medium">{loadingLabel}</span>
-                      </div>
-                    </div>
-                  ) : sharedLinks.length === 0 ? (
-                    <div className="flex items-center justify-center text-[#999] py-3">
-                      <span className="text-[13px] font-medium">{emptyLabel}</span>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {sharedLinks.map((link) => (
-                        <div key={link.id} className="relative">
-                          <div
-                            onClick={() => {
-                              if (link.isExpired) return;
-                              onSelectLink(selectedLink?.id === link.id ? null : link);
-                            }}
-                            className={`p-3 transition-colors rounded-xl relative ${
-                              link.isExpired ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-[#F3F4F6]'
-                            }`}
-                            style={{
-                              backgroundColor: '#F9FAFB',
-                              border: selectedLink?.id === link.id ? '2px solid #000' : '1px solid #E5E5E5',
-                              opacity: link.isExpired ? 0.72 : 1,
-                            }}
-                          >
-                            <div className="flex items-start justify-between gap-2 mb-2">
-                              <div className="flex-1 min-w-0">
-                                <p
-                                  className={`mb-1 text-sm font-semibold relative z-10 text-[#000] ${
-                                    link.isExpired ? 'line-through' : ''
-                                  }`}
-                                >
-                                  {link.name}
-                                </p>
-                                <p
-                                  className="truncate text-[11px] font-normal relative z-10 text-[#666]"
-                                  title={link.url}
-                                >
-                                  {link.url}
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-2 shrink-0 relative z-10">
-                                {selectedLink?.id === link.id && !link.isExpired && (
-                                  <span className="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-black text-white">
-                                    선택됨
-                                  </span>
-                                )}
-                                {link.isExpired && (
-                                  <span className="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-[#E5E7EB] text-[#374151]">
-                                    만료
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <p className="text-[11px] font-normal relative z-10 text-[#666]">
-                              {formatDate(link.createdAt)}
-                            </p>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onDeleteLink(link.id);
-                                if (selectedLink?.id === link.id) {
-                                  onSelectLink(null);
-                                }
-                              }}
-                              className="absolute right-2 bottom-2 p-1.5 hover:bg-[#E5E7EB] transition-colors rounded-md z-20"
-                              title="링크 삭제"
+          <div className="mb-4 px-6">
+            <p className="mb-3 text-[13px] font-medium text-[#666]">
+              {generatedLinksLabel} ({sharedLinks.length})
+            </p>
+            <div className="max-h-[300px] overflow-y-auto pt-2">
+              {isLoadingSharedLinks ? (
+                <div className="flex items-center justify-center py-3">
+                  <div className="inline-flex items-center gap-2 text-[#666]">
+                    <Spinner size="sm" />
+                    <span className="text-[13px] font-medium">{loadingLabel}</span>
+                  </div>
+                </div>
+              ) : sharedLinks.length === 0 ? (
+                <div className="flex items-center justify-center py-3 text-[#999]">
+                  <span className="text-[13px] font-medium">{emptyLabel}</span>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {sharedLinks.map((link) => (
+                    <div key={link.id} className="relative">
+                      <div
+                        onClick={() => {
+                          if (link.isExpired) return;
+                          onSelectLink(selectedLink?.id === link.id ? null : link);
+                        }}
+                        className={`relative rounded-xl p-3 transition-colors ${
+                          link.isExpired ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-[#F3F4F6]'
+                        }`}
+                        style={{
+                          backgroundColor: '#F9FAFB',
+                          border:
+                            selectedLink?.id === link.id ? '2px solid #000' : '1px solid #E5E5E5',
+                          opacity: link.isExpired ? 0.72 : 1,
+                        }}
+                      >
+                        <div className="mb-2 flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <p
+                              className={`relative z-10 mb-1 text-sm font-semibold text-[#000] ${
+                                link.isExpired ? 'line-through' : ''
+                              }`}
                             >
-                              <Trash2 size={14} color="#333333" strokeWidth={1.5} />
-                            </button>
+                              {link.name}
+                            </p>
+                            <p
+                              className="relative z-10 truncate text-[11px] font-normal text-[#666]"
+                              title={link.url}
+                            >
+                              {link.url}
+                            </p>
+                          </div>
+                          <div className="relative z-10 flex shrink-0 items-center gap-2">
+                            {selectedLink?.id === link.id && !link.isExpired ? (
+                              <span className="rounded-full bg-black px-2 py-0.5 text-[11px] font-semibold text-white">
+                                선택됨
+                              </span>
+                            ) : null}
+                            {link.isExpired ? (
+                              <span className="rounded-full bg-[#E5E7EB] px-2 py-0.5 text-[11px] font-semibold text-[#374151]">
+                                만료
+                              </span>
+                            ) : null}
                           </div>
                         </div>
-                      ))}
+                        <p className="relative z-10 text-[11px] font-normal text-[#666]">
+                          {formatDate(link.createdAt)}
+                        </p>
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteLink(link.id);
+                            if (selectedLink?.id === link.id) {
+                              onSelectLink(null);
+                            }
+                          }}
+                          className="absolute bottom-2 right-2 z-20 hover:bg-[#E5E7EB]"
+                          size="md"
+                          title="링크 삭제"
+                        >
+                          <Trash2 size={14} color="#333333" strokeWidth={1.5} />
+                        </IconButton>
+                      </div>
                     </div>
-                  )}
+                  ))}
                 </div>
-              </div>
+              )}
+            </div>
+          </div>
 
-              <div className="px-6 pb-6">
-                {selectedLink ? (
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => onCopyLink(selectedLink.url, selectedLink.id)}
-                      className="w-full px-5 py-3 text-black hover:opacity-90 transition-opacity flex items-center justify-center gap-2 rounded-xl bg-[#F3F4F6] text-sm font-semibold"
-                    >
-                      <Copy size={16} color="#000" strokeWidth={2} />
-                      {copiedLinkId === selectedLink.id ? copiedLabel : copyLinkLabel}
-                    </button>
+          <div className="px-6 pb-6">
+            {selectedLink ? (
+              <div className="space-y-3">
+                <Button
+                  onClick={() => onCopyLink(selectedLink.url, selectedLink.id)}
+                  variant="subtle"
+                  size="lg"
+                  fullWidth
+                >
+                  <Copy size={16} color="#000" strokeWidth={2} />
+                  {copiedLinkId === selectedLink.id ? copiedLabel : copyLinkLabel}
+                </Button>
 
-                    <button
-                      onClick={onKakaoShare}
-                      className="w-full px-5 py-3 text-[#3C1E1E] hover:opacity-90 transition-opacity flex items-center justify-center gap-2 rounded-xl bg-[#FEE500] text-sm font-semibold"
-                    >
-                      <Share2 size={16} color="#3C1E1E" strokeWidth={2} />
-                      {kakaoShareLabel}
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => openGlobalDialog('look:createLink')}
-                    className="w-full px-5 py-3 text-white hover:opacity-90 transition-opacity flex items-center justify-center gap-2 rounded-xl bg-black text-sm font-semibold"
-                  >
-                    <Link2 size={16} color="#fff" strokeWidth={2} />
-                    {createLinkLabel}
-                  </button>
-                )}
+                <Button onClick={onKakaoShare} variant="kakao" size="lg" fullWidth>
+                  <Share2 size={16} color="#3C1E1E" strokeWidth={2} />
+                  {kakaoShareLabel}
+                </Button>
               </div>
-            </>
-          )}
-        </Dialog.Popup>
-      </Dialog.Portal>
-    </Dialog.Root>
+            ) : (
+              <Button onClick={() => openGlobalDialog('look:createLink')} variant="solid" size="lg" fullWidth>
+                <Link2 size={16} color="#fff" strokeWidth={2} />
+                {createLinkLabel}
+              </Button>
+            )}
+          </div>
+        </>
+      ) : null}
+    </DialogShell>
   );
 }

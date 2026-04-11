@@ -2,6 +2,10 @@
 
 import { Heart, Share2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Badge } from '@/shared/ui/Badge';
+import { Card } from '@/shared/ui/Card';
+import { IconButton } from '@/shared/ui/IconButton';
+import { Text } from '@/shared/ui/Text';
 import type { Look } from '../model/useLooks';
 import { LookScrollableImageGallery } from './LookScrollableImageGallery';
 
@@ -29,20 +33,21 @@ export function LookListCard({
   const { t } = useTranslation();
 
   return (
-    <div
+    <Card
       onClick={(e) => onClick(e, look)}
       onPointerDown={onPointerDown}
       onPointerUp={onPointerUp}
       onPointerLeave={onPointerLeave}
-      className="cursor-pointer transition-all relative rounded-2xl p-4 bg-white shadow-[0_-2px_8px_rgba(0,0,0,0.04),0_6px_16px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04)]"
+      variant="elevated"
+      className="relative cursor-pointer p-4 transition-all"
     >
       <div className="absolute bottom-4 right-4 flex items-center gap-1 z-10">
-        <button
+        <IconButton
           onClick={(e) => {
             e.stopPropagation();
             onToggleFavorite(look.id);
           }}
-          className="p-1.5 hover:bg-[#F3F4F6] transition-all rounded-lg"
+          tone="subtle"
         >
           <Heart
             size={18}
@@ -50,36 +55,38 @@ export function LookListCard({
             fill={look.isFavorite ? '#000' : 'none'}
             strokeWidth={1.5}
           />
-        </button>
-        <button
+        </IconButton>
+        <IconButton
           onClick={(e) => {
             e.stopPropagation();
             onOpenShare(look);
           }}
-          className="p-1.5 hover:bg-[#F3F4F6] transition-all rounded-lg"
+          tone="subtle"
         >
           <Share2 size={18} color="#000" strokeWidth={1.5} />
-        </button>
+        </IconButton>
       </div>
 
       <LookScrollableImageGallery items={items} lookId={look.id} />
 
       <div className="px-4 pt-2 mb-2">
-        <h3 className="text-black text-[18px] font-bold tracking-[-0.01em]">{look.name}</h3>
+        <Text as="h3" variant="titleSm" className="tracking-[-0.01em]">
+          {look.name}
+        </Text>
       </div>
 
       <div className="px-4">
         <div className="flex flex-wrap gap-1.5 mb-2">
           {look.tags.map((tag) => (
-            <span key={tag} className="px-3 py-1 text-white rounded-full bg-black text-[11px] font-medium">
+            <Badge key={tag} className="px-3 py-1 text-[11px] font-medium">
               #{tag}
-            </span>
+            </Badge>
           ))}
         </div>
-        <p className="text-[#999] text-[11px] font-normal">
+        <Text variant="meta">
           {t('looks.cardItemsCount', { count: look.items.length })}
-        </p>
+        </Text>
       </div>
-    </div>
+    </Card>
   );
 }

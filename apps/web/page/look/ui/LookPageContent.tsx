@@ -1,9 +1,8 @@
 'use client';
 
 import { use } from 'react';
-import { Dialog } from '@base-ui/react/dialog';
-import { X } from 'lucide-react';
 import { LookForm } from '@/shared/ui/LookForm';
+import { DialogShell } from '@/shared/ui/DialogShell';
 import { useTranslation } from 'react-i18next';
 import { LookCountMeta } from './LookCountMeta';
 import type { ClothesListItemResponseDto, LookResponseDto } from '@/shared/model/orvalSchemas';
@@ -131,71 +130,47 @@ export function LookContent({
       />
 
       {/* 룩 추가 다이얼로그 */}
-      <Dialog.Root
+      <DialogShell
         open={isAddDialogOpen}
         onOpenChange={(open) => {
           if (open) openGlobalDialog('look:add');
           else closeGlobalDialog('look:add');
         }}
+        popupClassName="max-w-[400px] max-h-[85vh] overflow-hidden rounded-[24px] flex flex-col"
+        bodyClassName="flex flex-1 flex-col"
+        backdropClassName="bg-black/30"
       >
-        <Dialog.Portal>
-          <Dialog.Backdrop className="fixed inset-0 bg-black/30 z-50" />
-          <Dialog.Popup
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[400px] max-h-[85vh] flex flex-col overflow-hidden rounded-[24px]"
-            aria-describedby={undefined}
-          >
-            <button
-              onClick={() => closeGlobalDialog('look:add')}
-              className="absolute top-6 right-6 z-[60] p-1 hover:bg-[#F3F4F6] transition-colors rounded-md"
-              aria-label="닫기"
-            >
-              <X size={18} color="#000" strokeWidth={1.8} />
-            </button>
-            <LookForm
-              mode="add"
-              closetItems={closetItems}
-              onSave={handleAddLook}
-              onCancel={() => closeGlobalDialog('look:add')}
-              isSaving={isSavingLook}
-            />
-          </Dialog.Popup>
-        </Dialog.Portal>
-      </Dialog.Root>
+        <LookForm
+          mode="add"
+          closetItems={closetItems}
+          onSave={handleAddLook}
+          onCancel={() => closeGlobalDialog('look:add')}
+          isSaving={isSavingLook}
+        />
+      </DialogShell>
 
       {/* 룩 수정 다이얼로그 */}
-      <Dialog.Root open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <Dialog.Portal>
-          <Dialog.Backdrop className="fixed inset-0 bg-black/30 z-50" />
-          <Dialog.Popup
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[400px] max-h-[85vh] flex flex-col overflow-hidden rounded-[24px]"
-            aria-describedby={undefined}
-          >
-            <button
-              onClick={() => {
-                setShowEditDialog(false);
-                setSelectedLook(null);
-              }}
-              className="absolute top-6 right-6 z-[60] p-1 hover:bg-[#F3F4F6] transition-colors rounded-md"
-              aria-label="닫기"
-            >
-              <X size={18} color="#000" strokeWidth={1.8} />
-            </button>
-            {selectedLook && (
-              <LookForm
-                mode="edit"
-                initialData={selectedLook}
-                closetItems={closetItems}
-                onSave={handleEditLook}
-                onCancel={() => {
-                  setShowEditDialog(false);
-                  setSelectedLook(null);
-                }}
-                isSaving={isSavingLook}
-              />
-            )}
-          </Dialog.Popup>
-        </Dialog.Portal>
-      </Dialog.Root>
+      <DialogShell
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        popupClassName="max-w-[400px] max-h-[85vh] overflow-hidden rounded-[24px] flex flex-col"
+        bodyClassName="flex flex-1 flex-col"
+        backdropClassName="bg-black/30"
+      >
+        {selectedLook && (
+          <LookForm
+            mode="edit"
+            initialData={selectedLook}
+            closetItems={closetItems}
+            onSave={handleEditLook}
+            onCancel={() => {
+              setShowEditDialog(false);
+              setSelectedLook(null);
+            }}
+            isSaving={isSavingLook}
+          />
+        )}
+      </DialogShell>
 
       <LookCreateLinkDialog
         selectedLook={selectedLook}

@@ -4,6 +4,9 @@ import { Dialog } from '@base-ui/react/dialog';
 import { Camera, Upload } from 'lucide-react';
 import type { ChangeEvent, RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Card } from '@/shared/ui/Card';
+import { IconButton } from '@/shared/ui/IconButton';
+import { Text } from '@/shared/ui/Text';
 import { ClosetAddDialog } from './ClosetAddDialog';
 import { ClosetDialogTitle } from './ClosetDialogTitle';
 
@@ -26,30 +29,34 @@ export function ClosetAddMethodDialog({
     <ClosetAddDialog dialogKey="closet:addMethod" onClose={handleCancelAdd}>
       <div className="p-6">
         <ClosetDialogTitle title={t('closet.addItemTitle')} className="mb-4" />
-        <p className="text-[#555555] mb-6 text-[13px] font-normal leading-[1.5]">
+        <Text variant="caption" className="mb-6 leading-[1.5] text-[#555555]">
           {t('closet.selectImageMethod')}
-        </p>
+        </Text>
 
         <div className="space-y-3">
-          <button
+          <Card
             onClick={() => fileInputRef.current?.click()}
-            className="w-full flex items-center gap-3 px-5 py-4 hover:bg-gray-50 transition-colors rounded-2xl border-[1.5px] border-[#E5E5E5]"
+            variant="surface"
+            interactive
+            className="flex w-full items-center gap-3 border-[1.5px] px-5 py-4"
           >
             <Upload size={20} color="#000" strokeWidth={1.5} />
-            <span className="text-black text-sm font-medium">
+            <Text as="span" variant="bodyStrong" className="font-medium">
               {t('closet.chooseFromFile')}
-            </span>
-          </button>
+            </Text>
+          </Card>
 
-          <button
+          <Card
             onClick={() => cameraInputRef.current?.click()}
-            className="w-full flex items-center gap-3 px-5 py-4 hover:bg-gray-50 transition-colors rounded-2xl border-[1.5px] border-[#E5E5E5]"
+            variant="surface"
+            interactive
+            className="flex w-full items-center gap-3 border-[1.5px] px-5 py-4"
           >
             <Camera size={20} color="#000" strokeWidth={1.5} />
-            <span className="text-black text-sm font-medium">
+            <Text as="span" variant="bodyStrong" className="font-medium">
               {t('closet.takePhoto')}
-            </span>
-          </button>
+            </Text>
+          </Card>
         </div>
 
         <input
@@ -70,12 +77,19 @@ export function ClosetAddMethodDialog({
       </div>
 
       <Dialog.Close
-        className="absolute top-4 right-4 text-[#555555] text-2xl hover:opacity-70 transition-opacity"
+        render={
+          <IconButton
+            className="absolute top-4 right-4 text-2xl text-[#555555] hover:opacity-70"
+            tone="default"
+            size="sm"
+            aria-label="닫기"
+            onClick={handleCancelAdd}
+          >
+            ×
+          </IconButton>
+        }
         aria-label="닫기"
-        onClick={handleCancelAdd}
-      >
-        ×
-      </Dialog.Close>
+      />
     </ClosetAddDialog>
   );
 }

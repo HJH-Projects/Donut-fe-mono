@@ -1,8 +1,12 @@
 'use client';
 
-import { Dialog } from '@base-ui/react/dialog';
 import { Link2, X } from 'lucide-react';
+import { Button } from '@/shared/ui/Button';
+import { DialogShell } from '@/shared/ui/DialogShell';
+import { IconButton } from '@/shared/ui/IconButton';
+import { Input } from '@/shared/ui/Input';
 import Spinner from '@/shared/ui/Spinner';
+import { Text } from '@/shared/ui/Text';
 import type { Look } from '../model/useLooks';
 import { closeGlobalDialog, useGlobalDialogOpen } from '@/shared/model/globalDialogStore';
 
@@ -32,68 +36,77 @@ export function LookCreateLinkDialog({
   const open = useGlobalDialogOpen('look:createLink');
 
   return (
-    <Dialog.Root
+    <DialogShell
       open={open}
       onOpenChange={(next) => {
         if (!next) closeGlobalDialog('look:createLink');
       }}
+      popupClassName="max-w-[400px] rounded-[24px]"
+      bodyClassName=""
+      backdropClassName="bg-black/30"
+      showCloseButton={false}
     >
-      <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 bg-black/30 z-50" />
-        <Dialog.Popup
-          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[400px] rounded-[24px]"
-          aria-describedby={undefined}
-        >
-          {selectedLook && (
-            <>
-              <div className="shrink-0 p-6 pb-4 flex items-start justify-between">
-                <h2 className="text-black text-[20px] font-semibold">{selectedLook.name}</h2>
-                <button onClick={() => closeGlobalDialog('look:createLink')} className="p-1.5 hover:bg-[#F3F4F6] transition-colors rounded-lg">
-                  <X size={20} color="#000" strokeWidth={1.5} />
-                </button>
-              </div>
+      {selectedLook ? (
+        <>
+          <div className="flex shrink-0 items-start justify-between p-6 pb-4">
+            <Text as="h2" variant="titleMd" className="font-semibold">
+              {selectedLook.name}
+            </Text>
+            <IconButton
+              onClick={() => closeGlobalDialog('look:createLink')}
+              tone="subtle"
+              size="md"
+            >
+              <X size={20} color="#000" strokeWidth={1.5} />
+            </IconButton>
+          </div>
 
-              <div className="flex-1 overflow-y-auto px-6 pb-4">
-                <h4 className="text-black mb-3 text-[13px] font-semibold">{titleCreateNewLink}</h4>
-                <input
-                  type="text"
-                  value={linkName}
-                  onChange={(e) => onLinkNameChange(e.target.value)}
-                  className="w-full px-4 py-3 text-black mb-4 rounded-xl bg-[#F9FAFB] text-sm font-normal border border-[#E5E5E5]"
-                  placeholder={placeholder}
-                />
-              </div>
+          <div className="flex-1 overflow-y-auto px-6 pb-4">
+            <Text as="h4" variant="bodyStrong" className="mb-3 text-[13px]">
+              {titleCreateNewLink}
+            </Text>
+            <Input
+              type="text"
+              value={linkName}
+              onChange={(e) => onLinkNameChange(e.target.value)}
+              intent="subtle"
+              className="mb-4"
+              placeholder={placeholder}
+            />
+          </div>
 
-              <div className="shrink-0 p-6 pt-4 flex gap-3">
-                <button
-                  onClick={() => closeGlobalDialog('look:createLink')}
-                  disabled={isCreating}
-                  className="flex-1 px-5 py-3 flex items-center justify-center gap-2 hover:bg-[#F3F4F6] transition-colors rounded-xl border-[1.5px] border-[#E5E5E5] text-sm font-semibold text-black disabled:opacity-60"
-                >
-                  {cancelLabel}
-                </button>
-                <button
-                  onClick={onCreateLink}
-                  disabled={isCreating}
-                  className="flex-1 px-5 py-3 flex items-center justify-center gap-2 text-white hover:opacity-90 transition-opacity rounded-xl bg-black text-sm font-semibold disabled:opacity-60"
-                >
-                  {isCreating ? (
-                    <>
-                      <Spinner size="sm" className="text-white" />
-                      생성 중...
-                    </>
-                  ) : (
-                    <>
-                      <Link2 size={16} strokeWidth={2} />
-                      {confirmLabel}
-                    </>
-                  )}
-                </button>
-              </div>
-            </>
-          )}
-        </Dialog.Popup>
-      </Dialog.Portal>
-    </Dialog.Root>
+          <div className="flex shrink-0 gap-3 p-6 pt-4">
+            <Button
+              onClick={() => closeGlobalDialog('look:createLink')}
+              disabled={isCreating}
+              variant="secondary"
+              size="lg"
+              className="flex-1"
+            >
+              {cancelLabel}
+            </Button>
+            <Button
+              onClick={onCreateLink}
+              disabled={isCreating}
+              variant="solid"
+              size="lg"
+              className="flex-1"
+            >
+              {isCreating ? (
+                <>
+                  <Spinner size="sm" className="text-white" />
+                  생성 중...
+                </>
+              ) : (
+                <>
+                  <Link2 size={16} strokeWidth={2} />
+                  {confirmLabel}
+                </>
+              )}
+            </Button>
+          </div>
+        </>
+      ) : null}
+    </DialogShell>
   );
 }
