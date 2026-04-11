@@ -1,49 +1,26 @@
 'use client';
 
-import { Dialog } from '@base-ui/react/dialog';
-import { X } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { DialogShell } from '@/shared/ui/DialogShell';
 
 type MyDialogShellProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
 export function MyDialogShell({ open, onOpenChange, title, children }: MyDialogShellProps) {
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 bg-black/40 z-50" />
-        <Dialog.Popup
-          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 w-[90%] max-w-[420px]"
-          style={{
-            borderRadius: 'var(--radius-xl)',
-            padding: '32px',
-          }}
-          aria-describedby={undefined}
-        >
-          <Dialog.Close
-            className="absolute top-8 right-8 p-1 hover:bg-gray-100 transition-colors rounded-md"
-            aria-label="닫기"
-          >
-            <X size={18} color="#000" strokeWidth={1.8} />
-          </Dialog.Close>
-
-          <h2
-            className="text-black mb-8"
-            style={{
-              fontFamily: "var(--font-inter), 'Inter', sans-serif",
-              fontSize: '28px',
-              fontWeight: 700,
-            }}
-          >
-            {title}
-          </h2>
-
-          {children}
-        </Dialog.Popup>
-      </Dialog.Portal>
-    </Dialog.Root>
+    <DialogShell
+      open={open}
+      onOpenChange={onOpenChange}
+      title={title}
+      popupClassName="max-w-[420px] rounded-[var(--radius-xl)]"
+      bodyClassName="p-8"
+      titleSpacing="default"
+    >
+      {children}
+    </DialogShell>
   );
 }

@@ -1,6 +1,8 @@
 'use client';
 
+import { Button } from '@/shared/ui/Button';
 import Spinner from '@/shared/ui/Spinner';
+import { Text } from '@/shared/ui/Text';
 import {
   closeGlobalDialog,
   openGlobalDialog,
@@ -35,46 +37,26 @@ export function MyLogoutConfirmDialog({
       }
       title={title}
     >
-      <p
-        className="text-[#666666] mb-8"
-        style={{
-          fontFamily: "var(--font-inter), 'Inter', sans-serif",
-          fontSize: '14px',
-          fontWeight: 400,
-          lineHeight: '1.6',
-        }}
-      >
+      <Text variant="body" className="mb-8 leading-[1.6] text-[#666666]">
         {description}
-      </p>
+      </Text>
 
       <div className="flex gap-3">
-        <button
+        <Button
           onClick={() => closeGlobalDialog('my:logoutConfirm')}
           disabled={isLoggingOut}
-          className="flex-1 py-4 transition-all hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed"
-          style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: 'var(--radius-pill)',
-            border: '1.5px solid #E5E5E5',
-            color: '#000',
-            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-            fontSize: '15px',
-            fontWeight: 700,
-          }}
+          variant="secondary"
+          size="xl"
+          className="flex-1 text-[15px] font-bold"
         >
           {cancelLabel}
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={onConfirm}
           disabled={isLoggingOut}
-          className="flex-1 py-4 text-white transition-all hover:opacity-90 disabled:opacity-60 inline-flex items-center justify-center gap-2"
-          style={{
-            backgroundColor: '#000',
-            borderRadius: 'var(--radius-pill)',
-            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-            fontSize: '15px',
-            fontWeight: 700,
-          }}
+          variant="solid"
+          size="xl"
+          className="flex-1 text-[15px] font-bold"
         >
           {isLoggingOut ? (
             <>
@@ -84,9 +66,8 @@ export function MyLogoutConfirmDialog({
           ) : (
             confirmLabel
           )}
-        </button>
+        </Button>
       </div>
     </MyDialogShell>
   );
 }
-

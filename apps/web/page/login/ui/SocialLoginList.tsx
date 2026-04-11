@@ -1,34 +1,38 @@
 'use client';
 import { useLoginPopup } from '../model/useLoginPopup';
+import { Button } from '@/shared/ui/Button';
 
 export const SocialLoginList = () => {
   const { openPopup } = useLoginPopup();
 
   return (
     <div className="flex flex-col gap-3 w-full max-w-xs">
-      {/* Kakao Button */}
-      <button
+      <Button
         onClick={() => openPopup('kakao')}
-        className="w-full h-12 bg-[#FEE500] text-[#000000] rounded-md font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+        variant="kakao"
+        fullWidth
+        className="h-12 rounded-md text-sm font-semibold"
       >
         <span className="text-sm">카카오로 시작하기</span>
-      </button>
+      </Button>
 
-      {/* Google Button */}
-      <button
+      <Button
         onClick={() => openPopup('google')}
-        className="w-full h-12 bg-white border border-gray-200 text-gray-700 rounded-md font-semibold flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
+        variant="secondary"
+        fullWidth
+        className="h-12 rounded-md border text-sm font-semibold text-gray-700"
       >
         <span className="text-sm">Google로 시작하기</span>
-      </button>
+      </Button>
 
-      {/* Apple Button (UI Only) */}
-      <button
+      <Button
         disabled
-        className="w-full h-12 bg-black text-white rounded-md font-semibold flex items-center justify-center gap-2 opacity-50 cursor-not-allowed"
+        variant="solid"
+        fullWidth
+        className="h-12 rounded-md text-sm font-semibold"
       >
         <span className="text-sm">Apple로 시작하기</span>
-      </button>
+      </Button>
     </div>
   );
 };

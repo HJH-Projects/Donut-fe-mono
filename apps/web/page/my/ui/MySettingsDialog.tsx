@@ -1,10 +1,12 @@
 'use client';
 
+import { Button } from '@/shared/ui/Button';
 import {
   closeGlobalDialog,
   openGlobalDialog,
   useGlobalDialogOpen,
 } from '@/shared/model/globalDialogStore';
+import { Text } from '@/shared/ui/Text';
 import type { TemperatureUnit } from '../model/useMyContentData';
 import { MyDialogShell } from './MyDialogShell';
 
@@ -38,65 +40,38 @@ export function MySettingsDialog({
       title={title}
     >
       <div className="mb-8">
-        <h3
-          className="text-black mb-4"
-          style={{
-            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-            fontSize: '13px',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-          }}
-        >
+        <Text as="h3" variant="sectionLabel" className="mb-4">
           {sectionLabel}
-        </h3>
+        </Text>
         <div className="flex gap-3">
-          <button
+          <Button
             onClick={() => onChangeTemperatureUnit('celsius')}
-            className="flex-1 py-4 transition-all"
-            style={{
-              backgroundColor: temperatureUnit === 'celsius' ? '#000' : '#FFFFFF',
-              color: temperatureUnit === 'celsius' ? '#FFFFFF' : '#000',
-              borderRadius: 'var(--radius-pill)',
-              border: temperatureUnit === 'celsius' ? 'none' : '1.5px solid #E5E5E5',
-              fontFamily: "var(--font-inter), 'Inter', sans-serif",
-              fontSize: '15px',
-              fontWeight: 700,
-            }}
+            variant={temperatureUnit === 'celsius' ? 'solid' : 'secondary'}
+            size="xl"
+            className="flex-1 text-[15px] font-bold"
           >
             {celsiusLabel}
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => onChangeTemperatureUnit('fahrenheit')}
-            className="flex-1 py-4 transition-all"
-            style={{
-              backgroundColor: temperatureUnit === 'fahrenheit' ? '#000' : '#FFFFFF',
-              color: temperatureUnit === 'fahrenheit' ? '#FFFFFF' : '#000',
-              borderRadius: 'var(--radius-pill)',
-              border: temperatureUnit === 'fahrenheit' ? 'none' : '1.5px solid #E5E5E5',
-              fontFamily: "var(--font-inter), 'Inter', sans-serif",
-              fontSize: '15px',
-              fontWeight: 700,
-            }}
+            variant={temperatureUnit === 'fahrenheit' ? 'solid' : 'secondary'}
+            size="xl"
+            className="flex-1 text-[15px] font-bold"
           >
             {fahrenheitLabel}
-          </button>
+          </Button>
         </div>
       </div>
 
-      <button
+      <Button
         onClick={() => closeGlobalDialog('my:settings')}
-        className="w-full py-4 text-white transition-all hover:opacity-90"
-        style={{
-          backgroundColor: '#000',
-          borderRadius: 'var(--radius-pill)',
-          fontFamily: "var(--font-inter), 'Inter', sans-serif",
-          fontSize: '16px',
-          fontWeight: 700,
-        }}
+        variant="solid"
+        size="xl"
+        fullWidth
+        className="text-[16px] font-bold"
       >
         {confirmLabel}
-      </button>
+      </Button>
     </MyDialogShell>
   );
 }

@@ -1,10 +1,12 @@
 'use client';
 
+import { Button } from '@/shared/ui/Button';
 import {
   closeGlobalDialog,
   openGlobalDialog,
   useGlobalDialogOpen,
 } from '@/shared/model/globalDialogStore';
+import { Text } from '@/shared/ui/Text';
 import type { Language } from '../model/useMyContentData';
 import { MyDialogShell } from './MyDialogShell';
 
@@ -38,65 +40,38 @@ export function MyLanguageDialog({
       title={title}
     >
       <div className="mb-8">
-        <h3
-          className="text-black mb-4"
-          style={{
-            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-            fontSize: '13px',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-          }}
-        >
+        <Text as="h3" variant="sectionLabel" className="mb-4">
           {sectionLabel}
-        </h3>
+        </Text>
         <div className="flex gap-3">
-          <button
+          <Button
             onClick={() => onChangeLanguage('ko')}
-            className="flex-1 py-4 transition-all"
-            style={{
-              backgroundColor: language === 'ko' ? '#000' : '#FFFFFF',
-              color: language === 'ko' ? '#FFFFFF' : '#000',
-              borderRadius: 'var(--radius-pill)',
-              border: language === 'ko' ? 'none' : '1.5px solid #E5E5E5',
-              fontFamily: "var(--font-inter), 'Inter', sans-serif",
-              fontSize: '15px',
-              fontWeight: 700,
-            }}
+            variant={language === 'ko' ? 'solid' : 'secondary'}
+            size="xl"
+            className="flex-1 text-[15px] font-bold"
           >
             {koreanLabel}
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => onChangeLanguage('en')}
-            className="flex-1 py-4 transition-all"
-            style={{
-              backgroundColor: language === 'en' ? '#000' : '#FFFFFF',
-              color: language === 'en' ? '#FFFFFF' : '#000',
-              borderRadius: 'var(--radius-pill)',
-              border: language === 'en' ? 'none' : '1.5px solid #E5E5E5',
-              fontFamily: "var(--font-inter), 'Inter', sans-serif",
-              fontSize: '15px',
-              fontWeight: 700,
-            }}
+            variant={language === 'en' ? 'solid' : 'secondary'}
+            size="xl"
+            className="flex-1 text-[15px] font-bold"
           >
             {englishLabel}
-          </button>
+          </Button>
         </div>
       </div>
 
-      <button
+      <Button
         onClick={() => closeGlobalDialog('my:language')}
-        className="w-full py-4 text-white transition-all hover:opacity-90"
-        style={{
-          backgroundColor: '#000',
-          borderRadius: 'var(--radius-pill)',
-          fontFamily: "var(--font-inter), 'Inter', sans-serif",
-          fontSize: '16px',
-          fontWeight: 700,
-        }}
+        variant="solid"
+        size="xl"
+        fullWidth
+        className="text-[16px] font-bold"
       >
         {confirmLabel}
-      </button>
+      </Button>
     </MyDialogShell>
   );
 }

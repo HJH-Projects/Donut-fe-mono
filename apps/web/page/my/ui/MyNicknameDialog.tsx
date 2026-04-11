@@ -1,6 +1,9 @@
 'use client';
 
+import { Button } from '@/shared/ui/Button';
+import { Input } from '@/shared/ui/Input';
 import Spinner from '@/shared/ui/Spinner';
+import { Text } from '@/shared/ui/Text';
 import {
   closeGlobalDialog,
   openGlobalDialog,
@@ -44,45 +47,24 @@ export function MyNicknameDialog({
       title={title}
     >
       <div className="mb-8">
-        <h3
-          className="text-black mb-4"
-          style={{
-            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-            fontSize: '13px',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-          }}
-        >
+        <Text as="h3" variant="sectionLabel" className="mb-4">
           {nicknameLabel}
-        </h3>
-        <input
+        </Text>
+        <Input
           type="text"
           value={tempNickname}
           onChange={(e) => setTempNickname(e.target.value)}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          style={{
-            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-            fontSize: '15px',
-            fontWeight: 400,
-          }}
+          className="rounded-lg border border-gray-300 text-[15px] focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
       <div className="flex gap-3">
-        <button
+        <Button
           onClick={onReset}
           disabled={isResettingNickname || isSavingNickname}
-          className="flex-1 py-4 transition-all hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
-          style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: 'var(--radius-pill)',
-            border: '1.5px solid #E5E5E5',
-            color: '#000',
-            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-            fontSize: '16px',
-            fontWeight: 700,
-          }}
+          variant="secondary"
+          size="xl"
+          className="flex-1 text-[16px] font-bold"
         >
           {isResettingNickname ? (
             <>
@@ -92,18 +74,13 @@ export function MyNicknameDialog({
           ) : (
             resetLabel
           )}
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={onSave}
           disabled={isSavingNickname || isResettingNickname}
-          className="flex-1 py-4 text-white transition-all hover:opacity-90 disabled:opacity-60 inline-flex items-center justify-center gap-2"
-          style={{
-            backgroundColor: '#000',
-            borderRadius: 'var(--radius-pill)',
-            fontFamily: "var(--font-inter), 'Inter', sans-serif",
-            fontSize: '16px',
-            fontWeight: 700,
-          }}
+          variant="solid"
+          size="xl"
+          className="flex-1 text-[16px] font-bold"
         >
           {isSavingNickname ? (
             <>
@@ -113,7 +90,7 @@ export function MyNicknameDialog({
           ) : (
             applyLabel
           )}
-        </button>
+        </Button>
       </div>
     </MyDialogShell>
   );

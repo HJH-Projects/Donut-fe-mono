@@ -1,6 +1,8 @@
 'use client';
 
 import { ChevronRight } from 'lucide-react';
+import { Card } from '@/shared/ui/Card';
+import { Text } from '@/shared/ui/Text';
 
 type MyMenuItem = {
   label: string;
@@ -15,44 +17,24 @@ type MyMenuSectionProps = {
 export function MyMenuSection({ title, items }: MyMenuSectionProps) {
   return (
     <section className="mb-8">
-      <h3
-        className="mb-4"
-        style={{
-          fontFamily: "var(--font-inter), 'Inter', sans-serif",
-          fontSize: '13px',
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          color: '#737373',
-        }}
-      >
+      <Text as="h3" variant="sectionLabel" className="mb-4">
         {title}
-      </h3>
+      </Text>
 
       <div className="space-y-2">
         {items.map((item) => (
-          <button
+          <Card
             key={item.label}
             onClick={item.onClick}
-            className="w-full px-6 py-5 flex items-center justify-between transition-all hover:bg-gray-50"
-            style={{
-              backgroundColor: '#FFFFFF',
-              border: '1px solid #E5E5E5',
-              borderRadius: 'var(--radius-lg)',
-            }}
+            variant="outlined"
+            interactive
+            className="flex w-full items-center justify-between px-6 py-5"
           >
-            <span
-              className="text-black"
-              style={{
-                fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                fontSize: '16px',
-                fontWeight: 600,
-              }}
-            >
+            <Text as="span" variant="bodyStrong" className="text-[16px]">
               {item.label}
-            </span>
+            </Text>
             <ChevronRight size={20} color="#A3A3A3" strokeWidth={2} />
-          </button>
+          </Card>
         ))}
       </div>
     </section>
