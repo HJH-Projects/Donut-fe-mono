@@ -1,7 +1,0 @@
-export type SharedLink = {
-  id: string;
-  name: string;
-  url: string;
-  createdAt: Date;
-  isExpired: boolean;
-};

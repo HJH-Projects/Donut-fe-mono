@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Shirt, Sparkles, User } from "lucide-react";
+import { Home, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
@@ -11,8 +11,6 @@ export function BottomNav() {
 
   const navItems = [
     { id: 'home', icon: Home, label: t('nav.home'), path: '/' },
-    { id: 'closet', icon: Shirt, label: t('nav.closet'), path: '/closet' },
-    { id: 'looks', icon: Sparkles, label: t('nav.looks'), path: '/look' },
     { id: 'profile', icon: User, label: t('nav.profile'), path: '/my' },
   ];
 
