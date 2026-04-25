@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { Dialog } from '@base-ui/react/dialog';
@@ -13,6 +13,7 @@ import {
 import { clientKy } from '@/features/api/clientKy';
 import { useAuthGuard } from '@/features/auth/useAuthGuard';
 import { invalidateHomeLocations } from '@/shared/api/invalidations/homeLocations';
+import { loadKakaoMapSdk } from '@/shared/lib/kakaoMapSdk';
 import type { HomeLocationOption } from './home.types';
 import {
   ConfirmDeleteContent,
@@ -60,6 +61,7 @@ const LocationDialog = ({
   const { t } = useTranslation();
   const router = useRouter();
   const checkAuth = useAuthGuard();
+  const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<DialogMode>('select');
   const [alias, setAlias] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -271,8 +273,52 @@ const LocationDialog = ({
     );
   };
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let cancelled = false;
+    let idleId: number | null = null;
+    let timeoutId: number | null = null;
+
+    const runLoad = () => {
+      if (cancelled) return;
+      void loadKakaoMapSdk().catch(() => {
+        // 다이얼로그 내부(AddLocationContent)에서 재시도/fallback 처리
+      });
+    };
+
+    const idleWindow = window as Window & {
+      requestIdleCallback?: (cb: () => void, options?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+
+    if (typeof idleWindow.requestIdleCallback === 'function') {
+      idleId = idleWindow.requestIdleCallback(() => {
+        runLoad();
+      }, { timeout: 1200 });
+    } else {
+      timeoutId = window.setTimeout(runLoad, 250);
+    }
+
+    return () => {
+      cancelled = true;
+      if (idleId !== null) {
+        idleWindow.cancelIdleCallback?.(idleId);
+      }
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [isOpen]);
+
   return (
-    <Dialog.Root>
+    <Dialog.Root
+      open={isOpen}
+      onOpenChange={(nextOpen) => {
+        setIsOpen(nextOpen);
+        if (!nextOpen) resetAll();
+      }}
+    >
       <Dialog.Trigger
         className="mt-1 hover:opacity-70 transition-opacity"
         aria-label={t('home.locationSettingsAria')}
@@ -293,7 +339,6 @@ const LocationDialog = ({
             className="absolute top-4 right-4 text-[#555555] hover:opacity-70 transition-opacity"
             aria-label={t('common.close')}
             style={{ fontFamily: FONT, fontSize: '24px' }}
-            onClick={resetAll}
           >
             ×
           </Dialog.Close>

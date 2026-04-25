@@ -23,10 +23,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <head>
-        <link rel="preconnect" href="https://dapi.kakao.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://t1.daumcdn.net" crossOrigin="anonymous" />
-      </head>
       <body className={` ${inter.variable} antialiased bg-[#f5f5f5]`}>
         <div className="mx-auto w-full max-w-[500px]">
           <I18nProvider>
