@@ -10,6 +10,7 @@ import LocationWeather from './locationWeather';
 import RecommendBasicLook from './recommendBasicLook';
 import { useHomeData } from '../model/useHomeData';
 import { BellAction } from '@/shared/ui/BellAction';
+import { loadKakaoMapSdk } from '@/shared/lib/kakaoMapSdk';
 
 interface HomePageProps {
   header?: ReactNode;
@@ -47,6 +48,39 @@ const HomePage = ({
   });
 
   const [showWeatherDetail, setShowWeatherDetail] = useState(false);
+
+  useEffect(() => {
+    let timeoutId: number | null = null;
+    let idleId: number | null = null;
+
+    const preload = () => {
+      void loadKakaoMapSdk().catch(() => {
+        // 지도 SDK preload 실패는 다이얼로그 진입 시 재시도한다.
+      });
+    };
+
+    const idleWindow = window as Window & {
+      requestIdleCallback?: (cb: () => void, options?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+
+    if (typeof idleWindow.requestIdleCallback === 'function') {
+      idleId = idleWindow.requestIdleCallback(() => {
+        preload();
+      }, { timeout: 1500 });
+    } else {
+      timeoutId = window.setTimeout(preload, 400);
+    }
+
+    return () => {
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+      if (idleId !== null) {
+        idleWindow.cancelIdleCallback?.(idleId);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (showWeatherDetail) {

@@ -1,9 +1,10 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MapPin, Check, Trash2 } from 'lucide-react';
 import KakaoMapPicker, { type KakaoMapPickerRef } from '@/features/map/KakaoMapPicker';
 import KakaoMapSearch from '@/features/map/KakaoMapSearch';
 import Spinner from '@/shared/ui/Spinner';
+import { isKakaoMapSdkReady, loadKakaoMapSdk } from '@/shared/lib/kakaoMapSdk';
 import type { HomeLocationOption } from './home.types';
 
 const FONT = "var(--font-inter), 'Inter', sans-serif";
@@ -83,11 +84,29 @@ export const AddLocationContent = ({
 }: AddLocationContentProps) => {
   const { t } = useTranslation();
   const mapRef = useRef<KakaoMapPickerRef>(null);
+  const [isMapReady, setIsMapReady] = useState(() => isKakaoMapSdkReady());
   const [selectedCoords, setSelectedCoords] = useState<{
     lat: number;
     lon: number;
     name: string;
   } | null>(null);
+
+  useEffect(() => {
+    if (isMapReady) return;
+
+    let cancelled = false;
+    void loadKakaoMapSdk()
+      .then(() => {
+        if (!cancelled) setIsMapReady(true);
+      })
+      .catch(() => {
+        if (!cancelled) setIsMapReady(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isMapReady]);
 
   const handleLocationSelect = (location: { lat: number; lon: number; name: string }) => {
     setSelectedCoords(location);
@@ -112,8 +131,26 @@ export const AddLocationContent = ({
       >
         {t('home.addNewLocation')}
       </h2>
-      <KakaoMapSearch onSelect={handleSearchSelect} />
-      <KakaoMapPicker ref={mapRef} onLocationSelect={handleLocationSelect} />
+      {isMapReady ? (
+        <>
+          <KakaoMapSearch onSelect={handleSearchSelect} />
+          <KakaoMapPicker ref={mapRef} onLocationSelect={handleLocationSelect} />
+        </>
+      ) : (
+        <div
+          className="mb-4 flex h-[250px] flex-col items-center justify-center gap-2"
+          style={{
+            borderRadius: '16px',
+            border: '1.5px solid #E5E5E5',
+            backgroundColor: '#FAFAFA',
+          }}
+        >
+          <Spinner size="sm" className="text-black" />
+          <p className="text-[#777]" style={{ fontFamily: FONT, fontSize: '13px' }}>
+            {t('home.tapToSelectLocation')}
+          </p>
+        </div>
+      )}
       <p
         className="text-[#555555] mb-2"
         style={{ fontFamily: FONT, fontSize: '13px', fontWeight: 400, lineHeight: '1.5' }}
